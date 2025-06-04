@@ -10,6 +10,14 @@ type CollectionProduct = {
   price: number;
 };
 
+type SupabaseCollectionRow = {
+  id: number;
+  Inventory: {
+    Product: string;
+    Price: number;
+  };
+};
+
 export default function Collections() {
   const [user, setUser] = useState<any>(null);
   const [cart, setCart] = useState<{ [id: number]: number }>({});
@@ -68,7 +76,7 @@ export default function Collections() {
         .from('Collections')
         .select(`
           id,
-          Inventory!Collections_id_fkey (
+          Inventory:Inventory!Collections_id_fkey (
             Product,
             Price
           )
@@ -81,7 +89,8 @@ export default function Collections() {
       }
 
       if (data) {
-        const formattedData = data.map(item => ({
+        // data is SupabaseCollectionRow[]
+        const formattedData = (data as SupabaseCollectionRow[]).map(item => ({
           id: item.id,
           Product: item.Inventory.Product,
           price: item.Inventory.Price
