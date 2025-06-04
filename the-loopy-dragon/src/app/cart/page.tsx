@@ -133,6 +133,10 @@ export default function CartPage() {
   );
 
   const handleProceedToCheckout = () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     router.push("/checkout");
   };
 
