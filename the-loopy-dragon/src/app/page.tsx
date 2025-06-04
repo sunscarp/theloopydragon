@@ -11,6 +11,12 @@ type ProductRow = {
   Price: number;
 };
 
+export const metadata = {
+  title: "The Loopy Dragon",
+  description:
+    "Buy unique, fun, and magical dragon-themed merchandise. Browse our featured products and collections at The Loopy Dragon.",
+};
+
 export default function Home() {
   const [cart, setCart] = useState<{ [id: number]: number }>({});
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -195,7 +201,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-green-100 to-green-300 dark:from-green-900 dark:to-green-700 py-8 sm:py-16 px-4 flex flex-col items-center">
         <h1 className="text-3xl sm:text-5xl font-extrabold text-green-900 dark:text-green-100 mb-4 text-center">
-          Welcome to The Loopy Dragon Shop
+          Dragon-Themed Merchandise & Gifts
         </h1>
         <p className="text-lg text-green-800 dark:text-green-200 mb-6 text-center max-w-xl">
           Discover unique, fun, and magical dragon-themed merchandise for everyone!
