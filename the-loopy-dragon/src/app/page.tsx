@@ -11,12 +11,6 @@ type ProductRow = {
   Price: number;
 };
 
-export const metadata = {
-  title: "The Loopy Dragon",
-  description:
-    "Buy unique, fun, and magical dragon-themed merchandise. Browse our featured products and collections at The Loopy Dragon.",
-};
-
 export default function Home() {
   const [cart, setCart] = useState<{ [id: number]: number }>({});
   const [products, setProducts] = useState<ProductRow[]>([]);
