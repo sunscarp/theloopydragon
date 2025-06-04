@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 
-export default function OrderSummary() {
+function OrderSummaryContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
   const [order, setOrder] = useState<any>(null);
@@ -53,5 +53,13 @@ export default function OrderSummary() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderSummary() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Loading order summary...</div>}>
+      <OrderSummaryContent />
+    </Suspense>
   );
 }
