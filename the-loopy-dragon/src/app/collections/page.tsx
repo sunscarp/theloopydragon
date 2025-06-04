@@ -15,7 +15,7 @@ type SupabaseCollectionRow = {
   Inventory: {
     Product: string;
     Price: number;
-  };
+  }[];
 };
 
 export default function Collections() {
@@ -89,11 +89,11 @@ export default function Collections() {
       }
 
       if (data) {
-        // data is SupabaseCollectionRow[]
-        const formattedData = (data as SupabaseCollectionRow[]).map(item => ({
+        // Inventory is an array, so use the first element
+        const formattedData = data.map((item: any) => ({
           id: item.id,
-          Product: item.Inventory.Product,
-          price: item.Inventory.Price
+          Product: item.Inventory && item.Inventory[0]?.Product,
+          price: item.Inventory && item.Inventory[0]?.Price
         }));
         setProducts(formattedData);
       }
