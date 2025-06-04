@@ -4,10 +4,5 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "outputDirectory": ".next",
-  "regions": ["bom1"],
-  "env": {
-    "RAZORPAY_KEY_ID": "@razorpay_key_id",
-    "RAZORPAY_SECRET": "@razorpay_secret",
-    "NEXT_PUBLIC_RAZORPAY_KEY_ID": "@razorpay_key_id"
-  }
+  "regions": ["bom1"]
 }
