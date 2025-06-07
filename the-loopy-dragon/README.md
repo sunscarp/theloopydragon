@@ -7,6 +7,7 @@ This is a simple ecommerce website built with [Next.js](https://nextjs.org) and 
 - Product grid with add-to-cart functionality
 - Cart summary with total price
 - Responsive and dark mode support
+- **Mobile-first design:** Looks great and is fully usable on all phones and tablets
 
 ## Getting Started
 

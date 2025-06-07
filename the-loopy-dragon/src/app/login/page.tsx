@@ -7,6 +7,10 @@ export default function Login() {
   const router = useRouter();
 
   async function signInWithGoogle() {
+    const siteUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : 'http://localhost:3000';
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -14,7 +18,7 @@ export default function Login() {
           access_type: 'offline',
           prompt: 'consent',
         },
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${siteUrl}/`
       }
     });
 
@@ -24,7 +28,6 @@ export default function Login() {
     }
   }
 
-  // Check if already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -34,18 +37,21 @@ export default function Login() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 text-center">
-          Login to The Loopy Dragon
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 sm:p-10 max-w-md w-full">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
+          Welcome to The Loopy Dragon
         </h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-8 text-center">
+          Sign in to explore our handcrafted crochet creations
+        </p>
         <button
           onClick={signInWithGoogle}
-          className="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 px-4 py-2 rounded-lg shadow hover:shadow-md transition flex items-center justify-center gap-2"
+          className="w-full bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 px-6 py-3 rounded-lg shadow-sm hover:shadow-md transition duration-200 flex items-center justify-center gap-3 text-base sm:text-lg font-semibold"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path
-              fill="currentColor"
+              fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             />
             <path

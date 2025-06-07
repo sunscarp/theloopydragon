@@ -41,7 +41,6 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    // Calculate total
     const cartItems = Object.entries(cart)
       .map(([id, qty]) => {
         const product = products.find((p) => p.id === Number(id));
@@ -91,16 +90,43 @@ export default function CheckoutPage() {
         description: "Purchase from The Loopy Dragon",
         order_id: order.id,
         handler: async function (response: any) {
-          // For each product in cart, insert order and update inventory
           let allSuccess = true;
-          let lastOrderId = null;
+          let generatedOrderId = `ODR-${Math.floor(100000 + Math.random() * 900000)}`;
+          let supabaseErrorMsg = "";
+          const orderDate = new Date().toISOString();
+
+          const productDetails = Object.entries(cart).map(([productId, qty]) => {
+            const product = products.find((p) => p.id === Number(productId));
+            if (!product) return null;
+            return {
+              Product: product.Product || product.ProductName || product.name,
+              Quantity: qty,
+              Price: product.Price,
+              "Total Price": (product.Price * qty).toFixed(2),
+            };
+          }).filter(Boolean);
+
+          const { error: profileError } = await supabase
+            .from("Your Profile")
+            .insert([{
+              order_id: generatedOrderId,
+              "Order Date": orderDate,
+              Products: productDetails,
+              uid: user.id
+            }]);
+          if (profileError) {
+            allSuccess = false;
+            supabaseErrorMsg = profileError.message || JSON.stringify(profileError);
+            console.error("Supabase Your Profile Insert Error:", profileError);
+          }
+
           for (const [productId, qty] of Object.entries(cart)) {
             const product = products.find((p) => p.id === Number(productId));
             if (!product) continue;
-            // Insert order
-            const { error: orderError, data: orderData } = await supabase
+            const { error: orderError } = await supabase
               .from("Orders")
               .insert([{
+                order_id: generatedOrderId,
                 Name: name,
                 Address: address,
                 Pincode: pincode,
@@ -108,15 +134,18 @@ export default function CheckoutPage() {
                 Email: email,
                 Product: product.Product || product.ProductName || product.name,
                 "Product ID": product.id,
-              }])
-              .select()
-              .single();
+                Quantity: qty,
+                "Total Price": (product.Price * qty).toFixed(2),
+                uid: user.id,
+                payment_id: response.razorpay_payment_id,
+                "Order Date": orderDate
+              }]);
             if (orderError) {
               allSuccess = false;
+              supabaseErrorMsg = orderError.message || JSON.stringify(orderError);
+              console.error("Supabase Order Insert Error:", orderError);
               continue;
             }
-            lastOrderId = orderData?.id;
-            // Update inventory (reduce Quantity by qty)
             await supabase
               .from("Inventory")
               .update({ Quantity: (product.Quantity || product.quantity || 1) - qty })
@@ -124,9 +153,10 @@ export default function CheckoutPage() {
           }
           setCart({});
           localStorage.removeItem("cart");
-          if (allSuccess && lastOrderId) {
-            router.push(`/order-summary?order_id=${lastOrderId}`);
+          if (allSuccess) {
+            router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
+            alert("Order failed! Supabase error: " + supabaseErrorMsg);
             router.push("/order-failed");
           }
         },
@@ -147,6 +177,7 @@ export default function CheckoutPage() {
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
     } catch (error) {
+      alert("Order failed! JS error: " + (error as any)?.message);
       router.push("/order-failed");
     }
   };
@@ -154,101 +185,115 @@ export default function CheckoutPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <main className="max-w-xl mx-auto py-12 px-4 flex-1">
-          <h2 className="text-3xl font-bold mb-8 text-gray-800 dark:text-gray-100 text-center">
-            Checkout
-          </h2>
-          <form
-            className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 flex flex-col gap-6"
-            onSubmit={e => { e.preventDefault(); handlePayment(); }}
-          >
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
-                Address
-              </label>
-              <textarea
-                placeholder="House No, Street, Area, City"
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                rows={3}
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
-                  Pincode
-                </label>
-                <input
-                  type="text"
-                  placeholder="6-digit Pincode"
-                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  value={pincode}
-                  onChange={e => setPincode(e.target.value)}
-                  required
-                  maxLength={6}
-                  pattern="\d{6}"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
-                  Phone (WhatsApp)
-                </label>
-                <input
-                  type="tel"
-                  placeholder="10-digit WhatsApp Number"
-                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  required
-                  maxLength={10}
-                  pattern="\d{10}"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                placeholder="Your Email"
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex justify-between font-semibold text-lg">
-              <span>Total</span>
-              <span>₹{total.toFixed(2)}</span>
-            </div>
-            {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
-            )}
-            <button
-              type="submit"
-              className="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded transition text-lg font-semibold"
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl w-full">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white text-center mb-8 sm:mb-10">
+              Checkout
+            </h2>
+            <form
+              className="space-y-6"
+              onSubmit={e => { e.preventDefault(); handlePayment(); }}
             >
-              Pay with Razorpay
-            </button>
-          </form>
-        </main>
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    Delivery Address
+                  </label>
+                  <textarea
+                    id="address"
+                    placeholder="House No, Street, Area, City"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 resize-none"
+                    rows={4}
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="pincode" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                      Pincode
+                    </label>
+                    <input
+                      id="pincode"
+                      type="text"
+                      placeholder="6-digit Pincode"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      value={pincode}
+                      onChange={e => setPincode(e.target.value)}
+                      required
+                      maxLength={6}
+                      pattern="\d{6}"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                      Phone (WhatsApp)
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      placeholder="10-digit WhatsApp Number"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      required
+                      maxLength={10}
+                      pattern="\d{10}"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="Your Email"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
+                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">₹{total.toFixed(2)}</span>
+              </div>
+              {error && (
+                <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/50 rounded-lg p-3">
+                  {error}
+                </div>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold text-lg transition duration-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Pay with Razorpay
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </>
   );
