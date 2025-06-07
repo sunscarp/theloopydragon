@@ -48,6 +48,7 @@ export default function CartPage() {
           Price: number;
           Quantity: number;
           quantity: number;
+          ImageUrl?: string;  // Add this line
         }>,
     [cart, products]
   );
