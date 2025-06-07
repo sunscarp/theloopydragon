@@ -33,7 +33,7 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col font-sans scroll-smooth">
-      <Navbar cart={{}} />
+      <Navbar />
       
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-pink-600 to-pink-800 dark:from-pink-900 dark:to-pink-700 py-16 sm:py-24 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
