@@ -99,11 +99,19 @@ export async function POST(req: NextRequest) {
       <p style="margin-top:20px;">Thank you for shopping with The Loopy Dragon!</p>
     `;
 
-    // Send the email
+    // Send the email to customer
     await transporter.sendMail({
       from: `"The Loopy Dragon" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to: Email,
       subject: "Your Order Confirmation - The Loopy Dragon",
+      html,
+    });
+
+    // Send the email to owner
+    await transporter.sendMail({
+      from: `"The Loopy Dragon" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: process.env.OWNER_EMAIL || "theloopydragon123@gmail.com",
+      subject: `New Order Received - ${order_id}`,
       html,
     });
 
