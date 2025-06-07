@@ -66,7 +66,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <Navbar cart={{}} />
+      <Navbar />
       
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-teal-100 to-teal-300 dark:from-teal-900 dark:to-teal-700 py-8 sm:py-20 px-2 sm:px-6 flex flex-col items-center">
