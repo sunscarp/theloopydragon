@@ -8,9 +8,9 @@ import Footer from "@/components/Footer";
 
 type ProfileOrder = {
   order_id: string;
-  status?: string;
+  Status?: string; // Changed to match Supabase column name
   order_date?: string;
-  products?: string;
+  Products?: { Product: string; Quantity: number; Price?: number; "Total Price": number }[]; // Updated to match usage
 };
 
 export default function ProfilePage() {
