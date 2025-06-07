@@ -108,7 +108,7 @@ export default function ProfilePage() {
                         Order ID: <span className="break-all">{order.order_id}</span>
                       </div>
                       <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                        {order["Order Date"] ? new Date(order["Order Date"]).toLocaleString() : "N/A"}
+                        {order.order_date ? new Date(order.order_date).toLocaleString() : "N/A"}
                       </div>
                     </div>
                     <div className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm mb-2">
