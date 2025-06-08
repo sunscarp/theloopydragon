@@ -8,16 +8,34 @@ import Footer from "@/components/Footer";
 
 type ProfileOrder = {
   order_id: string;
-  status?: string;
-  order_date?: string;
-  products?: string;
+  Status?: string;
+  "Order Date"?: string;
+  Products?: Array<{
+    Product: string;
+    Quantity: number;
+    Price: number;
+    "Total Price": string;
+    "Shipping Cost"?: string;
+  }>;
+  uid?: string;
 };
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<ProfileOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
+
+  // Handle scroll effect for sticky navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50); // Trigger at 50px for smooth transition
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,8 +84,20 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <Navbar />
-      
+      {/* Sticky Navbar */}
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'bg-white/95 dark:bg-gray-900/95 shadow-xl backdrop-blur-md py-2 px-4 sm:px-6'
+            : 'bg-transparent py-4 px-6 sm:px-8'
+        }`}
+      >
+        <Navbar />
+      </div>
+
+      {/* Spacer to prevent content overlap */}
+      <div className="h-16 sm:h-20"></div>
+
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-teal-100 to-teal-300 dark:from-teal-900 dark:to-teal-700 py-8 sm:py-20 px-2 sm:px-6 flex flex-col items-center">
         <h1 className="text-2xl sm:text-5xl font-extrabold text-teal-900 dark:text-teal-100 mb-4 sm:mb-8 text-center">
@@ -98,7 +128,7 @@ export default function ProfilePage() {
               <div className="text-gray-500 dark:text-gray-400">No orders found.</div>
             ) : (
               <div className="space-y-6">
-                {orders.map(order => (
+                {orders.map((order: ProfileOrder) => (
                   <div
                     key={order.order_id}
                     className="bg-gray-50 dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-3 sm:p-5"
@@ -112,39 +142,63 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm mb-2">
-                      <b>Status:</b> {order.Status || "Processing"}
+                      <b>Status:</b> {order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
                     </div>
                     {/* Order Summary Table */}
                     {Array.isArray(order.Products) && order.Products.length > 0 && (
                       <div className="mt-2">
                         <h4 className="font-semibold mb-1 text-gray-800 dark:text-gray-100 text-xs sm:text-base">Order Summary</h4>
                         <div className="overflow-x-auto">
-                          <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg text-xs sm:text-sm">
-                            <thead>
-                              <tr className="bg-gray-100 dark:bg-gray-700">
-                                <th className="px-2 py-1 text-left font-medium text-gray-700 dark:text-gray-200">Product</th>
-                                <th className="px-2 py-1 text-center font-medium text-gray-700 dark:text-gray-200">Qty</th>
-                                <th className="px-2 py-1 text-center font-medium text-gray-700 dark:text-gray-200">Unit Price</th>
-                                <th className="px-2 py-1 text-right font-medium text-gray-700 dark:text-gray-200">Subtotal</th>
+                          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-800">
+                              <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Product
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Qty
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Unit Price
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                  Subtotal
+                                </th>
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                               {order.Products.map((item: any, idx: number) => (
-                                <tr key={idx} className="border-b border-gray-100 dark:border-gray-700">
-                                  <td className="px-2 py-1">{item.Product}</td>
-                                  <td className="px-2 py-1 text-center">{item.Quantity}</td>
-                                  <td className="px-2 py-1 text-center">
+                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {item.Product}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
+                                    {item.Quantity}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
                                     ₹{item.Price ? Number(item.Price).toFixed(2) : ((Number(item["Total Price"]) / Number(item.Quantity)) || 0).toFixed(2)}
                                   </td>
-                                  <td className="px-2 py-1 text-right font-semibold">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right text-gray-900 dark:text-white">
                                     ₹{Number(item["Total Price"]).toFixed(2)}
                                   </td>
                                 </tr>
                               ))}
                               <tr>
-                                <td colSpan={3} className="px-2 py-1 text-right font-bold">Total Paid</td>
-                                <td className="px-2 py-1 text-right font-bold text-green-700 dark:text-green-300">
+                                <td colSpan={3} className="px-6 py-4 text-right font-medium">Subtotal</td>
+                                <td className="px-6 py-4 text-right font-medium">
                                   ₹{order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0).toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} className="px-6 py-4 text-right font-medium">Shipping</td>
+                                <td className="px-6 py-4 text-right font-medium">
+                                  ₹{Number(order.Products[0]?.["Shipping Cost"] || 0).toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td colSpan={3} className="px-6 py-4 text-right font-bold">Total Paid</td>
+                                <td className="px-6 py-4 text-right font-bold text-green-700 dark:text-green-300">
+                                  ₹{(order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0) + Number(order.Products[0]?.["Shipping Cost"] || 0)).toFixed(2)}
                                 </td>
                               </tr>
                             </tbody>

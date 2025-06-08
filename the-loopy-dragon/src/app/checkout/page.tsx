@@ -9,7 +9,10 @@ export default function CheckoutPage() {
   const [user, setUser] = useState<any>(null);
   const [cart, setCart] = useState<{ [id: string]: number }>({});
   const [products, setProducts] = useState<any[]>([]);
+  const [subtotal, setSubtotal] = useState(0);
+  const [shippingCost, setShippingCost] = useState(0);
   const [total, setTotal] = useState(0);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
 
   // Form fields
   const [name, setName] = useState("");
@@ -47,8 +50,128 @@ export default function CheckoutPage() {
         return product ? { ...product, quantity: qty } : null;
       })
       .filter(Boolean) as Array<{ Price: number; quantity: number }>;
-    setTotal(cartItems.reduce((sum, item) => sum + item.Price * item.quantity, 0));
+    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + item.Price * item.quantity, 0);
+    setSubtotal(calculatedSubtotal);
   }, [cart, products]);
+
+  useEffect(() => {
+    setTotal(subtotal + shippingCost);
+  }, [subtotal, shippingCost]);
+
+  // Add this function to fetch complete product data
+  const fetchProductDetails = async (productIds: string[]) => {
+    const { data, error } = await supabase
+      .from('Inventory')
+      .select('*')
+      .in('id', productIds.map(Number));
+    
+    if (error) {
+      console.error('Error fetching product details:', error);
+      return;
+    }
+
+    console.log('Fetched products:', data); // Debug log
+    if (data) {
+      setProducts(data);
+      localStorage.setItem('products', JSON.stringify(data));
+    }
+  };
+
+  // Update the useEffect for cart/products
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) {
+        const cartData = JSON.parse(storedCart);
+        setCart(cartData);
+        // Fetch fresh product data from Supabase
+        fetchProductDetails(Object.keys(cartData));
+      }
+    }
+  }, []);
+
+  // Calculate total volumetric weight and physical weight
+  const calculateWeights = () => {
+    const details = Object.entries(cart).map(([id, qty]) => {
+      const product = products.find((p) => p.id === Number(id));
+      const length = Number(product?.Length || 10); // cm
+      const width = Number(product?.Width || 10);   // cm
+      const height = Number(product?.Height || 10);  // cm
+      const weight = Number(product?.Weight || 500); // grams
+      
+      // Calculate per item
+      const volumetricWeight = (length * width * height) / 4000; // volumetric weight in kg
+      const physicalWeight = weight / 1000; // physical weight in kg
+      
+      // Multiply by quantity
+      const totalVolumetricWeight = volumetricWeight * qty;
+      const totalPhysicalWeight = physicalWeight * qty;
+
+      return {
+        id,
+        name: product?.Product,
+        dimensions: `${length}x${width}x${height}cm`,
+        volumetricWeight: totalVolumetricWeight,
+        physicalWeight: totalPhysicalWeight
+      };
+    });
+
+    // Use higher of volumetric or physical weight
+    const totalVolumetricWeight = details.reduce((sum, item) => sum + item.volumetricWeight, 0);
+    const totalPhysicalWeight = details.reduce((sum, item) => sum + item.physicalWeight, 0);
+    const chargeableWeight = Math.max(totalVolumetricWeight, totalPhysicalWeight);
+
+    console.log('Weight details:', {
+      items: details,
+      totalVolumetric: totalVolumetricWeight,
+      totalPhysical: totalPhysicalWeight,
+      chargeable: chargeableWeight
+    });
+
+    return {
+      weightInGrams: Math.ceil(chargeableWeight * 1000), // Convert to grams
+      dimensions: details.map(d => d.dimensions)
+    };
+  };
+
+  // Calculate Delhivery shipping cost
+  const calculateShippingCost = async (destinationPincode: string) => {
+    if (!destinationPincode || destinationPincode.length !== 6) {
+      setShippingCost(0);
+      return;
+    }
+    
+    setIsCalculatingShipping(true);
+    try {
+      const { weightInGrams, dimensions } = calculateWeights();
+      
+      const response = await fetch(`/api/shipping?d_pin=${destinationPincode}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Shipping API Error:', data.error);
+        setShippingCost(50);
+        return;
+      }
+
+      setShippingCost(data.total || 50);
+    } catch (error) {
+      console.error('Shipping calculation error:', error);
+      setShippingCost(50);
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  };
+
+  // Handle pincode change and calculate shipping
+  const handlePincodeChange = (value: string) => {
+    setPincode(value);
+    if (value.length === 6 && /^\d{6}$/.test(value)) {
+      calculateShippingCost(value);
+    } else {
+      setShippingCost(0);
+    }
+  };
 
   const validate = () => {
     if (!name.trim() || !address.trim() || !pincode.trim() || !phone.trim() || !email.trim()) {
@@ -103,6 +226,7 @@ export default function CheckoutPage() {
               Quantity: qty,
               Price: product.Price,
               "Total Price": (product.Price * qty).toFixed(2),
+              "Shipping Cost": shippingCost.toFixed(2), // Add shipping cost to product details
             };
           }).filter(Boolean);
 
@@ -111,7 +235,7 @@ export default function CheckoutPage() {
             .insert([{
               order_id: generatedOrderId,
               "Order Date": orderDate,
-              Products: productDetails,
+              Products: productDetails, // Now includes shipping cost
               uid: user.id
             }]);
           if (profileError) {
@@ -136,6 +260,7 @@ export default function CheckoutPage() {
                 "Product ID": product.id,
                 Quantity: qty,
                 "Total Price": (product.Price * qty).toFixed(2),
+                "Shipping Cost": shippingCost.toFixed(2),
                 uid: user.id,
                 payment_id: response.razorpay_payment_id,
                 "Order Date": orderDate
@@ -235,11 +360,16 @@ export default function CheckoutPage() {
                       placeholder="6-digit Pincode"
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       value={pincode}
-                      onChange={e => setPincode(e.target.value)}
+                      onChange={e => handlePincodeChange(e.target.value)}
                       required
                       maxLength={6}
                       pattern="\d{6}"
                     />
+                    {isCalculatingShipping && (
+                      <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                        Calculating shipping cost...
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
@@ -273,10 +403,26 @@ export default function CheckoutPage() {
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">₹{total.toFixed(2)}</span>
+              
+              {/* Order Summary */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Subtotal</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">₹{subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Shipping</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {shippingCost > 0 ? `₹${shippingCost.toFixed(2)}` : 'Enter pincode'}
+                  </span>
+                </div>
+                <hr className="border-gray-200 dark:border-gray-600" />
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">₹{total.toFixed(2)}</span>
+                </div>
               </div>
+
               {error && (
                 <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/50 rounded-lg p-3">
                   {error}
@@ -284,12 +430,13 @@ export default function CheckoutPage() {
               )}
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold text-lg transition duration-200 flex items-center justify-center gap-2"
+                disabled={isCalculatingShipping}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold text-lg transition duration-200 flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Pay with Razorpay
+                {isCalculatingShipping ? 'Calculating...' : 'Pay with Razorpay'}
               </button>
             </form>
           </div>

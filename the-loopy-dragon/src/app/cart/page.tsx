@@ -95,7 +95,13 @@ export default function CartPage() {
         strategy="lazyOnload"
       />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
-        <Navbar />
+        {/* Fixed Navbar with gradient background */}
+        <div className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50`}>
+          <Navbar />
+        </div>
+        
+        {/* Spacer for fixed navbar */}
+        <div className="h-16 sm:h-20"></div>
 
         {/* Main Content */}
         <main className="w-full max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6 flex-1">
@@ -263,7 +269,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                    <span className="text-green-600 dark:text-green-400 font-medium">Standard Rates Apply</span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4">
                     <div className="flex justify-between items-center">

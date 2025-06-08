@@ -6,7 +6,7 @@ import Link from "next/link";
 
 function OrderSummaryContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("order_id");
+  const orderId = searchParams ? searchParams.get("order_id") : null;
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -128,12 +128,28 @@ function OrderSummaryContent() {
                     </td>
                   </tr>
                 ))}
+                <tr className="border-t-2 border-gray-200 dark:border-gray-600">
+                  <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+                    Subtotal
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                    ₹{total.toFixed(2)}
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+                    Shipping
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                    ₹{Number(orders[0]["Shipping Cost"] || 0).toFixed(2)}
+                  </td>
+                </tr>
                 <tr>
                   <td colSpan={3} className="px-4 sm:px-6 py-4 text-right font-bold text-base sm:text-lg text-gray-900 dark:text-white">
                     Total Paid
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-base sm:text-lg text-green-600 dark:text-green-400">
-                    ₹{total.toFixed(2)}
+                    ₹{(total + Number(orders[0]["Shipping Cost"] || 0)).toFixed(2)}
                   </td>
                 </tr>
               </tbody>

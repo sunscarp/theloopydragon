@@ -27,8 +27,7 @@ export default function Collections() {
   // Handle scroll effect for sticky navbar
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 100);
+      setIsScrolled(window.scrollY > 50); // Reduced threshold for smoother transition
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -127,29 +126,25 @@ export default function Collections() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-800 flex flex-col font-sans">
-      {/* Sticky Navbar with smooth animation */}
-      <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
-        isScrolled 
-          ? 'translate-y-0 shadow-xl backdrop-blur-md bg-white/95 dark:bg-gray-900/95' 
-          : '-translate-y-full'
-      }`}>
-        <div className={`transition-all duration-300 ${isScrolled ? 'py-2 px-4' : 'py-4 px-6'}`}>
-          <Navbar />
-        </div>
-      </div>
-
-      {/* Regular Navbar (visible at top) */}
-      <div className="relative z-40">
+      {/* Sticky Navbar */}
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'bg-white/95 dark:bg-gray-900/95 shadow-xl backdrop-blur-md py-2 px-4 sm:px-6'
+            : 'bg-transparent py-4 px-6 sm:px-8'
+        }`}
+      >
         <Navbar />
       </div>
-      
-      {/* Hero Section - Enhanced for mobile */}
+
+      {/* Spacer to prevent content overlap with fixed navbar */}
+      <div className="h-16 sm:h-20"></div>
+
+      {/* Hero Section */}
       <section className="relative w-full overflow-hidden">
-        {/* Animated background elements */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-purple-700 to-pink-600 dark:from-purple-900 dark:via-purple-800 dark:to-purple-700"></div>
         <div className="absolute inset-0 bg-black/10"></div>
         
-        {/* Floating decorative elements */}
         <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-32 h-32 bg-pink-300/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-purple-300/20 rounded-full blur-xl animate-pulse delay-500"></div>
@@ -166,7 +161,6 @@ export default function Collections() {
               Discover handcrafted crochet pieces made with love, care, and attention to every detail
             </p>
             
-            {/* Decorative separator */}
             <div className="mt-8 flex items-center justify-center space-x-2">
               <div className="h-px bg-white/30 w-8 sm:w-12"></div>
               <div className="text-white/60 text-2xl">🧶</div>
@@ -176,7 +170,7 @@ export default function Collections() {
         </div>
       </section>
 
-      {/* Collections Grid - Optimized for mobile */}
+      {/* Collections Grid */}
       <main className="flex-1 max-w-7xl mx-auto py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8">
         {Object.keys(groupedProducts).length === 0 ? (
           <div className="text-center py-16">
@@ -192,7 +186,6 @@ export default function Collections() {
           <div className="space-y-12 sm:space-y-16">
             {Object.entries(groupedProducts).map(([collection, products], index) => (
               <div key={collection} className="group">
-                {/* Collection Header */}
                 <div className="text-center mb-8 sm:mb-12">
                   <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl mb-4 shadow-sm">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +201,6 @@ export default function Collections() {
                   <div className="w-20 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto"></div>
                 </div>
 
-                {/* Products Grid - Mobile-first responsive */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                   {products.map((product, productIndex) => (
                     <div
@@ -218,7 +210,6 @@ export default function Collections() {
                         animationDelay: `${productIndex * 100}ms`
                       }}
                     >
-                      {/* Product Image */}
                       <div className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-4 overflow-hidden group-hover/card:shadow-lg transition-shadow duration-300">
                         {product.ImageUrl ? (
                           <img
@@ -235,7 +226,6 @@ export default function Collections() {
                           </div>
                         )}
                         
-                        {/* Stock indicator */}
                         {product.Quantity !== undefined && product.Quantity <= 0 && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                             <span className="bg-red-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg">
@@ -244,7 +234,6 @@ export default function Collections() {
                           </div>
                         )}
                         
-                        {/* Stock badge for low quantity */}
                         {product.Quantity !== undefined && product.Quantity > 0 && product.Quantity <= 3 && (
                           <span className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
                             Only {product.Quantity} left
@@ -252,7 +241,6 @@ export default function Collections() {
                         )}
                       </div>
 
-                      {/* Product Info */}
                       <div className="flex-1 flex flex-col">
                         <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover/card:text-purple-600 dark:group-hover/card:text-purple-400 transition-colors">
                           {product.Product}
@@ -272,7 +260,6 @@ export default function Collections() {
                           )}
                         </div>
 
-                        {/* Add to Cart Button */}
                         <button
                           className={`w-full py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 ${
                             product.Quantity !== undefined && product.Quantity <= 0

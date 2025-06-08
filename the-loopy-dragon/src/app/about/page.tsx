@@ -1,13 +1,39 @@
+
 "use client";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useState, useEffect } from "react";
 
 export default function About() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Handle scroll effect for sticky navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50); // Trigger at 50px for smooth transition
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      <Navbar />
-      
+      {/* Sticky Navbar */}
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'bg-white/95 dark:bg-gray-900/95 shadow-xl backdrop-blur-md py-2 px-4 sm:px-6'
+            : 'bg-transparent py-4 px-6 sm:px-8'
+        }`}
+      >
+        <Navbar />
+      </div>
+
+      {/* Spacer to prevent content overlap */}
+      <div className="h-16 sm:h-20"></div>
+
       {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-900 dark:to-blue-700 py-16 sm:py-24 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 text-center tracking-tight">

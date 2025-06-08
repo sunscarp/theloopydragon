@@ -70,6 +70,10 @@ export async function POST(req: NextRequest) {
       )
       .join("");
 
+    const shippingCost = orders[0]?.["Shipping Cost"] || 0;
+    const subtotal = orders.reduce((sum: number, item: any) => sum + Number(item["Total Price"]), 0);
+    const grandTotal = subtotal + Number(shippingCost);
+
     const html = `
       <h2>Order Confirmation - The Loopy Dragon</h2>
       <p>Thank you for your order! Here are your order details:</p>
@@ -91,8 +95,16 @@ export async function POST(req: NextRequest) {
         <tbody>
           ${orderRows}
           <tr>
+            <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">Subtotal</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">₹${subtotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;">Shipping</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:right;">₹${Number(shippingCost).toFixed(2)}</td>
+          </tr>
+          <tr>
             <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">Total Paid</td>
-            <td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">₹${Number(total).toFixed(2)}</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">₹${grandTotal.toFixed(2)}</td>
           </tr>
         </tbody>
       </table>
