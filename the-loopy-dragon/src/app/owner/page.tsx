@@ -13,13 +13,19 @@ export default function OwnerDashboard() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user;
-      
-      if (!currentUser || currentUser.email !== "sanskarisamazing@gmail.com") {
+      const currentUser = session?.user as { email?: string } | null;
+
+      const ownerEmails = [
+        "sanskarisamazing@gmail.com",
+        "snp480@gmail.com",
+        "ssp3201@gmail.com"
+      ];
+
+      if (!currentUser || !currentUser.email || !ownerEmails.includes(currentUser.email)) {
         router.push("/");
         return;
       }
-      
+
       setUser(currentUser);
       fetchOrders();
     };
