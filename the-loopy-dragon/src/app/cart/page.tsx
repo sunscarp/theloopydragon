@@ -318,7 +318,7 @@ export default function CartPage() {
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
                     <span className="text-green-600 dark:text-green-400 font-medium">
-                      Standard Rates applied
+                      {total >= 1000 ? 'FREE' : 'Standard Rates applied'}
                     </span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4">
@@ -330,7 +330,9 @@ export default function CartPage() {
                         <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
                           ₹{total.toFixed(2)}
                         </span>
-                        <span className="text-xs text-green-600 dark:text-green-400 mt-1">+ delivery</span>
+                        {total < 1000 && (
+                          <span className="text-xs text-green-600 dark:text-green-400 mt-1">+ delivery</span>
+                        )}
                       </span>
                     </div>
                   </div>
