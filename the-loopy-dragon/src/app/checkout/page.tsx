@@ -55,7 +55,7 @@ export default function CheckoutPage() {
   }, [cart, products]);
 
   useEffect(() => {
-    setTotal(subtotal + shippingCost);
+    setTotal(subtotal + (subtotal > 1000 ? 0 : shippingCost));
   }, [subtotal, shippingCost]);
 
   // Add this function to fetch complete product data
@@ -89,6 +89,13 @@ export default function CheckoutPage() {
       }
     }
   }, []);
+
+  // Make shipping free if subtotal > 1000
+  useEffect(() => {
+    if (subtotal > 1000) {
+      setShippingCost(0);
+    }
+  }, [subtotal]);
 
   // Calculate total volumetric weight and physical weight
   const calculateWeights = () => {
@@ -226,7 +233,7 @@ export default function CheckoutPage() {
               Quantity: qty,
               Price: product.Price,
               "Total Price": (product.Price * qty).toFixed(2),
-              "Shipping Cost": shippingCost.toFixed(2), // Add shipping cost to product details
+              "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2), // Ensure free shipping is stored as 0
             };
           }).filter(Boolean);
 
@@ -260,7 +267,7 @@ export default function CheckoutPage() {
                 "Product ID": product.id,
                 Quantity: qty,
                 "Total Price": (product.Price * qty).toFixed(2),
-                "Shipping Cost": shippingCost.toFixed(2),
+                "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2), // Ensure free shipping is stored as 0
                 uid: user.id,
                 payment_id: response.razorpay_payment_id,
                 "Order Date": orderDate
@@ -413,7 +420,13 @@ export default function CheckoutPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Shipping</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {shippingCost > 0 ? `₹${shippingCost.toFixed(2)}` : 'Enter pincode'}
+                    {subtotal > 1000 ? (
+                      <span className="text-green-600">Free Shipping</span>
+                    ) : shippingCost > 0 ? (
+                      `₹${shippingCost.toFixed(2)}`
+                    ) : (
+                      'Enter pincode'
+                    )}
                   </span>
                 </div>
                 <hr className="border-gray-200 dark:border-gray-600" />

@@ -89,6 +89,10 @@ export default function CartPage() {
     0
   );
 
+  // Calculate shipping cost (example: free above 1000, else 80)
+  const shippingCost = total >= 1000 ? 0 : 80;
+  const grandTotal = total + shippingCost;
+
   const handleProceedToCheckout = () => {
     if (!user) {
       // Add checkout=true parameter to indicate user wants to checkout after login
@@ -313,15 +317,20 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span className="text-green-600 dark:text-green-400 font-medium">Standard Rates Apply</span>
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      Standard Rates applied
+                    </span>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3 sm:pt-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                         Total
                       </span>
-                      <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
-                        ₹{total.toFixed(2)}
+                      <span className="flex flex-col items-end">
+                        <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 dark:from-green-400 dark:to-blue-400 bg-clip-text text-transparent">
+                          ₹{total.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-green-600 dark:text-green-400 mt-1">+ delivery</span>
                       </span>
                     </div>
                   </div>

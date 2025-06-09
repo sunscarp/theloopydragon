@@ -236,6 +236,7 @@ export default function Collections() {
                       product.ImageUrl5,
                     ].filter((img): img is string => !!img);
                     const currentIndex = carouselIndexes[product.id] || 0;
+                    const isOutOfStock = product.Quantity !== undefined && product.Quantity <= 0;
                     return (
                       <div
                         key={product.id}
@@ -244,7 +245,15 @@ export default function Collections() {
                           animationDelay: `${productIndex * 100}ms`
                         }}
                       >
-                        <div className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-4 overflow-hidden group-hover/card:shadow-lg transition-shadow duration-300 flex items-center justify-center">
+                        {/* Product Image(s) Carousel - click to open product page */}
+                        <a
+                          href={`/product/${encodeURIComponent(product.Product)}`}
+                          className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-4 overflow-hidden group-hover/card:shadow-lg transition-shadow duration-300 flex items-center justify-center"
+                          tabIndex={-1}
+                          onClick={e => {
+                            // allow normal navigation
+                          }}
+                        >
                           {images.length === 0 ? (
                             <div className="flex items-center justify-center h-full w-full">
                               <span className="text-4xl sm:text-5xl lg:text-6xl opacity-40 group-hover/card:opacity-60 transition-opacity" role="img" aria-label={product.Product}>
@@ -270,8 +279,13 @@ export default function Collections() {
                               <button
                                 type="button"
                                 className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 rounded-full p-1 shadow hover:bg-white dark:hover:bg-gray-800 transition"
-                                onClick={() => handleCarouselChange(product.id, images.length, -1)}
+                                onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleCarouselChange(product.id, images.length, -1);
+                                }}
                                 aria-label="Previous image"
+                                tabIndex={-1}
                               >
                                 <svg className="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -280,8 +294,13 @@ export default function Collections() {
                               <button
                                 type="button"
                                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 rounded-full p-1 shadow hover:bg-white dark:hover:bg-gray-800 transition"
-                                onClick={() => handleCarouselChange(product.id, images.length, 1)}
+                                onClick={e => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleCarouselChange(product.id, images.length, 1);
+                                }}
                                 aria-label="Next image"
+                                tabIndex={-1}
                               >
                                 <svg className="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -311,7 +330,7 @@ export default function Collections() {
                               Only {product.Quantity} left
                             </span>
                           )}
-                        </div>
+                        </a>
 
                         <div className="flex-1 flex flex-col">
                           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover/card:text-purple-600 dark:group-hover/card:text-purple-400 transition-colors">
@@ -338,7 +357,11 @@ export default function Collections() {
                                 ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                 : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                             }`}
-                            onClick={() => product.Quantity !== undefined && product.Quantity > 0 && addToCart(product.id)}
+                            onClick={e => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (product.Quantity !== undefined && product.Quantity > 0) addToCart(product.id);
+                            }}
                             disabled={product.Quantity !== undefined && product.Quantity <= 0}
                           >
                             {product.Quantity !== undefined && product.Quantity <= 0 ? (
