@@ -13,7 +13,14 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
       
-      if (!currentUser || currentUser.email !== "sanskarisamazing@gmail.com") {
+      const authorizedEmails = [
+        "sanskarisamazing@gmail.com",
+        "snp480@gmail.com",
+        "ssp3201@gmail.com",
+        "f20231193@hyderabad.bits-pilani.ac.in"
+      ];
+
+      if (!currentUser || !currentUser.email || !authorizedEmails.includes(currentUser.email)) {
         router.push("/");
         return;
       }

@@ -51,7 +51,7 @@ export default function Navbar() {
           <Link href="/contact" className="hover:text-green-700 dark:hover:text-green-300">Contact</Link>
           <Link href="/profile" className="hover:text-green-700 dark:hover:text-green-300">Your Orders</Link>
           {/* Owner Dashboard Link - Only show for authorized email */}
-          {user?.email === "sanskarisamazing@gmail.com" && (
+          {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
             <Link href="/owner" className="hover:text-green-700 dark:hover:text-green-300">Owner Dashboard</Link>
           )}
           {/* Cart Icon */}
@@ -130,7 +130,7 @@ export default function Navbar() {
             <Link href="/about" className="block py-2 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400" onClick={() => setMenuOpen(false)}>About</Link>
             <Link href="/contact" className="block py-2 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400" onClick={() => setMenuOpen(false)}>Contact</Link>
             <Link href="/profile" className="block py-2 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400" onClick={() => setMenuOpen(false)}>Your Orders</Link>
-            {user?.email === "sanskarisamazing@gmail.com" && (
+            {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
               <Link href="/owner" className="block py-2 text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400" onClick={() => setMenuOpen(false)}>Owner Dashboard</Link>
             )}
             {user ? (

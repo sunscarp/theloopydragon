@@ -15,13 +15,14 @@ export default function OwnerDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user as { email?: string } | null;
 
-      const ownerEmails = [
+      const authorizedEmails = [
         "sanskarisamazing@gmail.com",
         "snp480@gmail.com",
-        "ssp3201@gmail.com"
+        "ssp3201@gmail.com",
+        "f20231193@hyderabad.bits-pilani.ac.in"
       ];
 
-      if (!currentUser || !currentUser.email || !ownerEmails.includes(currentUser.email)) {
+      if (!currentUser || !currentUser.email || !authorizedEmails.includes(currentUser.email)) {
         router.push("/");
         return;
       }
