@@ -11,7 +11,11 @@ type ProductRow = {
   Product: string;
   Quantity: number;
   Price: number;
-  ImageUrl: string;
+  ImageUrl1?: string | null;
+  ImageUrl2?: string | null;
+  ImageUrl3?: string | null;
+  ImageUrl4?: string | null;
+  ImageUrl5?: string | null;
 };
 
 export default function Home() {
@@ -44,7 +48,7 @@ export default function Home() {
       setErrorMsg(null);
       const { data, error } = await supabase
         .from("Inventory")
-        .select("id, Product, Quantity, Price, ImageUrl");
+        .select("id, Product, Quantity, Price, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5");
       if (error) {
         setProducts([]);
         let msg = "Failed to fetch products: " + error.message;
@@ -66,6 +70,8 @@ export default function Home() {
         setProducts(data);
         if (typeof window !== "undefined") {
           localStorage.setItem("products", JSON.stringify(data));
+          // Dispatch custom event to notify CartContext about the update
+          window.dispatchEvent(new CustomEvent("productsUpdated", { detail: data }));
         }
       }
       setLoading(false);
@@ -84,6 +90,19 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Carousel state for each product
+  const [carouselIndexes, setCarouselIndexes] = useState<{ [id: number]: number }>({});
+
+  const handleCarouselChange = (productId: number, imagesLength: number, direction: number) => {
+    setCarouselIndexes(prev => {
+      const current = prev[productId] || 0;
+      let next = current + direction;
+      if (next < 0) next = imagesLength - 1;
+      if (next >= imagesLength) next = 0;
+      return { ...prev, [productId]: next };
+    });
+  };
 
   if (!isLoaded) {
     return (
@@ -327,92 +346,142 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {sortedProducts.map((product, index) => (
-              <div
-                key={product.id}
-                className="group bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl p-4 sm:p-6 flex flex-col transform transition-all duration-300 hover:scale-[1.02] border border-gray-100 dark:border-gray-700"
-                style={{
-                  animationDelay: `${index * 50}ms`
-                }}
-              >
-                {/* Product Image */}
-                <div className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-4 overflow-hidden group-hover:shadow-lg transition-shadow duration-300">
-                  {product.ImageUrl ? (
-                    <img
-                      src={product.ImageUrl}
-                      alt={product.Product}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <span className="text-4xl sm:text-5xl lg:text-6xl opacity-40 group-hover:opacity-60 transition-opacity" role="img" aria-label={product.Product}>
-                        🧶
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Stock indicators */}
-                  {product.Quantity <= 0 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="bg-red-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg">
-                        Sold Out
-                      </span>
-                    </div>
-                  )}
-                  
-                  {product.Quantity > 0 && product.Quantity <= 3 && (
-                    <span className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
-                      Only {product.Quantity} left
-                    </span>
-                  )}
-                </div>
+            {sortedProducts.map((product, index) => {
+              // Collect all non-null images
+              const images = [
+                product.ImageUrl1,
+                product.ImageUrl2,
+                product.ImageUrl3,
+                product.ImageUrl4,
+                product.ImageUrl5,
+              ].filter((img): img is string => !!img);
 
-                {/* Product Info */}
-                <div className="flex-1 flex flex-col">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                    {product.Product}
-                  </h3>
-                  
-                  <div className="flex items-center justify-between mb-4 mt-auto">
-                    <div className="flex items-baseline space-x-1">
-                      <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                        ₹{product.Price.toFixed(2)}
-                      </span>
-                    </div>
-                    
-                    {product.Quantity > 0 && (
-                      <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-                        In stock
+              const currentIndex = carouselIndexes[product.id] || 0;
+              return (
+                <Link
+                  href={`/product/${encodeURIComponent(product.Product)}`}
+                  key={product.id}
+                  className="group bg-white dark:bg-gray-800 rounded-3xl shadow-lg hover:shadow-2xl p-4 sm:p-6 flex flex-col transform transition-all duration-300 hover:scale-[1.02] border border-gray-100 dark:border-gray-700"
+                  style={{
+                    animationDelay: `${index * 50}ms`
+                  }}
+                >
+                  {/* Product Image(s) Carousel */}
+                  <div className="relative w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-2xl mb-4 overflow-hidden group-hover:shadow-lg transition-shadow duration-300 flex items-center justify-center">
+                    {images.length === 0 ? (
+                      <div className="flex items-center justify-center h-full w-full">
+                        <span className="text-4xl sm:text-5xl lg:text-6xl opacity-40 group-hover:opacity-60 transition-opacity" role="img" aria-label={product.Product}>
+                          🧶
+                        </span>
                       </div>
+                    ) : images.length === 1 ? (
+                      <img
+                        src={images[0]}
+                        alt={product.Product}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={images[currentIndex]}
+                          alt={product.Product}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                        {/* Carousel Controls */}
+                        <button
+                          type="button"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 rounded-full p-1 shadow hover:bg-white dark:hover:bg-gray-800 transition"
+                          onClick={() => handleCarouselChange(product.id, images.length, -1)}
+                          aria-label="Previous image"
+                        >
+                          <svg className="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-700/70 rounded-full p-1 shadow hover:bg-white dark:hover:bg-gray-800 transition"
+                          onClick={() => handleCarouselChange(product.id, images.length, 1)}
+                          aria-label="Next image"
+                        >
+                          <svg className="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        {/* Dots */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                          {images.map((_, i) => (
+                            <span
+                              key={i}
+                              className={`w-2 h-2 rounded-full ${i === currentIndex ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {/* Stock indicators */}
+                    {product.Quantity <= 0 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="bg-red-500 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg">
+                          Sold Out
+                        </span>
+                      </div>
+                    )}
+                    {product.Quantity > 0 && product.Quantity <= 3 && (
+                      <span className="absolute top-3 right-3 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+                        Only {product.Quantity} left
+                      </span>
                     )}
                   </div>
 
-                  {/* Add to Cart Button */}
-                  <button
-                    className={`w-full py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 ${
-                      product.Quantity <= 0
-                        ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
-                    }`}
-                    onClick={() => product.Quantity > 0 && addToCart(product.id)}
-                    disabled={product.Quantity <= 0}
-                  >
-                    {product.Quantity <= 0 ? (
-                      <span className="flex items-center justify-center space-x-2">
-                        <span>Sold Out</span>
-                        <span>😔</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center space-x-2">
-                        <span>Add to Cart</span>
-                        <span>🛒</span>
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
+                  {/* Product Info */}
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {product.Product}
+                    </h3>
+                    
+                    <div className="flex items-center justify-between mb-4 mt-auto">
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                          ₹{product.Price.toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      {product.Quantity > 0 && (
+                        <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                          In stock
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Add to Cart Button */}
+                    <button
+                      className={`w-full py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 ${
+                        product.Quantity <= 0
+                          ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                      }`}
+                      onClick={() => product.Quantity > 0 && addToCart(product.id)}
+                      disabled={product.Quantity <= 0}
+                    >
+                      {product.Quantity <= 0 ? (
+                        <span className="flex items-center justify-center space-x-2">
+                          <span>Sold Out</span>
+                          <span>😔</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center space-x-2">
+                          <span>Add to Cart</span>
+                          <span>🛒</span>
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

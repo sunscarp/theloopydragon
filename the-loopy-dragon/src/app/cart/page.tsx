@@ -15,20 +15,47 @@ declare global {
 export default function CartPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { cart, products, updateQuantity, removeFromCart, isLoaded, clearCart } = useCart();
 
-  // Check auth status
+  // Check auth status and handle post-login redirect
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-    });
+      setIsCheckingAuth(false);
+
+      // Check if user just logged in and should go to checkout
+      const urlParams = new URLSearchParams(window.location.search);
+      const shouldGoToCheckout = urlParams.get("checkout");
+      
+      if (session?.user && shouldGoToCheckout === "true") {
+        // Clear the checkout parameter and redirect to checkout
+        window.history.replaceState({}, document.title, window.location.pathname);
+        router.push("/checkout");
+      }
+    };
+
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setIsCheckingAuth(false);
+
+      // If user just signed in and we're on cart page, check if they intended to checkout
+      if (session?.user) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shouldGoToCheckout = urlParams.get("checkout");
+        
+        if (shouldGoToCheckout === "true") {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          router.push("/checkout");
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   const cartItems = useMemo(
     () =>
@@ -48,7 +75,11 @@ export default function CartPage() {
           Price: number;
           Quantity: number;
           quantity: number;
-          ImageUrl?: string;  // Add this line
+          ImageUrl1?: string | null;
+          ImageUrl2?: string | null;
+          ImageUrl3?: string | null;
+          ImageUrl4?: string | null;
+          ImageUrl5?: string | null;
         }>,
     [cart, products]
   );
@@ -60,7 +91,8 @@ export default function CartPage() {
 
   const handleProceedToCheckout = () => {
     if (!user) {
-      router.push("/login?redirect=/cart");
+      // Add checkout=true parameter to indicate user wants to checkout after login
+      router.push("/login?redirect=/cart&checkout=true");
       return;
     }
     router.push("/checkout");
@@ -76,8 +108,8 @@ export default function CartPage() {
     }
   }, [clearCart]);
 
-  // Show loading state until cart data is loaded
-  if (!isLoaded) {
+  // Show loading state until cart data and auth are loaded
+  if (!isLoaded || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
@@ -147,15 +179,27 @@ export default function CartPage() {
                         {/* Product Image */}
                         <div className="relative">
                           <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl overflow-hidden flex items-center justify-center shadow-inner">
-                            {item.ImageUrl ? (
-                              <img
-                                src={item.ImageUrl}
-                                alt={item.Product}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-2xl sm:text-3xl opacity-70">🧶</span>
-                            )}
+                            {(() => {
+                              const images = [
+                                item.ImageUrl1,
+                                item.ImageUrl2,
+                                item.ImageUrl3,
+                                item.ImageUrl4,
+                                item.ImageUrl5,
+                              ].filter((img): img is string => !!img);
+                              if (images.length > 0) {
+                                return (
+                                  <img
+                                    src={images[0]}
+                                    alt={item.Product}
+                                    className="w-full h-full object-cover"
+                                  />
+                                );
+                              }
+                              return (
+                                <span className="text-2xl sm:text-3xl opacity-70">🧶</span>
+                              );
+                            })()}
                           </div>
                           {/* Item number badge */}
                           <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
@@ -287,7 +331,7 @@ export default function CartPage() {
                   className="w-full mt-6 sm:mt-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl sm:rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl active:scale-95"
                   onClick={handleProceedToCheckout}
                 >
-                  Proceed to Checkout →
+                  {user ? 'Proceed to Checkout →' : 'Sign In to Checkout →'}
                 </button>
                 
                 <p className="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-4">

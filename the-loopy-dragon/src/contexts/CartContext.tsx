@@ -69,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setProducts(loadProductsFromStorage());
       setIsLoaded(true);
 
-      // Only listen for product updates, remove cart listener
+      // Listen for both storage events AND custom product updates
       const handleStorage = (e: StorageEvent) => {
         if (e.key === "products" && e.newValue) {
           try {
@@ -80,8 +80,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       };
 
+      // Listen for custom product update events (for same-tab updates)
+      const handleProductUpdate = (e: CustomEvent) => {
+        setProducts(e.detail);
+      };
+
       window.addEventListener("storage", handleStorage);
-      return () => window.removeEventListener("storage", handleStorage);
+      window.addEventListener("productsUpdated", handleProductUpdate as EventListener);
+      
+      return () => {
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener("productsUpdated", handleProductUpdate as EventListener);
+      };
     }
   }, []);
 

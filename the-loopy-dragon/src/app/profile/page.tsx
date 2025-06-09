@@ -206,12 +206,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     )}
-                    <Link
-                      href={`/track-order?order_id=${order.order_id}`}
-                      className="mt-3 inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs sm:text-sm transition"
-                    >
-                      Track your order
-                    </Link>
+                    {/* Removed Track your order button */}
                   </div>
                 ))}
               </div>
