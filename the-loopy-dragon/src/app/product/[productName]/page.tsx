@@ -223,10 +223,18 @@ export default function ProductPage() {
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
                   {product.Product}
                 </h1>
+                {/* Render multiple tags if present */}
                 {product.Tag && (
-                  <span className="ml-4 flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                    {product.Tag}
-                  </span>
+                  <div className="ml-4 flex flex-wrap gap-2">
+                    {product.Tag.split(",").map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
+                      >
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
               
