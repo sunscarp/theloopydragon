@@ -8,8 +8,8 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
 
-  // Handle scroll effect for navbar
   useEffect(() => {
+    // Handle scroll effect for navbar
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       setIsScrolled(scrollTop > 50);
