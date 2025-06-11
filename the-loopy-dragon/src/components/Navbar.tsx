@@ -38,7 +38,7 @@ export default function Navbar() {
         const rect = contactLinkRef.current.getBoundingClientRect();
         const navRect = contactLinkRef.current.closest("nav")?.getBoundingClientRect();
         if (navRect) {
-          setIconsLeft(rect.right - navRect.left + 40); // Scaled from 50px to 40px (50 * 0.8)
+          setIconsLeft(rect.right - navRect.left + 2.5 * 16); // 2.5rem (40px at base font size)
         }
       }
     }
@@ -57,22 +57,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white h-[80px]">
-      <div className="relative h-full max-w-[1920px] mx-auto w-full">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white h-[5rem]">
+      <div className="relative h-full max-w-screen-2xl mx-auto w-full px-4 lg:px-6">
         {/* Logo */}
         <Link 
           href="/" 
           className="absolute flex items-center top-1/2 -translate-y-1/2"
           style={{ 
-            left: `${(187 / 1920) * 100}%`
+            left: "9.74%" // (187 / 1920) * 100%
           }}
           id="navbar-logo-link"
         >
           <div
             className="relative flex items-center justify-center"
             style={{
-              width: "43.384px",
-              height: "43.384px",
+              width: "2.71rem", // Scaled from 43.384px
+              height: "2.71rem",
             }}
           >
             <Image
@@ -84,19 +84,17 @@ export default function Navbar() {
             />
           </div>
           <span
-            className={`${arapey.className} hidden sm:block`}
+            className={`${arapey.className} hidden sm:block ml-3 text-black`}
             style={{
               fontWeight: 400,
-              fontSize: "20px",
+              fontSize: "1.25rem", // 20px
               letterSpacing: "0.16em",
-              color: "#000000",
-              marginLeft: "12.616px",
               lineHeight: "100%",
               display: "flex",
               alignItems: "center"
             }}
           >
-            <span className="block md:hidden" style={{ fontSize: "14px" }}>
+            <span className="block md:hidden" style={{ fontSize: "0.875rem" }}>
               THE LOOPY DRAGON
             </span>
             <span className="hidden md:block">
@@ -107,10 +105,10 @@ export default function Navbar() {
 
         {/* Desktop Navigation - Hidden on mobile */}
         <div 
-          className="absolute hidden lg:flex items-center"
+          className="absolute hidden lg:flex items-center space-x-10"
           style={{ 
-            left: `${(884 / 1920) * 100}%`,
-            top: "30.4px" // Scaled from 38px (38 * 0.8)
+            left: "46%", // Adjusted from (884 / 1920) * 100% for better centering
+            top: "1.9rem" // 30.4px
           }}
         >
           <Link 
@@ -120,10 +118,9 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.04em", // Scaled from 0.05em (0.05 * 0.8)
-              fontSize: "16px", // Scaled from 20px (20 * 0.8)
-              width: "auto",
-              height: "19.2px", // Scaled from 24px (24 * 0.8)
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
@@ -138,14 +135,12 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.04em", // Scaled from 0.05em
-              fontSize: "16px", // Scaled from 20px
-              width: "auto",
-              height: "19.2px", // Scaled from 24px
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "40px" // Scaled from 50px (50 * 0.8)
+              justifyContent: "center"
             }}
           >
             {pathname === '/shop' ? <span className="font-bold">Shop</span> : "Shop"}
@@ -157,14 +152,12 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.04em", // Scaled from 0.05em
-              fontSize: "16px", // Scaled from 20px
-              width: "auto",
-              height: "19.2px", // Scaled from 24px
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "40px" // Scaled from 50px
+              justifyContent: "center"
             }}
           >
             {pathname === '/collections' ? <span className="font-bold">Collections</span> : "Collections"}
@@ -176,19 +169,16 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.04em", // Scaled from 0.05em
-              fontSize: "16px", // Scaled from 20px
-              width: "auto",
-              height: "19.2px", // Scaled from 24px
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "40px" // Scaled from 50px
+              justifyContent: "center"
             }}
           >
             {pathname === '/custom-order' ? <span className="font-bold">Customise</span> : "Customise"}
           </Link>
-          {/* Contact Us reference point */}
           <Link 
             href="/contact" 
             className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
@@ -198,21 +188,19 @@ export default function Navbar() {
             ref={contactLinkRef}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.04em", // Scaled from 0.05em
-              fontSize: "16px", // Scaled from 20px
-              width: "auto",
-              height: "19.2px", // Scaled from 24px
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "40px" // Scaled from 50px
+              justifyContent: "center"
             }}
           >
             {pathname === '/contact' ? <span className="font-bold">Contact us</span> : "Contact us"}
           </Link>
         </div>
 
-        {/* Desktop Right Side Icons & Actions - Positioned 40px to the right of Contact Us */}
+        {/* Desktop Right Side Icons & Actions */}
         {iconsLeft !== null && (
           <div
             className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
@@ -220,14 +208,14 @@ export default function Navbar() {
               left: `${iconsLeft}px`
             }}
           >
-            <div className="flex items-center">
+            <div className="flex items-center space-x-6">
               {/* Wishlist/Heart Icon */}
               <Link 
                 href="/wishlist" 
                 className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{
-                  width: "20.8px",
-                  height: "20.8px",
+                  width: "1.3rem",
+                  height: "1.3rem",
                   padding: "0"
                 }}
               >
@@ -245,9 +233,8 @@ export default function Navbar() {
                 href="/cart" 
                 className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{ 
-                  marginLeft: "24px",
-                  width: "20.8px",
-                  height: "20.8px",
+                  width: "1.3rem",
+                  height: "1.3rem",
                   padding: "0"
                 }}
               >
@@ -262,16 +249,16 @@ export default function Navbar() {
                   <span
                     className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs flex items-center justify-center font-bold shadow-lg border-2 border-white"
                     style={{
-                      top: '-10px',
-                      right: '-10px',
-                      minWidth: '20px',
-                      height: '20px',
-                      padding: '0 5px',
-                      fontSize: '12px',
+                      top: '-0.625rem',
+                      right: '-0.625rem',
+                      minWidth: '1.25rem',
+                      height: '1.25rem',
+                      padding: '0 0.3125rem',
+                      fontSize: '0.75rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 2px 8px 0 rgba(80,0,80,0.10)',
+                      boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
                       zIndex: 2
                     }}
                   >
@@ -282,42 +269,42 @@ export default function Navbar() {
 
               {/* User Icon */}
               {user ? (
-                <div className="relative" style={{ marginLeft: "17px" }}>
+                <div className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                     style={{
-                      width: "20.8px", // Scaled from 26px
-                      height: "20.8px", // Scaled from 26px
+                      width: "1.3rem",
+                      height: "1.3rem",
                       padding: "0"
                     }}
                   >
                     <Image
                       src="/user.png"
                       alt="User"
-                      width={20.8} // Scaled from 26
-                      height={20.8} // Scaled from 26
+                      width={20.8}
+                      height={20.8}
                       className="object-contain"
                     />
                   </button>
                   
                   {/* User Dropdown */}
                   {menuOpen && (
-                    <div className="absolute right-0 top-full mt-1.6 w-38.4 bg-white rounded-lg shadow-lg border border-gray-200 py-1.6 z-50">
-                      <div className="px-3.2 py-1.6 text-sm text-gray-500 border-b border-gray-100">
+                    <div className="absolute right-0 top-full mt-0.1rem w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-0.4rem z-50">
+                      <div className="px-0.8rem py-0.4rem text-sm text-gray-500 border-b border-gray-100">
                         {user.email}
                       </div>
-                      <Link href="/profile" className="block px-3.2 py-1.6 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                      <Link href="/profile" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
                         Your Orders
                       </Link>
                       {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                        <Link href="/owner" className="block px-3.2 py-1.6 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                        <Link href="/owner" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
                           Owner Dashboard
                         </Link>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-3.2 py-1.6 text-sm text-red-600 hover:bg-red-50"
+                        className="block w-full text-left px-0.8rem py-0.4rem text-sm text-red-600 hover:bg-red-50"
                         type="button"
                       >
                         Logout
@@ -330,17 +317,16 @@ export default function Navbar() {
                   href="/login" 
                   className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                   style={{ 
-                    marginLeft: "24px", // Scaled from 30px
-                    width: "20.8px", // Scaled from 26px
-                    height: "20.8px", // Scaled from 26px
+                    width: "1.3rem",
+                    height: "1.3rem",
                     padding: "0"
                   }}
                 >
                   <Image
                     src="/user.png"
                     alt="User"
-                    width={20.8} // Scaled from 26
-                    height={20.8} // Scaled from 26
+                    width={20.8}
+                    height={20.8}
                     className="object-contain"
                   />
                 </Link>
@@ -349,15 +335,14 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Mobile Right Side - Cart and Menu Button with enhanced styling */}
+        {/* Mobile Right Side - Cart and Menu Button */}
         <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-3 sm:space-x-4">
-          {/* Mobile Cart Icon with enhanced touch target */}
           <Link 
             href="/cart" 
             className="relative p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
             style={{
-              minWidth: '44px',
-              minHeight: '44px'
+              minWidth: '2.75rem',
+              minHeight: '2.75rem'
             }}
           >
             <Image
@@ -371,16 +356,16 @@ export default function Navbar() {
               <span
                 className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white"
                 style={{
-                  top: '-10px',
-                  right: '-10px',
-                  minWidth: '22px',
-                  height: '22px',
-                  padding: '0 6px',
-                  fontSize: '13px',
+                  top: '-0.625rem',
+                  right: '-0.625rem',
+                  minWidth: '1.375rem',
+                  height: '1.375rem',
+                  padding: '0 0.375rem',
+                  fontSize: '0.8125rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 8px 0 rgba(80,0,80,0.10)',
+                  boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
                   zIndex: 2
                 }}
               >
@@ -389,13 +374,12 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Mobile Menu Button with enhanced styling */}
           <button 
             onClick={() => setMenuOpen(!menuOpen)} 
             className="p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
             style={{
-              minWidth: '44px',
-              minHeight: '44px'
+              minWidth: '2.75rem',
+              minHeight: '2.75rem'
             }}
             aria-label="Toggle menu"
           >
@@ -417,12 +401,11 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Enhanced Mobile Menu Dropdown */}
+        {/* Mobile Menu Dropdown */}
         {menuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 lg:hidden z-50 animate-fadeIn">
-            <div className="max-h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
               <div className="px-4 sm:px-6 py-6 space-y-1">
-                {/* Navigation Links */}
                 <div className="space-y-2">
                   <Link 
                     href="/" 
@@ -433,7 +416,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    🏠 Home
+                     Home
                   </Link>
                   <Link 
                     href="/shop" 
@@ -444,7 +427,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    🛍️ Shop
+                     Shop
                   </Link>
                   <Link 
                     href="/collections" 
@@ -455,7 +438,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    📚 Collections
+                     Collections
                   </Link>
                   <Link 
                     href="/custom-order" 
@@ -466,7 +449,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    ✨ Customise
+                     Customise
                   </Link>
                   <Link 
                     href="/contact" 
@@ -477,7 +460,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    📞 Contact us
+                     Contact us
                   </Link>
                   <Link 
                     href="/wishlist" 
@@ -488,7 +471,7 @@ export default function Navbar() {
                     }`}
                     onClick={() => setMenuOpen(false)}
                   >
-                    ❤️ Wishlist
+                     Wishlist
                   </Link>
                   {user && (
                     <Link 
@@ -500,7 +483,7 @@ export default function Navbar() {
                       }`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      📦 Your Orders
+                       Your Orders
                     </Link>
                   )}
                   {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
@@ -513,12 +496,11 @@ export default function Navbar() {
                       }`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      👑 Owner Dashboard
+                       Owner Dashboard
                     </Link>
                   )}
                 </div>
 
-                {/* User Section */}
                 {user ? (
                   <div className="pt-4 border-t border-gray-100 mt-4">
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3">
@@ -539,7 +521,7 @@ export default function Navbar() {
                       className={`${montserrat.className} block w-full py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] text-red-600 hover:bg-red-50 hover:text-red-700 text-left`}
                       type="button"
                     >
-                      🚪 Logout
+                       Logout
                     </button>
                   </div>
                 ) : (
@@ -549,7 +531,7 @@ export default function Navbar() {
                       className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                      🔐 Login / Sign Up
+                       Login / Sign Up
                     </Link>
                   </div>
                 )}
@@ -563,7 +545,7 @@ export default function Navbar() {
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(-0.625rem);
           }
           to {
             opacity: 1;
@@ -583,29 +565,29 @@ export default function Navbar() {
         
         @media (max-width: 640px) {
           .relative.flex.items-center.justify-center {
-            width: 32px !important;
-            height: 32px !important;
+            width: 2rem !important;
+            height: 2rem !important;
           }
           
           #navbar-logo-link span {
-            font-size: 16px !important; /* was 12px, now bigger */
+            font-size: 1rem !important;
             letter-spacing: 0.13em !important;
           }
         }
         
         @media (min-width: 641px) and (max-width: 1023px) {
           .relative.flex.items-center.justify-center {
-            width: 40px !important;
-            height: 40px !important;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
           }
           
           #navbar-logo-link span {
-            fontSize: 16px !important;
+            font-size: 1rem !important;
             letter-spacing: 0.14em !important;
           }
         }
 
-        /* Enhanced touch targets for better mobile UX */
+        /* Enhanced touch targets for mobile */
         @media (max-width: 1023px) {
           .touch-manipulation {
             touch-action: manipulation;
@@ -616,13 +598,20 @@ export default function Navbar() {
 
         /* Smooth scrolling for mobile menu */
         @media (max-width: 1023px) {
-          .max-h-\[calc\(100vh-80px\)\] {
+          .max-h-\[calc\(100vh-5rem\)\] {
             scrollbar-width: none;
             -ms-overflow-style: none;
           }
           
-          .max-h-\[calc\(100vh-80px\)\]::-webkit-scrollbar {
+          .max-h-\[calc\(100vh-5rem\)\]::-webkit-scrollbar {
             display: none;
+          }
+        }
+
+        /* Ensure consistent spacing on larger screens */
+        @media (min-width: 1280px) {
+          .space-x-10 > :not(:last-child) {
+            margin-right: 2.5rem; /* Replaces fixed 40px */
           }
         }
       `}</style>
