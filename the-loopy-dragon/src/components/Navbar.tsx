@@ -261,7 +261,7 @@ export default function Navbar() {
 
               {/* User Icon */}
               {user ? (
-                <div className="relative" style={{ marginLeft: "24px" }}>
+                <div className="relative" style={{ marginLeft: "17px" }}>
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
