@@ -66,12 +66,13 @@ export default function Navbar() {
           style={{ 
             left: `${(187 / 1920) * 100}%`
           }}
+          id="navbar-logo-link"
         >
           <div
             className="relative flex items-center justify-center"
             style={{
-              width: "43.384px", // Scaled from 54.23px (54.23 * 0.8)
-              height: "43.384px", // Scaled from 54.23px
+              width: "43.384px",
+              height: "43.384px",
             }}
           >
             <Image
@@ -86,22 +87,27 @@ export default function Navbar() {
             className={`${arapey.className} hidden sm:block`}
             style={{
               fontWeight: 400,
-              fontSize: "20px", // Scaled from 25px (25 * 0.8)
-              letterSpacing: "0.16em", // Scaled from 0.2em (0.2 * 0.8)
+              fontSize: "20px",
+              letterSpacing: "0.16em",
               color: "#000000",
-              marginLeft: "12.616px", // Scaled from 15.77px (15.77 * 0.8)
+              marginLeft: "12.616px",
               lineHeight: "100%",
               display: "flex",
               alignItems: "center"
             }}
           >
-            THE LOOPY DRAGON
+            <span className="block md:hidden" style={{ fontSize: "14px" }}>
+              THE LOOPY DRAGON
+            </span>
+            <span className="hidden md:block">
+              THE LOOPY DRAGON
+            </span>
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Hidden on mobile */}
         <div 
-          className="absolute flex items-center"
+          className="absolute hidden lg:flex items-center"
           style={{ 
             left: `${(884 / 1920) * 100}%`,
             top: "30.4px" // Scaled from 38px (38 * 0.8)
@@ -206,10 +212,10 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Side Icons & Actions - Positioned 40px to the right of Contact Us */}
+        {/* Desktop Right Side Icons & Actions - Positioned 40px to the right of Contact Us */}
         {iconsLeft !== null && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 flex items-center"
+            className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
             style={{
               left: `${iconsLeft}px`
             }}
@@ -328,76 +334,268 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Mobile Menu Button */}
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)} 
-          className="lg:hidden absolute right-3.2 top-1/2 transform -translate-y-1/2 p-1.6 hover:bg-gray-50 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {menuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        {/* Mobile Right Side - Cart and Menu Button with enhanced styling */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-3 sm:space-x-4">
+          {/* Mobile Cart Icon with enhanced touch target */}
+          <Link 
+            href="/cart" 
+            className="relative p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
+            style={{
+              minWidth: '44px',
+              minHeight: '44px'
+            }}
+          >
+            <Image
+              src="/bag.png"
+              alt="Cart"
+              width={32}
+              height={32}
+              className="object-contain w-7 h-7 sm:w-8 sm:h-8"
+            />
+            {Object.keys(cart).length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white">
+                {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
+              </span>
             )}
-          </svg>
-        </button>
+          </Link>
 
-        {/* Mobile Menu Dropdown */}
-        {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-100 py-3.2 px-3.2 lg:hidden z-50">
-            <div className="space-y-2.4">
-              <Link href="/" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Home
-              </Link>
-              <Link href="/shop" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Shop
-              </Link>
-              <Link href="/collections" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Collections
-              </Link>
-              <Link href="/custom-order" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Customise
-              </Link>
-              <Link href="/contact" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Contact us
-              </Link>
-              <Link href="/about" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                About
-              </Link>
-              <Link href="/profile" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Your Orders
-              </Link>
-              {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                <Link href="/owner" className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                  Owner Dashboard
-                </Link>
+          {/* Mobile Menu Button with enhanced styling */}
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)} 
+            className="p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
+            style={{
+              minWidth: '44px',
+              minHeight: '44px'
+            }}
+            aria-label="Toggle menu"
+          >
+            <svg 
+              className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700 transition-transform duration-200" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{
+                transform: menuOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+              }}
+            >
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
               )}
-              {user ? (
-                <>
-                  <div className="pt-2.4 border-t border-gray-100">
-                    <span className="block py-1.6 text-sm text-gray-500">{user.email}</span>
+            </svg>
+          </button>
+        </div>
+
+        {/* Enhanced Mobile Menu Dropdown */}
+        {menuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 lg:hidden z-50 animate-fadeIn">
+            <div className="max-h-[calc(100vh-80px)] overflow-y-auto">
+              <div className="px-4 sm:px-6 py-6 space-y-1">
+                {/* Navigation Links */}
+                <div className="space-y-2">
+                  <Link 
+                    href="/" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    🏠 Home
+                  </Link>
+                  <Link 
+                    href="/shop" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/shop' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    🛍️ Shop
+                  </Link>
+                  <Link 
+                    href="/collections" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/collections' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    📚 Collections
+                  </Link>
+                  <Link 
+                    href="/custom-order" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/custom-order' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    ✨ Customise
+                  </Link>
+                  <Link 
+                    href="/contact" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/contact' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    📞 Contact us
+                  </Link>
+                  <Link 
+                    href="/wishlist" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/wishlist' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    ❤️ Wishlist
+                  </Link>
+                  {user && (
+                    <Link 
+                      href="/profile" 
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                        pathname === '/profile' 
+                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      📦 Your Orders
+                    </Link>
+                  )}
+                  {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
+                    <Link 
+                      href="/owner" 
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                        pathname === '/owner' 
+                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      👑 Owner Dashboard
+                    </Link>
+                  )}
+                </div>
+
+                {/* User Section */}
+                {user ? (
+                  <div className="pt-4 border-t border-gray-100 mt-4">
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">
+                            {user.email?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Welcome back!</p>
+                          <p className="text-xs text-gray-600 truncate max-w-[200px]">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
                     <button
                       onClick={handleLogout}
-                      className="block py-1.6 text-red-600 hover:text-red-700 font-medium"
+                      className={`${montserrat.className} block w-full py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] text-red-600 hover:bg-red-50 hover:text-red-700 text-left`}
                       type="button"
                     >
-                      Logout
+                      🚪 Logout
                     </button>
                   </div>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block py-1.6 text-gray-700 hover:text-gray-900 font-medium"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              )}
+                ) : (
+                  <div className="pt-4 border-t border-gray-100 mt-4">
+                    <Link
+                      href="/login"
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 text-center`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      🔐 Login / Sign Up
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        @media (max-width: 1023px) {
+          #navbar-logo-link {
+            left: 7% !important;
+          }
+        }
+        
+        @media (max-width: 640px) {
+          .relative.flex.items-center.justify-center {
+            width: 32px !important;
+            height: 32px !important;
+          }
+          
+          #navbar-logo-link span {
+            font-size: 16px !important; /* was 12px, now bigger */
+            letter-spacing: 0.13em !important;
+          }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1023px) {
+          .relative.flex.items-center.justify-center {
+            width: 40px !important;
+            height: 40px !important;
+          }
+          
+          #navbar-logo-link span {
+            fontSize: 16px !important;
+            letter-spacing: 0.14em !important;
+          }
+        }
+
+        /* Enhanced touch targets for better mobile UX */
+        @media (max-width: 1023px) {
+          .touch-manipulation {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+
+        /* Smooth scrolling for mobile menu */
+        @media (max-width: 1023px) {
+          .max-h-\[calc\(100vh-80px\)\] {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          
+          .max-h-\[calc\(100vh-80px\)\]::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
     </nav>
   );
 }
