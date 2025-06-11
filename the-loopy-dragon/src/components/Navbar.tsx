@@ -226,16 +226,16 @@ export default function Navbar() {
                 href="/wishlist" 
                 className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{
-                  width: "20.8px", // Scaled from 26px (26 * 0.8)
-                  height: "20.8px", // Scaled from 26px
+                  width: "20.8px",
+                  height: "20.8px",
                   padding: "0"
                 }}
               >
                 <Image
                   src="/heart.png"
                   alt="Wishlist"
-                  width={20.8} // Scaled from 26
-                  height={20.8} // Scaled from 26
+                  width={20.8}
+                  height={20.8}
                   className="object-contain"
                 />
               </Link>
@@ -245,21 +245,36 @@ export default function Navbar() {
                 href="/cart" 
                 className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{ 
-                  marginLeft: "24px", // Scaled from 30px (30 * 0.8)
-                  width: "20.8px", // Scaled from 26px
-                  height: "20.8px", // Scaled from 26px
+                  marginLeft: "24px",
+                  width: "20.8px",
+                  height: "20.8px",
                   padding: "0"
                 }}
               >
                 <Image
                   src="/bag.png"
                   alt="Cart"
-                  width={20.8} // Scaled from 26
-                  height={20.8} // Scaled from 26
+                  width={20.8}
+                  height={20.8}
                   className="object-contain"
                 />
                 {Object.keys(cart).length > 0 && (
-                  <span className="absolute -top-0.8 -right-0.8 bg-purple-600 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center font-semibold">
+                  <span
+                    className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                    style={{
+                      top: '-10px',
+                      right: '-10px',
+                      minWidth: '20px',
+                      height: '20px',
+                      padding: '0 5px',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px 0 rgba(80,0,80,0.10)',
+                      zIndex: 2
+                    }}
+                  >
                     {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
                   </span>
                 )}
@@ -353,7 +368,22 @@ export default function Navbar() {
               className="object-contain w-7 h-7 sm:w-8 sm:h-8"
             />
             {Object.keys(cart).length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white">
+              <span
+                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                style={{
+                  top: '-10px',
+                  right: '-10px',
+                  minWidth: '22px',
+                  height: '22px',
+                  padding: '0 6px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px 0 rgba(80,0,80,0.10)',
+                  zIndex: 2
+                }}
+              >
                 {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
               </span>
             )}
