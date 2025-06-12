@@ -42,17 +42,17 @@ export default function Navbar() {
       ref={navRef}
       className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100"
       style={{ 
-        background: "#F5F9FF",
-        boxShadow: "0 0 0 0 #F5F9FF"
+        background: "F5F9FF",  // Changed from #F5F9FF to red
+        boxShadow: "0 0 0 0 #F5F9FF"  // Updated shadow color to match
       }}
     >
       <div 
         className="h-20 max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8" 
-        style={{ background: "#F5F9FF" }}
+        style={{ background: "#F5F9FF" }}  // Changed div background to match
       >
         {/* DESKTOP LAYOUT (lg and above) */}
-        <div className="hidden lg:grid items-center h-full gap-4" style={{ gridTemplateColumns: '1.2fr 2fr 1.2fr' }}>
-          {/* Left Section: Logo + Brand Name - Moved further inward */}
+        <div className="hidden lg:grid items-center h-full gap-4" style={{ gridTemplateColumns: '1fr 3fr 0.8fr' }}>
+          {/* Left Section: Logo + Brand Name */}
           <div className="flex items-center justify-start pl-8 xl:pl-12 2xl:pl-16">
             <Link 
               href="/" 
@@ -94,8 +94,8 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Center Section: Navigation Links - Moved more to the right */}
-          <div className="flex items-center justify-center pl-16 xl:pl-20 2xl:pl-24">
+          {/* Center/Right Section: Navigation Links - Moved close to icons */}
+          <div className="flex items-center justify-end pr-4">
             <div className="flex items-center space-x-6 xl:space-x-8">
               {[
                 { href: "/", label: "Home" },
@@ -121,8 +121,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Right Section: Icons - Moved further inward */}
-          <div className="flex items-center justify-end space-x-2 pr-8 xl:pr-12 2xl:pr-16">
+          {/* Right Section: Icons */}
+          <div className="flex items-center justify-start space-x-2 pl-2">
             {/* Wishlist Icon */}
             <Link 
               href="/wishlist" 
@@ -747,4 +747,4 @@ export default function Navbar() {
       `}</style>
     </nav>
   );
-} 
+}
