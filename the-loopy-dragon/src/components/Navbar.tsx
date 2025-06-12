@@ -16,8 +16,8 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { cart } = useCart();
-  const contactLinkRef = useRef<HTMLAnchorElement>(null);
-  const [iconsLeft, setIconsLeft] = useState<number | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -32,19 +32,17 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Calculate the left position of the icons relative to the navbar
-    function updateIconsLeft() {
-      if (contactLinkRef.current) {
-        const rect = contactLinkRef.current.getBoundingClientRect();
-        const navRect = contactLinkRef.current.closest("nav")?.getBoundingClientRect();
-        if (navRect) {
-          setIconsLeft(rect.right - navRect.left + 2.5 * 16); // 2.5rem (40px at base font size)
-        }
-      }
+    // Track screen size for responsive scaling
+    function updateScreenSize() {
+      setScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     }
-    updateIconsLeft();
-    window.addEventListener("resize", updateIconsLeft);
-    return () => window.removeEventListener("resize", updateIconsLeft);
+
+    updateScreenSize();
+    window.addEventListener("resize", updateScreenSize);
+    return () => window.removeEventListener("resize", updateScreenSize);
   }, []);
 
   const handleLogout = async () => {
@@ -56,23 +54,44 @@ export default function Navbar() {
     router.push("/cart");
   };
 
+  // Dynamic scaling based on screen width
+  const getScaleClass = () => {
+    if (screenSize.width >= 1920) return "scale-100";
+    if (screenSize.width >= 1600) return "scale-95";
+    if (screenSize.width >= 1400) return "scale-90";
+    if (screenSize.width >= 1200) return "scale-85";
+    return "scale-80";
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white h-[5rem]">
-      <div className="relative h-full max-w-screen-2xl mx-auto w-full px-4 lg:px-6">
-        {/* Logo */}
+    <nav
+      ref={navRef}
+      className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100"
+      style={{ 
+        transform: "translateX(-1.04vw)",
+        background: "#F5F9FF",
+        width: "101vw",
+        boxShadow: "0 0 0 0 #F5F9FF"
+      }}
+    >
+      <div className="relative h-20 max-w-screen-2xl mx-auto w-full px-4 lg:px-6" style={{ background: "#F5F9FF" }}>
+        {/* DESKTOP LAYOUT (unchanged) */}
+        {/* Logo - Desktop positioning */}
         <Link 
           href="/" 
-          className="absolute flex items-center top-1/2 -translate-y-1/2"
-          style={{ 
-            left: "9.74%" // (187 / 1920) * 100%
-          }}
+          className="absolute hidden lg:flex items-center top-1/2 -translate-y-1/2"
+          style={{ left: "9.73vw" }}
           id="navbar-logo-link"
         >
           <div
             className="relative flex items-center justify-center"
             style={{
-              width: "2.71rem", // Scaled from 43.384px
-              height: "2.71rem",
+              width: "clamp(28px, 3vw, 44px)",
+              height: "clamp(28px, 3vw, 44px)",
+              minWidth: "28px",
+              minHeight: "28px",
+              maxWidth: "44px",
+              maxHeight: "44px"
             }}
           >
             <Image
@@ -83,289 +102,319 @@ export default function Navbar() {
               priority
             />
           </div>
-          <span
-            className={`${arapey.className} hidden sm:block ml-3 text-black`}
-            style={{
-              fontWeight: 400,
-              fontSize: "1.25rem", // 20px
-              letterSpacing: "0.16em",
-              lineHeight: "100%",
-              display: "flex",
-              alignItems: "center"
-            }}
-          >
-            <span className="block md:hidden" style={{ fontSize: "0.875rem" }}>
-              THE LOOPY DRAGON
-            </span>
-            <span className="hidden md:block">
-              THE LOOPY DRAGON
-            </span>
-          </span>
         </Link>
 
-        {/* Desktop Navigation - Hidden on mobile */}
-        <div 
-          className="absolute hidden lg:flex items-center space-x-10"
-          style={{ 
-            left: "46%", // Adjusted from (884 / 1920) * 100% for better centering
-            top: "1.9rem" // 30.4px
+        {/* Text Logo - Desktop */}
+        <span
+          className={`${arapey.className} hidden lg:block absolute top-1/2 -translate-y-1/2`}
+          style={{
+            left: "13.38vw",
+            fontSize: "clamp(14px, 1.2vw, 20px)",
+            letterSpacing: "clamp(0.09em, 0.13vw, 0.16em)",
+            lineHeight: "100%",
+            color: "#000",
+            fontWeight: 400,
+            minWidth: "100px",
+            maxWidth: "220px"
+          }}
+        >
+          THE LOOPY DRAGON
+        </span>
+
+        {/* Desktop Navigation Links - Each link absolutely positioned */}
+        <Link
+          href="/shop"
+          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+          style={{
+            left: "52.08vw",
+            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
+            letterSpacing: "0.04em",
+            fontWeight: pathname === "/shop" ? 600 : 400,
+            ...(pathname === "/shop" && { color: "#111", fontWeight: 600 }),
+          }}
+        >
+          Shop
+        </Link>
+        <Link
+          href="/collections"
+          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+          style={{
+            left: "57.55vw",
+            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
+            letterSpacing: "0.04em",
+            fontWeight: pathname === "/collections" ? 600 : 400,
+            ...(pathname === "/collections" && { color: "#111", fontWeight: 600 }),
+          }}
+        >
+          Collections
+        </Link>
+        <Link
+          href="/custom-order"
+          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+          style={{
+            left: "66.4vw",
+            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
+            letterSpacing: "0.04em",
+            fontWeight: pathname === "/custom-order" ? 600 : 400,
+            ...(pathname === "/custom-order" && { color: "#111", fontWeight: 600 }),
+          }}
+        >
+          Customise
+        </Link>
+        <Link
+          href="/contact"
+          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+          style={{
+            left: "74.94vw",
+            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
+            letterSpacing: "0.04em",
+            fontWeight: pathname === "/contact" ? 600 : 400,
+            ...(pathname === "/contact" && { color: "#111", fontWeight: 600 }),
+          }}
+        >
+          Contact us
+        </Link>
+        {/* Home */}
+        <Link
+          href="/"
+          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+          style={{
+            left: "46.04vw",
+            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
+            letterSpacing: "0.04em",
+            fontWeight: pathname === "/" ? 600 : 400,
+            ...(pathname === "/" && { color: "#111", fontWeight: 600 }),
+          }}
+        >
+          Home
+        </Link>
+
+        {/* Desktop Icons */}
+        {/* Heart Icon */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
+          style={{
+            left: "83.125vw"
           }}
         >
           <Link 
-            href="/" 
-            className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
-              pathname === '/' ? 'text-gray-900 font-semibold' : ''
-            }`}
+            href="/wishlist" 
+            className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
             style={{
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-              fontSize: "1rem",
-              height: "1.2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
+              width: "clamp(2rem, 3vw, 2.5rem)",
+              height: "clamp(2rem, 3vw, 2.5rem)",
             }}
           >
-            {pathname === '/' ? <span className="font-bold">Home</span> : "Home"}
-          </Link>
-          <Link 
-            href="/shop" 
-            className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
-              pathname === '/shop' ? 'text-gray-900 font-semibold' : ''
-            }`}
-            style={{
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-              fontSize: "1rem",
-              height: "1.2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            {pathname === '/shop' ? <span className="font-bold">Shop</span> : "Shop"}
-          </Link>
-          <Link 
-            href="/collections" 
-            className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
-              pathname === '/collections' ? 'text-gray-900 font-semibold' : ''
-            }`}
-            style={{
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-              fontSize: "1rem",
-              height: "1.2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            {pathname === '/collections' ? <span className="font-bold">Collections</span> : "Collections"}
-          </Link>
-          <Link 
-            href="/custom-order" 
-            className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
-              pathname === '/custom-order' ? 'text-gray-900 font-semibold' : ''
-            }`}
-            style={{
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-              fontSize: "1rem",
-              height: "1.2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            {pathname === '/custom-order' ? <span className="font-bold">Customise</span> : "Customise"}
-          </Link>
-          <Link 
-            href="/contact" 
-            className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
-              pathname === '/contact' ? 'text-gray-900 font-semibold' : ''
-            }`}
-            id="contact-link"
-            ref={contactLinkRef}
-            style={{
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-              fontSize: "1rem",
-              height: "1.2rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            {pathname === '/contact' ? <span className="font-bold">Contact us</span> : "Contact us"}
+            <Image
+              src="/heart.png"
+              alt="Wishlist"
+              width={20}
+              height={20}
+              className="object-contain"
+              style={{
+                width: "clamp(16px, 2vw, 20px)",
+                height: "clamp(16px, 2vw, 20px)",
+              }}
+            />
           </Link>
         </div>
 
-        {/* Desktop Right Side Icons & Actions */}
-        {iconsLeft !== null && (
-          <div
-            className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
-            style={{
-              left: `${iconsLeft}px`
-            }}
-          >
-            <div className="flex items-center space-x-6">
-              {/* Wishlist/Heart Icon */}
-              <Link 
-                href="/wishlist" 
-                className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
-                style={{
-                  width: "1.3rem",
-                  height: "1.3rem",
-                  padding: "0"
-                }}
-              >
-                <Image
-                  src="/heart.png"
-                  alt="Wishlist"
-                  width={20.8}
-                  height={20.8}
-                  className="object-contain"
-                />
-              </Link>
-
-              {/* Cart Icon */}
-              <Link 
-                href="/cart" 
-                className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
-                style={{ 
-                  width: "1.3rem",
-                  height: "1.3rem",
-                  padding: "0"
-                }}
-              >
-                <Image
-                  src="/bag.png"
-                  alt="Cart"
-                  width={20.8}
-                  height={20.8}
-                  className="object-contain"
-                />
-                {Object.keys(cart).length > 0 && (
-                  <span
-                    className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs flex items-center justify-center font-bold shadow-lg border-2 border-white"
-                    style={{
-                      top: '-0.625rem',
-                      right: '-0.625rem',
-                      minWidth: '1.25rem',
-                      height: '1.25rem',
-                      padding: '0 0.3125rem',
-                      fontSize: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
-                      zIndex: 2
-                    }}
-                  >
-                    {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
-                  </span>
-                )}
-              </Link>
-
-              {/* User Icon */}
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setMenuOpen(!menuOpen)}
-                    className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
-                    style={{
-                      width: "1.3rem",
-                      height: "1.3rem",
-                      padding: "0"
-                    }}
-                  >
-                    <Image
-                      src="/user.png"
-                      alt="User"
-                      width={20.8}
-                      height={20.8}
-                      className="object-contain"
-                    />
-                  </button>
-                  
-                  {/* User Dropdown */}
-                  {menuOpen && (
-                    <div className="absolute right-0 top-full mt-0.1rem w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-0.4rem z-50">
-                      <div className="px-0.8rem py-0.4rem text-sm text-gray-500 border-b border-gray-100">
-                        {user.email}
-                      </div>
-                      <Link href="/profile" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                        Your Orders
-                      </Link>
-                      {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                        <Link href="/owner" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                          Owner Dashboard
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-0.8rem py-0.4rem text-sm text-red-600 hover:bg-red-50"
-                        type="button"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link 
-                  href="/login" 
-                  className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
-                  style={{ 
-                    width: "1.3rem",
-                    height: "1.3rem",
-                    padding: "0"
-                  }}
-                >
-                  <Image
-                    src="/user.png"
-                    alt="User"
-                    width={20.8}
-                    height={20.8}
-                    className="object-contain"
-                  />
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Right Side - Cart and Menu Button */}
-        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-3 sm:space-x-4">
+        {/* Bag Icon */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
+          style={{
+            left: "86.0416vw"
+          }}
+        >
           <Link 
             href="/cart" 
-            className="relative p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
+            className="relative p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
             style={{
-              minWidth: '2.75rem',
-              minHeight: '2.75rem'
+              width: "clamp(2rem, 3vw, 2.5rem)",
+              height: "clamp(2rem, 3vw, 2.5rem)",
             }}
           >
             <Image
               src="/bag.png"
               alt="Cart"
-              width={32}
-              height={32}
-              className="object-contain w-7 h-7 sm:w-8 sm:h-8"
+              width={20}
+              height={20}
+              className="object-contain"
+              style={{
+                width: "clamp(16px, 2vw, 20px)",
+                height: "clamp(16px, 2vw, 20px)",
+              }}
             />
             {Object.keys(cart).length > 0 && (
               <span
-                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
                 style={{
-                  top: '-0.625rem',
-                  right: '-0.625rem',
-                  minWidth: '1.375rem',
-                  height: '1.375rem',
-                  padding: '0 0.375rem',
-                  fontSize: '0.8125rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
+                  top: '-0.5rem',
+                  right: '-0.5rem',
+                  minWidth: 'clamp(1rem, 1.5vw, 1.25rem)',
+                  height: 'clamp(1rem, 1.5vw, 1.25rem)',
+                  fontSize: 'clamp(0.6rem, 1vw, 0.75rem)',
+                  padding: '0 0.25rem',
+                  zIndex: 2
+                }}
+              >
+                {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
+              </span>
+            )}
+          </Link>
+        </div>
+
+        {/* User Icon */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
+          style={{
+            left: "88.95vw"
+          }}
+        >
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
+                style={{
+                  width: "clamp(2rem, 3vw, 2.5rem)",
+                  height: "clamp(2rem, 3vw, 2.5rem)",
+                }}
+              >
+                <Image
+                  src="/user.png"
+                  alt="User"
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                  style={{
+                    width: "clamp(16px, 2vw, 20px)",
+                    height: "clamp(16px, 2vw, 20px)",
+                  }}
+                />
+              </button>
+              
+              {/* User Dropdown */}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                    {user.email}
+                  </div>
+                  <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                    Your Orders
+                  </Link>
+                  {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
+                    <Link href="/owner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                      Owner Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    type="button"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link 
+              href="/login" 
+              className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
+              style={{
+                width: "clamp(2rem, 3vw, 2.5rem)",
+                height: "clamp(2rem, 3vw, 2.5rem)",
+              }}
+            >
+              <Image
+                src="/user.png"
+                alt="User"
+                width={20}
+                height={20}
+                className="object-contain"
+                style={{
+                  width: "clamp(16px, 2vw, 20px)",
+                  height: "clamp(16px, 2vw, 20px)",
+                }}
+              />
+            </Link>
+          )}
+        </div>
+
+        {/* MOBILE LAYOUT - Fixed Mobile Text Logo */}
+        {/* Mobile Logo Container - Centralized approach */}
+        <div className="absolute lg:hidden flex items-center top-1/2 -translate-y-1/2 left-4">
+          <Link 
+            href="/" 
+            className="flex items-center space-x-3"
+            id="navbar-mobile-logo-link"
+          >
+            {/* Circle Logo */}
+            <div
+              className="relative flex items-center justify-center flex-shrink-0"
+              style={{
+                width: "36px",
+                height: "36px",
+              }}
+            >
+              <Image
+                src="/circle-logo.png"
+                alt="The Loopy Dragon Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+
+            {/* Mobile Text Logo - Responsive and optimized */}
+            <span
+              className={`${arapey.className} select-none`}
+              style={{
+                fontSize: "clamp(12px, 4vw, 16px)",
+                letterSpacing: "clamp(0.08em, 0.15vw, 0.12em)",
+                lineHeight: "1.1",
+                color: "#000",
+                fontWeight: 400,
+                whiteSpace: "nowrap",
+                textRendering: "optimizeLegibility",
+                WebkitFontSmoothing: "antialiased",
+                MozOsxFontSmoothing: "grayscale"
+              }}
+            >
+              THE LOOPY DRAGON
+            </span>
+          </Link>
+        </div>
+
+        {/* Mobile Right Side - Cart and Hamburger Menu */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-2">
+          {/* Mobile Cart */}
+          <Link 
+            href="/cart" 
+            className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
+            style={{
+              minWidth: '2.5rem',
+              minHeight: '2.5rem'
+            }}
+          >
+            <Image
+              src="/bag.png"
+              alt="Cart"
+              width={24}
+              height={24}
+              className="object-contain"
+            />
+            {Object.keys(cart).length > 0 && (
+              <span
+                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                style={{
+                  top: '-0.375rem',
+                  right: '-0.375rem',
+                  minWidth: '1.25rem',
+                  height: '1.25rem',
+                  fontSize: '0.75rem',
+                  padding: '0 0.25rem',
                   zIndex: 2
                 }}
               >
@@ -374,17 +423,18 @@ export default function Navbar() {
             )}
           </Link>
 
+          {/* Mobile Hamburger Menu */}
           <button 
             onClick={() => setMenuOpen(!menuOpen)} 
-            className="p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
+            className="p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
             style={{
-              minWidth: '2.75rem',
-              minHeight: '2.75rem'
+              minWidth: '2.5rem',
+              minHeight: '2.5rem'
             }}
             aria-label="Toggle menu"
           >
             <svg 
-              className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700 transition-transform duration-200" 
+              className="w-6 h-6 text-gray-700 transition-transform duration-200" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -405,74 +455,30 @@ export default function Navbar() {
         {menuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 lg:hidden z-50 animate-fadeIn">
             <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
-              <div className="px-4 sm:px-6 py-6 space-y-1">
+              <div className="px-4 py-6 space-y-1">
                 <div className="space-y-2">
-                  <Link 
-                    href="/" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Home
-                  </Link>
-                  <Link 
-                    href="/shop" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/shop' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Shop
-                  </Link>
-                  <Link 
-                    href="/collections" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/collections' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Collections
-                  </Link>
-                  <Link 
-                    href="/custom-order" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/custom-order' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Customise
-                  </Link>
-                  <Link 
-                    href="/contact" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/contact' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Contact us
-                  </Link>
-                  <Link 
-                    href="/wishlist" 
-                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                      pathname === '/wishlist' 
-                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                     Wishlist
-                  </Link>
+                  {[
+                    { href: "/", label: "Home" },
+                    { href: "/shop", label: "Shop" },
+                    { href: "/collections", label: "Collections" },
+                    { href: "/custom-order", label: "Customise" },
+                    { href: "/contact", label: "Contact us" },
+                    { href: "/wishlist", label: "Wishlist" }
+                  ].map((item) => (
+                    <Link 
+                      key={item.href}
+                      href={item.href} 
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                        pathname === item.href 
+                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  
                   {user && (
                     <Link 
                       href="/profile" 
@@ -483,9 +489,10 @@ export default function Navbar() {
                       }`}
                       onClick={() => setMenuOpen(false)}
                     >
-                       Your Orders
+                      Your Orders
                     </Link>
                   )}
+                  
                   {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
                     <Link 
                       href="/owner" 
@@ -496,7 +503,7 @@ export default function Navbar() {
                       }`}
                       onClick={() => setMenuOpen(false)}
                     >
-                       Owner Dashboard
+                      Owner Dashboard
                     </Link>
                   )}
                 </div>
@@ -521,7 +528,7 @@ export default function Navbar() {
                       className={`${montserrat.className} block w-full py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] text-red-600 hover:bg-red-50 hover:text-red-700 text-left`}
                       type="button"
                     >
-                       Logout
+                      Logout
                     </button>
                   </div>
                 ) : (
@@ -531,7 +538,7 @@ export default function Navbar() {
                       className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 text-center`}
                       onClick={() => setMenuOpen(false)}
                     >
-                       Login / Sign Up
+                      Login / Sign Up
                     </Link>
                   </div>
                 )}
@@ -540,8 +547,10 @@ export default function Navbar() {
           </div>
         )}
       </div>
-
       <style jsx global>{`
+        body {
+          background-color: #F5F9FF !important;
+        }
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -557,38 +566,8 @@ export default function Navbar() {
           animation: fadeIn 0.2s ease-out;
         }
 
-        @media (max-width: 63.9375rem) { /* 1023px */
-          #navbar-logo-link {
-            left: 7% !important;
-          }
-        }
-        
-        @media (max-width: 40rem) { /* 640px */
-          .relative.flex.items-center.justify-center {
-            width: 2rem !important;
-            height: 2rem !important;
-          }
-          
-          #navbar-logo-link span {
-            font-size: 1rem !important;
-            letter-spacing: 0.13em !important;
-          }
-        }
-        
-        @media (min-width: 40.0625rem) and (max-width: 63.9375rem) { /* 641px - 1023px */
-          .relative.flex.items-center.justify-center {
-            width: 2.5rem !important;
-            height: 2.5rem !important;
-          }
-          
-          #navbar-logo-link span {
-            font-size: 1rem !important;
-            letter-spacing: 0.14em !important;
-          }
-        }
-
         /* Enhanced touch targets for mobile */
-        @media (max-width: 63.9375rem) { /* 1023px */
+        @media (max-width: 1023px) {
           .touch-manipulation {
             touch-action: manipulation;
             -webkit-touch-callout: none;
@@ -597,7 +576,7 @@ export default function Navbar() {
         }
 
         /* Smooth scrolling for mobile menu */
-        @media (max-width: 63.9375rem) { /* 1023px */
+        @media (max-width: 1023px) {
           .max-h-\[calc\(100vh-5rem\)\] {
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -608,10 +587,63 @@ export default function Navbar() {
           }
         }
 
-        /* Ensure consistent spacing on larger screens */
-        @media (min-width: 80rem) { /* 1280px */
-          .space-x-10 > :not(:last-child) {
-            margin-right: 2.5rem;
+        /* Ensure proper scaling on ultrawide monitors */
+        @media (min-width: 2560px) {
+          nav > div {
+            max-width: 120rem;
+          }
+        }
+
+        /* High DPI display adjustments */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+          nav {
+            backface-visibility: hidden;
+            transform: translateZ(0);
+          }
+        }
+
+        /* Mobile-specific optimizations */
+        @media (max-width: 1023px) {
+          /* Ensure text doesn't wrap on smaller screens */
+          .whitespace-nowrap {
+            white-space: nowrap;
+          }
+          
+          /* Better touch targets */
+          button, a {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* Prevent text selection on mobile interactive elements */
+          button, a {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          /* Mobile logo text optimization */
+          .mobile-logo-text {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+          }
+        }
+
+        /* Very small mobile devices */
+        @media (max-width: 360px) {
+          /* For very small screens, reduce logo size further */
+          .mobile-logo-container {
+            transform: scale(0.9);
+            transform-origin: left center;
+          }
+        }
+
+        /* Larger mobile devices and small tablets */
+        @media (min-width: 480px) and (max-width: 1023px) {
+          /* For larger mobile screens, allow slightly bigger text */
+          .mobile-logo-text {
+            font-size: clamp(14px, 3.5vw, 18px) !important;
           }
         }
       `}</style>
