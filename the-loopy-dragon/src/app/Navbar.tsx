@@ -38,7 +38,7 @@ export default function Navbar() {
         const rect = contactLinkRef.current.getBoundingClientRect();
         const navRect = contactLinkRef.current.closest("nav")?.getBoundingClientRect();
         if (navRect) {
-          setIconsLeft(rect.right - navRect.left + 50); // 50px to the right of Contact us
+          setIconsLeft(rect.right - navRect.left + 2.5 * 16); // 2.5rem (40px at base font size)
         }
       }
     }
@@ -57,21 +57,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white h-[100px]">
-      <div className="relative h-full max-w-[1920px] mx-auto w-full">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white h-[5rem]">
+      <div className="relative h-full max-w-screen-2xl mx-auto w-full px-4 lg:px-6">
         {/* Logo */}
         <Link 
           href="/" 
           className="absolute flex items-center top-1/2 -translate-y-1/2"
           style={{ 
-            left: `${(187 / 1920) * 100}%`
+            left: "9.74%" // (187 / 1920) * 100%
           }}
+          id="navbar-logo-link"
         >
           <div
             className="relative flex items-center justify-center"
             style={{
-              width: "54.23px",
-              height: "54.23px",
+              width: "2.71rem", // Scaled from 43.384px
+              height: "2.71rem",
             }}
           >
             <Image
@@ -83,28 +84,31 @@ export default function Navbar() {
             />
           </div>
           <span
-            className={`${arapey.className} hidden sm:block`}
+            className={`${arapey.className} hidden sm:block ml-3 text-black`}
             style={{
               fontWeight: 400,
-              fontSize: "25px",
-              letterSpacing: "0.2em",
-              color: "#000000",
-              marginLeft: "15.77px",
+              fontSize: "1.25rem", // 20px
+              letterSpacing: "0.16em",
               lineHeight: "100%",
               display: "flex",
               alignItems: "center"
             }}
           >
-            THE LOOPY DRAGON
+            <span className="block md:hidden" style={{ fontSize: "0.875rem" }}>
+              THE LOOPY DRAGON
+            </span>
+            <span className="hidden md:block">
+              THE LOOPY DRAGON
+            </span>
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Hidden on mobile */}
         <div 
-          className="absolute flex items-center"
+          className="absolute hidden lg:flex items-center space-x-10"
           style={{ 
-            left: `${(884 / 1920) * 100}%`,
-            top: "38px"
+            left: "46%", // Adjusted from (884 / 1920) * 100% for better centering
+            top: "1.9rem" // 30.4px
           }}
         >
           <Link 
@@ -114,10 +118,9 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "20px",
-              width: "auto",
-              height: "24px",
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
@@ -132,14 +135,12 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "20px",
-              width: "auto",
-              height: "24px",
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "50px"
+              justifyContent: "center"
             }}
           >
             {pathname === '/shop' ? <span className="font-bold">Shop</span> : "Shop"}
@@ -151,14 +152,12 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "20px",
-              width: "auto",
-              height: "24px",
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "50px"
+              justifyContent: "center"
             }}
           >
             {pathname === '/collections' ? <span className="font-bold">Collections</span> : "Collections"}
@@ -170,19 +169,16 @@ export default function Navbar() {
             }`}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "20px",
-              width: "auto",
-              height: "24px",
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "50px"
+              justifyContent: "center"
             }}
           >
-            {pathname === '/custom-order' ? <span className="font-bold">Customize</span> : "Customize"}
+            {pathname === '/custom-order' ? <span className="font-bold">Customise</span> : "Customise"}
           </Link>
-          {/* Contact Us reference point */}
           <Link 
             href="/contact" 
             className={`${montserrat.className} text-gray-700 transition-colors hover:text-[#888888] ${
@@ -192,44 +188,42 @@ export default function Navbar() {
             ref={contactLinkRef}
             style={{
               fontWeight: 400,
-              letterSpacing: "0.05em",
-              fontSize: "20px",
-              width: "auto",
-              height: "24px",
+              letterSpacing: "0.04em",
+              fontSize: "1rem",
+              height: "1.2rem",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              marginLeft: "50px"
+              justifyContent: "center"
             }}
           >
             {pathname === '/contact' ? <span className="font-bold">Contact us</span> : "Contact us"}
           </Link>
         </div>
 
-        {/* Right Side Icons & Actions - Positioned 50px to the right of Contact Us */}
+        {/* Desktop Right Side Icons & Actions */}
         {iconsLeft !== null && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 flex items-center"
+            className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
             style={{
               left: `${iconsLeft}px`
             }}
           >
-            <div className="flex items-center">
+            <div className="flex items-center space-x-6">
               {/* Wishlist/Heart Icon */}
               <Link 
                 href="/wishlist" 
                 className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{
-                  width: "26px",
-                  height: "26px",
+                  width: "1.3rem",
+                  height: "1.3rem",
                   padding: "0"
                 }}
               >
                 <Image
                   src="/heart.png"
                   alt="Wishlist"
-                  width={26}
-                  height={26}
+                  width={20.8}
+                  height={20.8}
                   className="object-contain"
                 />
               </Link>
@@ -239,21 +233,35 @@ export default function Navbar() {
                 href="/cart" 
                 className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                 style={{ 
-                  marginLeft: "30px",
-                  width: "26px",
-                  height: "26px",
+                  width: "1.3rem",
+                  height: "1.3rem",
                   padding: "0"
                 }}
               >
                 <Image
                   src="/bag.png"
                   alt="Cart"
-                  width={26}
-                  height={26}
+                  width={20.8}
+                  height={20.8}
                   className="object-contain"
                 />
                 {Object.keys(cart).length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-purple-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center font-semibold">
+                  <span
+                    className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                    style={{
+                      top: '-0.625rem',
+                      right: '-0.625rem',
+                      minWidth: '1.25rem',
+                      height: '1.25rem',
+                      padding: '0 0.3125rem',
+                      fontSize: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
+                      zIndex: 2
+                    }}
+                  >
                     {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
                   </span>
                 )}
@@ -261,42 +269,42 @@ export default function Navbar() {
 
               {/* User Icon */}
               {user ? (
-                <div className="relative" style={{ marginLeft: "30px" }}>
+                <div className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                     style={{
-                      width: "26px",
-                      height: "26px",
+                      width: "1.3rem",
+                      height: "1.3rem",
                       padding: "0"
                     }}
                   >
                     <Image
                       src="/user.png"
                       alt="User"
-                      width={26}
-                      height={26}
+                      width={20.8}
+                      height={20.8}
                       className="object-contain"
                     />
                   </button>
                   
                   {/* User Dropdown */}
                   {menuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                    <div className="absolute right-0 top-full mt-0.1rem w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-0.4rem z-50">
+                      <div className="px-0.8rem py-0.4rem text-sm text-gray-500 border-b border-gray-100">
                         {user.email}
                       </div>
-                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                      <Link href="/profile" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
                         Your Orders
                       </Link>
                       {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                        <Link href="/owner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                        <Link href="/owner" className="block px-0.8rem py-0.4rem text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
                           Owner Dashboard
                         </Link>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        className="block w-full text-left px-0.8rem py-0.4rem text-sm text-red-600 hover:bg-red-50"
                         type="button"
                       >
                         Logout
@@ -309,17 +317,16 @@ export default function Navbar() {
                   href="/login" 
                   className="p-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-center"
                   style={{ 
-                    marginLeft: "30px",
-                    width: "26px",
-                    height: "26px",
+                    width: "1.3rem",
+                    height: "1.3rem",
                     padding: "0"
                   }}
                 >
                   <Image
                     src="/user.png"
                     alt="User"
-                    width={26}
-                    height={26}
+                    width={20.8}
+                    height={20.8}
                     className="object-contain"
                   />
                 </Link>
@@ -328,76 +335,286 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Mobile Menu Button */}
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)} 
-          className="lg:hidden absolute right-4 top-1/2 transform -translate-y-1/2 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-        >
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {menuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        {/* Mobile Right Side - Cart and Menu Button */}
+        <div className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-3 sm:space-x-4">
+          <Link 
+            href="/cart" 
+            className="relative p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
+            style={{
+              minWidth: '2.75rem',
+              minHeight: '2.75rem'
+            }}
+          >
+            <Image
+              src="/bag.png"
+              alt="Cart"
+              width={32}
+              height={32}
+              className="object-contain w-7 h-7 sm:w-8 sm:h-8"
+            />
+            {Object.keys(cart).length > 0 && (
+              <span
+                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full text-xs sm:text-sm flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                style={{
+                  top: '-0.625rem',
+                  right: '-0.625rem',
+                  minWidth: '1.375rem',
+                  height: '1.375rem',
+                  padding: '0 0.375rem',
+                  fontSize: '0.8125rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0.125rem 0.5rem 0 rgba(80,0,80,0.10)',
+                  zIndex: 2
+                }}
+              >
+                {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
+              </span>
             )}
-          </svg>
-        </button>
+          </Link>
+
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)} 
+            className="p-3 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
+            style={{
+              minWidth: '2.75rem',
+              minHeight: '2.75rem'
+            }}
+            aria-label="Toggle menu"
+          >
+            <svg 
+              className="w-6 h-6 sm:w-7 sm:h-7 text-gray-700 transition-transform duration-200" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{
+                transform: menuOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+              }}
+            >
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
 
         {/* Mobile Menu Dropdown */}
         {menuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-100 py-4 px-4 lg:hidden z-50">
-            <div className="space-y-3">
-              <Link href="/" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Home
-              </Link>
-              <Link href="/shop" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Shop
-              </Link>
-              <Link href="/collections" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Collections
-              </Link>
-              <Link href="/custom-order" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Customize
-              </Link>
-              <Link href="/contact" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Contact us
-              </Link>
-              <Link href="/about" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                About
-              </Link>
-              <Link href="/profile" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                Your Orders
-              </Link>
-              {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                <Link href="/owner" className="block py-2 text-gray-700 hover:text-gray-900 font-medium" onClick={() => setMenuOpen(false)}>
-                  Owner Dashboard
-                </Link>
-              )}
-              {user ? (
-                <>
-                  <div className="pt-3 border-t border-gray-100">
-                    <span className="block py-2 text-sm text-gray-500">{user.email}</span>
+          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 lg:hidden z-50 animate-fadeIn">
+            <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
+              <div className="px-4 sm:px-6 py-6 space-y-1">
+                <div className="space-y-2">
+                  <Link 
+                    href="/" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Home
+                  </Link>
+                  <Link 
+                    href="/shop" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/shop' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Shop
+                  </Link>
+                  <Link 
+                    href="/collections" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/collections' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Collections
+                  </Link>
+                  <Link 
+                    href="/custom-order" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/custom-order' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Customise
+                  </Link>
+                  <Link 
+                    href="/contact" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/contact' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Contact us
+                  </Link>
+                  <Link 
+                    href="/wishlist" 
+                    className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                      pathname === '/wishlist' 
+                        ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                     Wishlist
+                  </Link>
+                  {user && (
+                    <Link 
+                      href="/profile" 
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                        pathname === '/profile' 
+                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                       Your Orders
+                    </Link>
+                  )}
+                  {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
+                    <Link 
+                      href="/owner" 
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
+                        pathname === '/owner' 
+                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                       Owner Dashboard
+                    </Link>
+                  )}
+                </div>
+
+                {user ? (
+                  <div className="pt-4 border-t border-gray-100 mt-4">
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">
+                            {user.email?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Welcome back!</p>
+                          <p className="text-xs text-gray-600 truncate max-w-[12.5rem]">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
                     <button
                       onClick={handleLogout}
-                      className="block py-2 text-red-600 hover:text-red-700 font-medium"
+                      className={`${montserrat.className} block w-full py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] text-red-600 hover:bg-red-50 hover:text-red-700 text-left`}
                       type="button"
                     >
-                      Logout
+                       Logout
                     </button>
                   </div>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block py-2 text-gray-700 hover:text-gray-900 font-medium"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              )}
+                ) : (
+                  <div className="pt-4 border-t border-gray-100 mt-4">
+                    <Link
+                      href="/login"
+                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 text-center`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                       Login / Sign Up
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-0.625rem);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        @media (max-width: 63.9375rem) { /* 1023px */
+          #navbar-logo-link {
+            left: 7% !important;
+          }
+        }
+        
+        @media (max-width: 40rem) { /* 640px */
+          .relative.flex.items-center.justify-center {
+            width: 2rem !important;
+            height: 2rem !important;
+          }
+          
+          #navbar-logo-link span {
+            font-size: 1rem !important;
+            letter-spacing: 0.13em !important;
+          }
+        }
+        
+        @media (min-width: 40.0625rem) and (max-width: 63.9375rem) { /* 641px - 1023px */
+          .relative.flex.items-center.justify-center {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+          }
+          
+          #navbar-logo-link span {
+            font-size: 1rem !important;
+            letter-spacing: 0.14em !important;
+          }
+        }
+
+        /* Enhanced touch targets for mobile */
+        @media (max-width: 63.9375rem) { /* 1023px */
+          .touch-manipulation {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+
+        /* Smooth scrolling for mobile menu */
+        @media (max-width: 63.9375rem) { /* 1023px */
+          .max-h-\[calc\(100vh-5rem\)\] {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          
+          .max-h-\[calc\(100vh-5rem\)\]::-webkit-scrollbar {
+            display: none;
+          }
+        }
+
+        /* Ensure consistent spacing on larger screens */
+        @media (min-width: 80rem) { /* 1280px */
+          .space-x-10 > :not(:last-child) {
+            margin-right: 2.5rem;
+          }
+        }
+      `}</style>
     </nav>
   );
 }
