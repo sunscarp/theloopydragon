@@ -512,7 +512,7 @@ export default function Navbar() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">Welcome back!</p>
-                          <p className="text-xs text-gray-600 truncate max-w-[200px]">{user.email}</p>
+                          <p className="text-xs text-gray-600 truncate max-w-[12.5rem]">{user.email}</p>
                         </div>
                       </div>
                     </div>
@@ -557,13 +557,13 @@ export default function Navbar() {
           animation: fadeIn 0.2s ease-out;
         }
 
-        @media (max-width: 1023px) {
+        @media (max-width: 63.9375rem) { /* 1023px */
           #navbar-logo-link {
             left: 7% !important;
           }
         }
         
-        @media (max-width: 640px) {
+        @media (max-width: 40rem) { /* 640px */
           .relative.flex.items-center.justify-center {
             width: 2rem !important;
             height: 2rem !important;
@@ -575,7 +575,7 @@ export default function Navbar() {
           }
         }
         
-        @media (min-width: 641px) and (max-width: 1023px) {
+        @media (min-width: 40.0625rem) and (max-width: 63.9375rem) { /* 641px - 1023px */
           .relative.flex.items-center.justify-center {
             width: 2.5rem !important;
             height: 2.5rem !important;
@@ -588,7 +588,7 @@ export default function Navbar() {
         }
 
         /* Enhanced touch targets for mobile */
-        @media (max-width: 1023px) {
+        @media (max-width: 63.9375rem) { /* 1023px */
           .touch-manipulation {
             touch-action: manipulation;
             -webkit-touch-callout: none;
@@ -597,7 +597,7 @@ export default function Navbar() {
         }
 
         /* Smooth scrolling for mobile menu */
-        @media (max-width: 1023px) {
+        @media (max-width: 63.9375rem) { /* 1023px */
           .max-h-\[calc\(100vh-5rem\)\] {
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -609,9 +609,9 @@ export default function Navbar() {
         }
 
         /* Ensure consistent spacing on larger screens */
-        @media (min-width: 1280px) {
+        @media (min-width: 80rem) { /* 1280px */
           .space-x-10 > :not(:last-child) {
-            margin-right: 2.5rem; /* Replaces fixed 40px */
+            margin-right: 2.5rem;
           }
         }
       `}</style>
