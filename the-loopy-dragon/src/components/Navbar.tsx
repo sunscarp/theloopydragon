@@ -17,7 +17,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const { cart } = useCart();
   const navRef = useRef<HTMLElement>(null);
-  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,427 +30,477 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    // Track screen size for responsive scaling
-    function updateScreenSize() {
-      setScreenSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    }
-
-    updateScreenSize();
-    window.addEventListener("resize", updateScreenSize);
-    return () => window.removeEventListener("resize", updateScreenSize);
-  }, []);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setMenuOpen(false);
   };
 
-  const goToCart = () => {
-    router.push("/cart");
-  };
-
-  // Dynamic scaling based on screen width
-  const getScaleClass = () => {
-    if (screenSize.width >= 1920) return "scale-100";
-    if (screenSize.width >= 1600) return "scale-95";
-    if (screenSize.width >= 1400) return "scale-90";
-    if (screenSize.width >= 1200) return "scale-85";
-    return "scale-80";
-  };
+  const cartItemCount = Object.values(cart).reduce((a: number, b: number) => a + b, 0);
 
   return (
     <nav
       ref={navRef}
       className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100"
       style={{ 
-        transform: "translateX(-1.04vw)",
         background: "#F5F9FF",
-        width: "101vw",
         boxShadow: "0 0 0 0 #F5F9FF"
       }}
     >
-      <div className="relative h-20 max-w-screen-2xl mx-auto w-full px-4 lg:px-6" style={{ background: "#F5F9FF" }}>
-        {/* DESKTOP LAYOUT (unchanged) */}
-        {/* Logo - Desktop positioning */}
-        <Link 
-          href="/" 
-          className="absolute hidden lg:flex items-center top-1/2 -translate-y-1/2"
-          style={{ left: "9.73vw" }}
-          id="navbar-logo-link"
-        >
-          <div
-            className="relative flex items-center justify-center"
-            style={{
-              width: "clamp(28px, 3vw, 44px)",
-              height: "clamp(28px, 3vw, 44px)",
-              minWidth: "28px",
-              minHeight: "28px",
-              maxWidth: "44px",
-              maxHeight: "44px"
-            }}
-          >
-            <Image
-              src="/circle-logo.png"
-              alt="The Loopy Dragon Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-        </Link>
-
-        {/* Text Logo - Desktop */}
-        <span
-          className={`${arapey.className} hidden lg:block absolute top-1/2 -translate-y-1/2`}
-          style={{
-            left: "13.38vw",
-            fontSize: "clamp(14px, 1.2vw, 20px)",
-            letterSpacing: "clamp(0.09em, 0.13vw, 0.16em)",
-            lineHeight: "100%",
-            color: "#000",
-            fontWeight: 400,
-            minWidth: "100px",
-            maxWidth: "220px"
-          }}
-        >
-          THE LOOPY DRAGON
-        </span>
-
-        {/* Desktop Navigation Links - Each link absolutely positioned */}
-        <Link
-          href="/shop"
-          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
-          style={{
-            left: "52.08vw",
-            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
-            letterSpacing: "0.04em",
-            fontWeight: pathname === "/shop" ? 600 : 400,
-            ...(pathname === "/shop" && { color: "#111", fontWeight: 600 }),
-          }}
-        >
-          Shop
-        </Link>
-        <Link
-          href="/collections"
-          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
-          style={{
-            left: "57.55vw",
-            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
-            letterSpacing: "0.04em",
-            fontWeight: pathname === "/collections" ? 600 : 400,
-            ...(pathname === "/collections" && { color: "#111", fontWeight: 600 }),
-          }}
-        >
-          Collections
-        </Link>
-        <Link
-          href="/custom-order"
-          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
-          style={{
-            left: "66.4vw",
-            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
-            letterSpacing: "0.04em",
-            fontWeight: pathname === "/custom-order" ? 600 : 400,
-            ...(pathname === "/custom-order" && { color: "#111", fontWeight: 600 }),
-          }}
-        >
-          Customise
-        </Link>
-        <Link
-          href="/contact"
-          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
-          style={{
-            left: "74.94vw",
-            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
-            letterSpacing: "0.04em",
-            fontWeight: pathname === "/contact" ? 600 : 400,
-            ...(pathname === "/contact" && { color: "#111", fontWeight: 600 }),
-          }}
-        >
-          Contact us
-        </Link>
-        {/* Home */}
-        <Link
-          href="/"
-          className={`${montserrat.className} hidden lg:flex items-center absolute top-1/2 -translate-y-1/2 text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
-          style={{
-            left: "46.04vw",
-            fontSize: "clamp(0.875rem, 1.2vw, 1rem)",
-            letterSpacing: "0.04em",
-            fontWeight: pathname === "/" ? 600 : 400,
-            ...(pathname === "/" && { color: "#111", fontWeight: 600 }),
-          }}
-        >
-          Home
-        </Link>
-
-        {/* Desktop Icons */}
-        {/* Heart Icon */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
-          style={{
-            left: "83.125vw"
-          }}
-        >
-          <Link 
-            href="/wishlist" 
-            className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
-            style={{
-              width: "clamp(2rem, 3vw, 2.5rem)",
-              height: "clamp(2rem, 3vw, 2.5rem)",
-            }}
-          >
-            <Image
-              src="/heart.png"
-              alt="Wishlist"
-              width={20}
-              height={20}
-              className="object-contain"
-              style={{
-                width: "clamp(16px, 2vw, 20px)",
-                height: "clamp(16px, 2vw, 20px)",
-              }}
-            />
-          </Link>
-        </div>
-
-        {/* Bag Icon */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
-          style={{
-            left: "86.0416vw"
-          }}
-        >
-          <Link 
-            href="/cart" 
-            className="relative p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
-            style={{
-              width: "clamp(2rem, 3vw, 2.5rem)",
-              height: "clamp(2rem, 3vw, 2.5rem)",
-            }}
-          >
-            <Image
-              src="/bag.png"
-              alt="Cart"
-              width={20}
-              height={20}
-              className="object-contain"
-              style={{
-                width: "clamp(16px, 2vw, 20px)",
-                height: "clamp(16px, 2vw, 20px)",
-              }}
-            />
-            {Object.keys(cart).length > 0 && (
-              <span
-                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+      <div 
+        className="h-20 max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8" 
+        style={{ background: "#F5F9FF" }}
+      >
+        {/* DESKTOP LAYOUT (lg and above) */}
+        <div className="hidden lg:grid items-center h-full gap-4" style={{ gridTemplateColumns: '1.2fr 2fr 1.2fr' }}>
+          {/* Left Section: Logo + Brand Name - Moved further inward */}
+          <div className="flex items-center justify-start pl-8 xl:pl-12 2xl:pl-16">
+            <Link 
+              href="/" 
+              className="flex items-center"
+              id="navbar-logo-link"
+            >
+              <div
+                className="relative flex items-center justify-center mr-3"
                 style={{
-                  top: '-0.5rem',
-                  right: '-0.5rem',
-                  minWidth: 'clamp(1rem, 1.5vw, 1.25rem)',
-                  height: 'clamp(1rem, 1.5vw, 1.25rem)',
-                  fontSize: 'clamp(0.6rem, 1vw, 0.75rem)',
-                  padding: '0 0.25rem',
-                  zIndex: 2
-                }}
-              >
-                {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
-              </span>
-            )}
-          </Link>
-        </div>
-
-        {/* User Icon */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center"
-          style={{
-            left: "88.95vw"
-          }}
-        >
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
-                style={{
-                  width: "clamp(2rem, 3vw, 2.5rem)",
-                  height: "clamp(2rem, 3vw, 2.5rem)",
+                  width: "clamp(52px, 2.5vw, 44px)",
+                  height: "clamp(32px, 2.5vw, 44px)",
+                  minWidth: "32px",
+                  minHeight: "32px",
+                  maxWidth: "44px",
+                  maxHeight: "44px"
                 }}
               >
                 <Image
-                  src="/user.png"
-                  alt="User"
-                  width={20}
-                  height={20}
+                  src="/circle-logo.png"
+                  alt="The Loopy Dragon Logo"
+                  fill
                   className="object-contain"
-                  style={{
-                    width: "clamp(16px, 2vw, 20px)",
-                    height: "clamp(16px, 2vw, 20px)",
-                  }}
+                  priority
                 />
-              </button>
-              
-              {/* User Dropdown */}
-              {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-                    {user.email}
-                  </div>
-                  <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                    Your Orders
-                  </Link>
-                  {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
-                    <Link href="/owner" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                      Owner Dashboard
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    type="button"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+              </div>
+              <span
+                className={`${arapey.className}`}
+                style={{
+                  fontSize: "clamp(16px, 1.3vw, 20px)",
+                  letterSpacing: "clamp(0.09em, 0.13vw, 0.16em)",
+                  lineHeight: "100%",
+                  color: "#000",
+                  fontWeight: 400,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                THE LOOPY DRAGON
+              </span>
+            </Link>
+          </div>
+
+          {/* Center Section: Navigation Links - Moved more to the right */}
+          <div className="flex items-center justify-center pl-16 xl:pl-20 2xl:pl-24">
+            <div className="flex items-center space-x-6 xl:space-x-8">
+              {[
+                { href: "/", label: "Home" },
+                { href: "/shop", label: "Shop" },
+                { href: "/collections", label: "Collections" },
+                { href: "/custom-order", label: "Customise" },
+                { href: "/contact", label: "Contact us" }
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`${montserrat.className} text-gray-700 transition-colors hover:text-gray-900 whitespace-nowrap`}
+                  style={{
+                    fontSize: "clamp(0.875rem, 1.1vw, 1rem)",
+                    letterSpacing: "0.04em",
+                    fontWeight: pathname === item.href ? 600 : 400,
+                    color: pathname === item.href ? "#111" : undefined,
+                  }}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
-          ) : (
+          </div>
+
+          {/* Right Section: Icons - Moved further inward */}
+          <div className="flex items-center justify-end space-x-2 pr-8 xl:pr-12 2xl:pr-16">
+            {/* Wishlist Icon */}
             <Link 
-              href="/login" 
-              className="p-2 rounded-lg transition-colors flex items-center justify-center" // removed hover:bg-gray-50
+              href="/wishlist" 
+              className="p-2 rounded-lg transition-colors flex items-center justify-center"
               style={{
-                width: "clamp(2rem, 3vw, 2.5rem)",
-                height: "clamp(2rem, 3vw, 2.5rem)",
+                width: "clamp(2rem, 2.5vw, 2.5rem)",
+                height: "clamp(2rem, 2.5vw, 2.5rem)"
               }}
             >
               <Image
-                src="/user.png"
-                alt="User"
+                src="/heart.png"
+                alt="Wishlist"
                 width={20}
                 height={20}
                 className="object-contain"
                 style={{
-                  width: "clamp(16px, 2vw, 20px)",
-                  height: "clamp(16px, 2vw, 20px)",
+                  width: "clamp(18px, 1.8vw, 20px)",
+                  height: "clamp(18px, 1.8vw, 20px)",
                 }}
               />
             </Link>
-          )}
-        </div>
 
-        {/* MOBILE LAYOUT - Fixed Mobile Text Logo */}
-        {/* Mobile Logo Container - Centralized approach */}
-        <div className="absolute lg:hidden flex items-center top-1/2 -translate-y-1/2 left-4">
-          <Link 
-            href="/" 
-            className="flex items-center space-x-3"
-            id="navbar-mobile-logo-link"
-          >
-            {/* Circle Logo */}
-            <div
-              className="relative flex items-center justify-center flex-shrink-0"
+            {/* Cart Icon */}
+            <Link 
+              href="/cart" 
+              className="relative p-2 rounded-lg transition-colors flex items-center justify-center"
               style={{
-                width: "36px",
-                height: "36px",
+                width: "clamp(2rem, 2.5vw, 2.5rem)",
+                height: "clamp(2rem, 2.5vw, 2.5rem)"
               }}
             >
               <Image
-                src="/circle-logo.png"
-                alt="The Loopy Dragon Logo"
-                fill
+                src="/bag.png"
+                alt="Cart"
+                width={20}
+                height={20}
                 className="object-contain"
-                priority
+                style={{
+                  width: "clamp(18px, 1.8vw, 20px)",
+                  height: "clamp(18px, 1.8vw, 20px)",
+                }}
               />
-            </div>
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                  style={{
+                    top: '-0.5rem',
+                    right: '-0.5rem',
+                    minWidth: 'clamp(1rem, 1.5vw, 1.25rem)',
+                    height: 'clamp(1rem, 1.5vw, 1.25rem)',
+                    fontSize: 'clamp(0.6rem, 1vw, 0.75rem)',
+                    padding: '0 0.25rem',
+                    zIndex: 2
+                  }}
+                >
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
 
-            {/* Mobile Text Logo - Responsive and optimized */}
-            <span
-              className={`${arapey.className} select-none`}
-              style={{
-                fontSize: "clamp(12px, 4vw, 16px)",
-                letterSpacing: "clamp(0.08em, 0.15vw, 0.12em)",
-                lineHeight: "1.1",
-                color: "#000",
-                fontWeight: 400,
-                whiteSpace: "nowrap",
-                textRendering: "optimizeLegibility",
-                WebkitFontSmoothing: "antialiased",
-                MozOsxFontSmoothing: "grayscale"
-              }}
-            >
-              THE LOOPY DRAGON
-            </span>
-          </Link>
+            {/* User Icon */}
+            <div className="relative">
+              {user ? (
+                <>
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    className="p-2 rounded-lg transition-colors flex items-center justify-center"
+                    style={{
+                      width: "clamp(2rem, 2.5vw, 2.5rem)",
+                      height: "clamp(2rem, 2.5vw, 2.5rem)",
+                    }}
+                  >
+                    <Image
+                      src="/user.png"
+                      alt="User"
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                      style={{
+                        width: "clamp(18px, 1.8vw, 20px)",
+                        height: "clamp(18px, 1.8vw, 20px)",
+                      }}
+                    />
+                  </button>
+                  
+                  {/* User Dropdown */}
+                  {menuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                        {user.email}
+                      </div>
+                      <Link 
+                        href="/profile" 
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" 
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Your Orders
+                      </Link>
+                      {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
+                        <Link 
+                          href="/owner" 
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" 
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          Owner Dashboard
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        type="button"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="p-2 rounded-lg transition-colors flex items-center justify-center"
+                  style={{
+                    width: "clamp(2rem, 2.5vw, 2.5rem)",
+                    height: "clamp(2rem, 2.5vw, 2.5rem)",
+                  }}
+                >
+                  <Image
+                    src="/user.png"
+                    alt="User"
+                    width={20}
+                    height={20}
+                    className="object-contain"
+                    style={{
+                      width: "clamp(18px, 1.8vw, 20px)",
+                      height: "clamp(18px, 1.8vw, 20px)",
+                    }}
+                  />
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Mobile Right Side - Cart and Hamburger Menu */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:hidden flex items-center space-x-2">
-          {/* Mobile Cart */}
-          <Link 
-            href="/cart" 
-            className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
-            style={{
-              minWidth: '2.5rem',
-              minHeight: '2.5rem'
-            }}
-          >
-            <Image
-              src="/bag.png"
-              alt="Cart"
-              width={24}
-              height={24}
-              className="object-contain"
-            />
-            {Object.keys(cart).length > 0 && (
-              <span
-                className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+        {/* TABLET LAYOUT (md to lg) */}
+        <div className="hidden md:flex lg:hidden items-center justify-between h-full px-2">
+          {/* Left: Logo + Brand - Moved further inward */}
+          <div className="flex items-center flex-shrink-0 pl-6">
+            <Link 
+              href="/" 
+              className="flex items-center"
+              id="navbar-tablet-logo-link"
+            >
+              <div
+                className="relative flex items-center justify-center mr-3"
                 style={{
-                  top: '-0.375rem',
-                  right: '-0.375rem',
-                  minWidth: '1.25rem',
-                  height: '1.25rem',
-                  fontSize: '0.75rem',
-                  padding: '0 0.25rem',
-                  zIndex: 2
+                  width: "38px",
+                  height: "38px",
                 }}
               >
-                {Object.values(cart).reduce((a: number, b: number) => a + b, 0)}
+                <Image
+                  src="/circle-logo.png"
+                  alt="The Loopy Dragon Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <span
+                className={`${arapey.className} select-none`}
+                style={{
+                  fontSize: "18px",
+                  letterSpacing: "0.12em",
+                  lineHeight: "1.1",
+                  color: "#000",
+                  fontWeight: 400,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                THE LOOPY DRAGON
               </span>
-            )}
-          </Link>
+            </Link>
+          </div>
 
-          {/* Mobile Hamburger Menu */}
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)} 
-            className="p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
-            style={{
-              minWidth: '2.5rem',
-              minHeight: '2.5rem'
-            }}
-            aria-label="Toggle menu"
-          >
-            <svg 
-              className="w-6 h-6 text-gray-700 transition-transform duration-200" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
+          {/* Right: Icons + Menu - Moved further inward */}
+          <div className="flex items-center space-x-3 pr-6">
+            {/* Wishlist Icon */}
+            <Link 
+              href="/wishlist" 
+              className="p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center"
               style={{
-                transform: menuOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+                minWidth: '2.5rem',
+                minHeight: '2.5rem'
               }}
             >
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              <Image
+                src="/heart.png"
+                alt="Wishlist"
+                width={22}
+                height={22}
+                className="object-contain"
+              />
+            </Link>
+
+            {/* Cart Icon */}
+            <Link 
+              href="/cart" 
+              className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center"
+              style={{
+                minWidth: '2.5rem',
+                minHeight: '2.5rem'
+              }}
+            >
+              <Image
+                src="/bag.png"
+                alt="Cart"
+                width={22}
+                height={22}
+                className="object-contain"
+              />
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                  style={{
+                    top: '-0.375rem',
+                    right: '-0.375rem',
+                    minWidth: '1.25rem',
+                    height: '1.25rem',
+                    fontSize: '0.75rem',
+                    padding: '0 0.25rem',
+                    zIndex: 2
+                  }}
+                >
+                  {cartItemCount}
+                </span>
               )}
-            </svg>
-          </button>
+            </Link>
+
+            {/* Hamburger Menu */}
+            <button 
+              onClick={() => setMenuOpen(!menuOpen)} 
+              className="p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center"
+              style={{
+                minWidth: '2.5rem',
+                minHeight: '2.5rem'
+              }}
+              aria-label="Toggle menu"
+            >
+              <svg 
+                className="w-6 h-6 text-gray-700 transition-transform duration-200" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                style={{
+                  transform: menuOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+                }}
+              >
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* MOBILE LAYOUT (below md) */}
+        <div className="flex md:hidden items-center justify-between h-full px-1 sm:px-2">
+          {/* Left: Logo + Brand - Moved further inward */}
+          <div className="flex items-center flex-shrink-0 pl-4 sm:pl-6">
+            <Link 
+              href="/" 
+              className="flex items-center"
+              id="navbar-mobile-logo-link"
+            >
+              <div
+                className="relative flex items-center justify-center mr-2.5 sm:mr-3"
+                style={{
+                  width: "clamp(32px, 8vw, 38px)",
+                  height: "clamp(32px, 8vw, 38px)",
+                }}
+              >
+                <Image
+                  src="/circle-logo.png"
+                  alt="The Loopy Dragon Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <span
+                className={`${arapey.className} select-none`}
+                style={{
+                  fontSize: "clamp(13px, 4.5vw, 18px)",
+                  letterSpacing: "clamp(0.08em, 0.15vw, 0.12em)",
+                  lineHeight: "1.1",
+                  color: "#000",
+                  fontWeight: 400,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                THE LOOPY DRAGON
+              </span>
+            </Link>
+          </div>
+
+          {/* Right: Cart + Menu - Moved further inward */}
+          <div className="flex items-center space-x-1 sm:space-x-2 pr-4 sm:pr-6">
+            {/* Mobile Cart */}
+            <Link 
+              href="/cart" 
+              className="relative p-2 sm:p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center touch-manipulation active:scale-95"
+              style={{
+                minWidth: '2.25rem',
+                minHeight: '2.25rem'
+              }}
+            >
+              <Image
+                src="/bag.png"
+                alt="Cart"
+                width={22}
+                height={22}
+                className="object-contain"
+                style={{
+                  width: "clamp(20px, 5vw, 24px)",
+                  height: "clamp(20px, 5vw, 24px)"
+                }}
+              />
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white"
+                  style={{
+                    top: '-0.25rem',
+                    right: '-0.25rem',
+                    minWidth: '1.125rem',
+                    height: '1.125rem',
+                    fontSize: '0.7rem',
+                    padding: '0 0.2rem',
+                    zIndex: 2
+                  }}
+                >
+                  {cartItemCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Mobile Hamburger Menu */}
+            <button 
+              onClick={() => setMenuOpen(!menuOpen)} 
+              className="p-2 sm:p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 touch-manipulation active:scale-95 flex items-center justify-center"
+              style={{
+                minWidth: '2.25rem',
+                minHeight: '2.25rem'
+              }}
+              aria-label="Toggle menu"
+            >
+              <svg 
+                className="text-gray-700 transition-transform duration-200" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                style={{
+                  width: "clamp(22px, 5vw, 26px)",
+                  height: "clamp(22px, 5vw, 26px)",
+                  transform: menuOpen ? 'rotate(90deg)' : 'rotate(0deg)'
+                }}
+              >
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile/Tablet Menu Dropdown */}
         {menuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 lg:hidden z-50 animate-fadeIn">
             <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
@@ -547,10 +596,12 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
       <style jsx global>{`
         body {
           background-color: #F5F9FF !important;
         }
+        
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -602,51 +653,98 @@ export default function Navbar() {
           }
         }
 
-        /* Mobile-specific optimizations */
-        @media (max-width: 1023px) {
-          /* Ensure text doesn't wrap on smaller screens */
-          .whitespace-nowrap {
-            white-space: nowrap;
+        /* iPad specific optimizations */
+        @media (min-width: 768px) and (max-width: 1024px) {
+          /* iPad Portrait and Landscape */
+          .hidden.md\\:flex.lg\\:hidden {
+            padding: 0 1rem;
           }
-          
-          /* Better touch targets */
-          button, a {
-            min-height: 44px;
-            min-width: 44px;
-          }
-          
-          /* Prevent text selection on mobile interactive elements */
-          button, a {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
+        }
 
-          /* Mobile logo text optimization */
-          .mobile-logo-text {
-            transform: translateZ(0);
-            backface-visibility: hidden;
+        /* iPad Pro specific optimizations */
+        @media (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+          /* iPad Pro Landscape - ensure desktop layout works properly */
+          .hidden.lg\\:grid {
+            padding: 0 2rem;
+          }
+        }
+
+        /* Mobile landscape optimizations */
+        @media (max-height: 500px) and (orientation: landscape) {
+          /* Mobile landscape - reduce padding */
+          .flex.md\\:hidden {
+            padding: 0 0.75rem;
+          }
+          
+          .h-20 {
+            height: 4rem !important;
           }
         }
 
         /* Very small mobile devices */
         @media (max-width: 360px) {
-          /* For very small screens, reduce logo size further */
-          .mobile-logo-container {
-            transform: scale(0.9);
+          /* Ensure content fits on very small screens */
+          .flex.items-center:first-child {
+            transform: scale(0.95);
             transform-origin: left center;
           }
         }
 
-        /* Larger mobile devices and small tablets */
-        @media (min-width: 480px) and (max-width: 1023px) {
-          /* For larger mobile screens, allow slightly bigger text */
-          .mobile-logo-text {
-            font-size: clamp(14px, 3.5vw, 18px) !important;
+        /* Large mobile devices and small tablets */
+        @media (min-width: 480px) and (max-width: 767px) {
+          /* Allow slightly bigger elements on larger mobile screens */
+          .flex.md\\:hidden .space-x-1 {
+            gap: 0.5rem;
+          }
+        }
+
+        /* Desktop optimizations */
+        @media (min-width: 1280px) {
+          /* Ensure proper spacing on large desktops */
+          .hidden.lg\\:grid .space-x-6 {
+            gap: 2rem;
+          }
+        }
+
+        /* Ultra-wide desktop optimizations */
+        @media (min-width: 1920px) {
+          /* Prevent elements from becoming too large on big screens */
+          .max-w-screen-2xl {
+            padding-left: 3rem;
+            padding-right: 3rem;
+          }
+        }
+
+        /* Orientation change handling */
+        @media (orientation: portrait) {
+          /* Portrait specific adjustments */
+          .md\\:flex.lg\\:hidden .flex.items-center.space-x-3 {
+            gap: 0.75rem;
+          }
+        }
+
+        @media (orientation: landscape) {
+          /* Landscape specific adjustments */
+          .md\\:flex.lg\\:hidden .flex.items-center.space-x-3 {
+            gap: 1rem;
+          }
+        }
+
+        /* Additional adjustments for better spacing */
+        @media (min-width: 1024px) and (max-width: 1279px) {
+          /* Adjust for smaller desktop screens */
+          .pl-8 {
+            padding-left: 1.5rem;
+          }
+        }
+
+        @media (min-width: 1280px) {
+          /* Larger desktop screens */
+          .xl\\:pl-12 {
+            padding-left: 2rem;
           }
         }
       `}</style>
     </nav>
   );
-}
+} 
