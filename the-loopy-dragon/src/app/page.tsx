@@ -112,8 +112,8 @@ export default function Home() {
         {/* Features Section */}
         <section className="w-full py-16 bg-white">
           <div className="relative w-full">
-            {/* Feature Items Container */}
-            <div className="flex items-center justify-between w-full px-4">
+            {/* Desktop Layout - Hidden on small screens */}
+            <div className="hidden sm:flex items-center justify-between w-full px-4">
               {/* Custom Orders */}
               <div 
                 className="flex flex-col items-center"
@@ -152,6 +152,7 @@ export default function Home() {
                   minHeight: '40px'
                 }}
               ></div>
+              
               {/* Free Delivery */}
               <div 
                 className="flex flex-col items-center"
@@ -190,6 +191,7 @@ export default function Home() {
                   minHeight: '40px'
                 }}
               ></div>
+              
               {/* Wide Product Range */}
               <div 
                 className="flex flex-col items-center"
@@ -228,6 +230,7 @@ export default function Home() {
                   minHeight: '40px'
                 }}
               ></div>
+              
               {/* 100% Handmade */}
               <div 
                 className="flex flex-col items-center"
@@ -260,82 +263,92 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mobile Layout - Stack vertically on small screens */}
-          <div className="block sm:hidden px-4 space-y-8">
-            {/* Custom Orders */}
-            <div className="flex flex-col items-center">
-              <img 
-                src="/custom-orders.png" 
-                alt="Custom Orders Available"
-                className="w-12 h-12 mb-3"
-              />
-              <p 
-                className="text-black text-center text-sm"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 400,
-                  letterSpacing: '0.05em'
-                }}
-              >
-                Custom Orders Available
-              </p>
-            </div>
+          {/* Mobile Layout - Beautiful grid layout for small screens */}
+          <div className="block sm:hidden px-6">
+            <div className="grid grid-cols-2 gap-8 max-w-sm mx-auto">
+              {/* Custom Orders */}
+              <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <img 
+                    src="/custom-orders.png" 
+                    alt="Custom Orders Available"
+                    className="w-8 h-8"
+                  />
+                </div>
+                <p 
+                  className="text-gray-800 text-center text-xs leading-relaxed"
+                  style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em'
+                  }}
+                >
+                  Custom Orders Available
+                </p>
+              </div>
 
-            {/* Free Delivery */}
-            <div className="flex flex-col items-center">
-              <img 
-                src="/delivery.png" 
-                alt="Free Delivery above ₹1000"
-                className="w-14 h-14 mb-3"
-              />
-              <p 
-                className="text-black text-center text-sm"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 400,
-                  letterSpacing: '0.05em'
-                }}
-              >
-                Free Delivery above ₹1000
-              </p>
-            </div>
+              {/* Free Delivery */}
+              <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <img 
+                    src="/delivery.png" 
+                    alt="Free Delivery above ₹1000"
+                    className="w-9 h-9"
+                  />
+                </div>
+                <p 
+                  className="text-gray-800 text-center text-xs leading-relaxed"
+                  style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em'
+                  }}
+                >
+                  Free Delivery above ₹1000
+                </p>
+              </div>
 
-            {/* Wide Product Range */}
-            <div className="flex flex-col items-center">
-              <img 
-                src="/product-range.png" 
-                alt="Wide product range"
-                className="w-11 h-11 mb-3"
-              />
-              <p 
-                className="text-black text-center text-sm"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 400,
-                  letterSpacing: '0.05em'
-                }}
-              >
-                Wide product range
-              </p>
-            </div>
+              {/* Wide Product Range */}
+              <div className="flex flex-col items-center bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <img 
+                    src="/product-range.png" 
+                    alt="Wide product range"
+                    className="w-8 h-8"
+                  />
+                </div>
+                <p 
+                  className="text-gray-800 text-center text-xs leading-relaxed"
+                  style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em'
+                  }}
+                >
+                  Wide product range
+                </p>
+              </div>
 
-            {/* 100% Handmade */}
-            <div className="flex flex-col items-center">
-              <img 
-                src="/handmade.png" 
-                alt="100% Handmade"
-                className="w-13 h-13 mb-3"
-              />
-              <p 
-                className="text-black text-center text-sm"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 400,
-                  letterSpacing: '0.05em'
-                }}
-              >
-                100% Handmade
-              </p>
+              {/* 100% Handmade */}
+              <div className="flex flex-col items-center bg-gradient-to-br from-orange-50 to-pink-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <img 
+                    src="/handmade.png" 
+                    alt="100% Handmade"
+                    className="w-8 h-8"
+                  />
+                </div>
+                <p 
+                  className="text-gray-800 text-center text-xs leading-relaxed"
+                  style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontWeight: 500,
+                    letterSpacing: '0.02em'
+                  }}
+                >
+                  100% Handmade
+                </p>
+              </div>
             </div>
           </div>
         </section>
