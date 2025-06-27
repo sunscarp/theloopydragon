@@ -111,33 +111,35 @@ export default function Home() {
         <div className="h-16 sm:h-20"></div>
         
         {/* Hero Section */}
-        <section className="relative w-full overflow-hidden">
+        <section className="relative w-full overflow-hidden -mx-4 sm:mx-0">
           {/* Background Image - Scaled to proper aspect ratio */}
           <div 
             className="w-full bg-cover bg-center bg-no-repeat"
             style={{ 
               backgroundImage: 'url(/flower-image.png)',
               height: 'clamp(400px, 32.5vw, 624px)', // Maintains 1920:624 aspect ratio
-              minHeight: '400px'
+              minHeight: '400px',
+              width: '100vw', // Force full viewport width
+              marginLeft: 'calc(-50vw + 50%)', // Center while extending full width
             }}
           >
             {/* Content Container - Positioned absolutely for precise placement */}
             <div className="relative h-full flex items-center">
               <div 
-                className="flex flex-col justify-center"
+                className="flex flex-col justify-center px-4 sm:px-0"
                 style={{
                   marginLeft: 'clamp(20px, 9.74vw, 187px)', // 187px at 1920px width, responsive
-                  width: 'clamp(300px, 31.875vw, 612px)', // 612px at 1920px width, responsive
+                  width: 'clamp(280px, 31.875vw, 612px)', // Slightly smaller on mobile
                   height: 'clamp(350px, 22.24vw, 427px)' // 427px at 1920px width, responsive
                 }}
               >
                 {/* Main Heading */}
                 <h1 
-                  className="text-black mb-6 leading-none tracking-wider"
+                  className="text-black mb-4 sm:mb-6 leading-none tracking-wider"
                   style={{
                     fontFamily: 'Montserrat, sans-serif',
                     fontWeight: 500,
-                    fontSize: 'clamp(28px, 3.125vw, 60px)', // 60px at 1920px width
+                    fontSize: 'clamp(24px, 3.125vw, 60px)', // Slightly smaller starting size for mobile
                     letterSpacing: '0.05em'
                   }}
                 >
@@ -146,11 +148,11 @@ export default function Home() {
                 
                 {/* Subtitle */}
                 <p 
-                  className="text-black mb-8"
+                  className="text-black mb-6 sm:mb-8"
                   style={{
                     fontFamily: 'Montserrat, sans-serif',
                     fontWeight: 500,
-                    fontSize: 'clamp(16px, 1.25vw, 24px)', // 24px at 1920px width
+                    fontSize: 'clamp(14px, 1.25vw, 24px)', // Slightly smaller starting size for mobile
                     lineHeight: '1.875', // 45px / 24px = 1.875
                     letterSpacing: '0.05em'
                   }}
@@ -164,11 +166,11 @@ export default function Home() {
                   href="/shop"
                   className="inline-flex items-center justify-center bg-white text-black hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   style={{
-                    width: 'clamp(240px, 14.9vw, 286px)', // 286px at 1920px width
-                    height: 'clamp(70px, 4.69vw, 90px)', // 90px at 1920px width
+                    width: 'clamp(200px, 14.9vw, 286px)', // Smaller starting width for mobile
+                    height: 'clamp(60px, 4.69vw, 90px)', // Smaller starting height for mobile
                     fontFamily: 'Montserrat, sans-serif',
                     fontWeight: 600,
-                    fontSize: 'clamp(16px, 1.04vw, 20px)', // 20px at 1920px width
+                    fontSize: 'clamp(14px, 1.04vw, 20px)', // Smaller starting size for mobile
                     letterSpacing: '0.05em',
                     borderRadius: 0 // Sharp corners
                   }}
@@ -181,7 +183,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="w-full py-16 bg-white">
+        <section className="w-full py-3.5 bg-white">
           <div className="relative w-full">
             {/* Desktop Layout - Hidden on small screens */}
             <div className="hidden sm:flex items-center justify-between w-full px-4">
@@ -219,8 +221,8 @@ export default function Home() {
               <div 
                 className="w-px bg-gray-300"
                 style={{
-                  height: 'clamp(40px, 4.48vw, 86px)', // 86px at 1920px width
-                  minHeight: '40px'
+                  height: 'clamp(60px, 4vw, 90px)', // Reduced height to match content better
+                  minHeight: '60px'
                 }}
               ></div>
               
@@ -258,8 +260,8 @@ export default function Home() {
               <div 
                 className="w-px bg-gray-300"
                 style={{
-                  height: 'clamp(40px, 4.48vw, 86px)', // 86px at 1920px width
-                  minHeight: '40px'
+                  height: 'clamp(60px, 4vw, 90px)', // Reduced height to match content better
+                  minHeight: '60px'
                 }}
               ></div>
               
@@ -297,8 +299,8 @@ export default function Home() {
               <div 
                 className="w-px bg-gray-300"
                 style={{
-                  height: 'clamp(40px, 4.48vw, 86px)', // 86px at 1920px width
-                  minHeight: '40px'
+                  height: 'clamp(60px, 4vw, 90px)', // Reduced height to match content better
+                  minHeight: '60px'
                 }}
               ></div>
               
@@ -426,14 +428,15 @@ export default function Home() {
 
         {/* Top Picks Section */}
         <section
-          className="w-full py-16"
+          className="w-full py-12 md:py-16 lg:py-20 xl:py-24" // Responsive vertical padding
           style={{
             backgroundImage: "url('/yes.png')",
             backgroundSize: "cover",
             backgroundPosition: "center"
           }}
         >
-          <div className="max-w-7xl mx-auto px-4">
+          {/* Increased horizontal padding on container */}
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-10 lg:px-12">
             {/* Section Header */}
             <div className="text-center mb-12">
               <h2 
@@ -441,7 +444,7 @@ export default function Home() {
                 style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontWeight: 600,
-                  fontSize: 'clamp(28px, 3.75vw, 36px)', // 36px at 1920px width
+                  fontSize: 'clamp(28px, 3.75vw, 36px)',
                   lineHeight: '100%',
                   letterSpacing: '0%'
                 }}
@@ -453,7 +456,7 @@ export default function Home() {
                 style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontWeight: 400,
-                  fontSize: 'clamp(18px, 2.5vw, 24px)', // 24px at 1920px width
+                  fontSize: 'clamp(18px, 2.5vw, 24px)',
                   lineHeight: '100%',
                   letterSpacing: '0%'
                 }}
@@ -462,25 +465,23 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {/* Products Grid - Added responsive horizontal margins */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 mx-2 sm:mx-4 md:mx-0">
               {topPicksProducts.map((product) => (
-                <Link
-                  key={product.Product}
-                  href={`/product/${encodeURIComponent(product.Product)}`}
-                  className="flex flex-col items-start group"
-                  style={{ textDecoration: 'none', background: 'transparent', border: 'none', boxShadow: 'none' }}
-                >
-                  {/* Product Image */}
-                  <div className="aspect-square w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div key={product.Product} className="flex flex-col items-start">
+                  {/* Product Image - Only this part is clickable and animated */}
+                  <Link
+                    href={`/product/${encodeURIComponent(product.Product)}`}
+                    className="aspect-square w-full bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    style={{ textDecoration: 'none', background: 'transparent', border: 'none' }}
+                  >
                     {product.ImageUrl1 ? (
                       <img 
                         src={product.ImageUrl1}
                         alt={product.Product}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          // Fallback placeholder if image doesn't exist
-                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4zNDMgNzAuNzY2IDEwMC4wODkgNzYuMzE4SzEwMC4wODkgMTI4LjMxOEM5NS4zNDMgMTMzLjg3IDEwOC4yODQgMTM1IDEwMCAxMzVTMTA0LjY1NyAxMzMuODcgOTkuOTExIDEyOC4zMThWNzYuMzE4Qzk0LjY1NyA3MC43NjYgOTEuNzE2IDcwIDEwMCA3MFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTEyMCA9MEM4Ni44NjI5IDkwIDYwIDExNi44NjMgNjAgMTUwUzg2Ljg2MjkgMjEwIDEyMCAyMTBTMTgwIDE4My4xMzcgMTgwIDE1MFMxNTMuMTM3IDkwIDEyMCA9MFoiIGZpbGw9IiNFNUU3RUIiLz4KPC9zdmc+';
+                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4zNDMgNzAuNzY2IDEwMC4wODkgNzYuMzE4SzEwMC4wODkgMTI4LjMxOEM5NS4zNDMgMTMzLjg3IDEwOC4yODQgMTM1IDEwMCAxMzVTMTA0LjY1NyAxMzMuODcgOTkuOTExIDEyOC4zMThWNzYuMzE4Qzk0LjY1NyA7MC43NjYgOTEuNzE2IDcwIDEwMCA3MFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTEyMCA5MEM4Ni44NjI5IDkwIDYwIDExNi44NjMgNjAgMTUwUzg2Ljg2MjkgMjEwIDEyMCAyMTBTMTgwIDE4My4xMzcgMTgwIDE1MFMxNTMuMTM3IDkwIDEyMCA5MFoiIGZpbGw9IiNFNUU3RUIiLz4KPC9zdmc+';
                         }}
                       />
                     ) : (
@@ -488,8 +489,8 @@ export default function Home() {
                         <span className="text-4xl opacity-30">🧶</span>
                       </div>
                     )}
-                  </div>
-                  {/* Product Info - plain text, left aligned */}
+                  </Link>
+                  {/* Product Info - Static, no animation */}
                   <div className="mt-3 text-left w-full">
                     <h3 
                       className="text-black mb-1"
@@ -497,10 +498,7 @@ export default function Home() {
                         fontFamily: 'Montserrat, sans-serif',
                         fontWeight: 500,
                         fontSize: 'clamp(14px, 1.2vw, 18px)',
-                        lineHeight: '1.2',
-                        background: 'transparent',
-                        border: 'none',
-                        boxShadow: 'none'
+                        lineHeight: '1.2'
                       }}
                     >
                       {product.Product}
@@ -511,16 +509,13 @@ export default function Home() {
                         fontFamily: 'Montserrat, sans-serif',
                         fontWeight: 600,
                         fontSize: 'clamp(16px, 1.4vw, 20px)',
-                        color: '#000',
-                        background: 'transparent',
-                        border: 'none',
-                        boxShadow: 'none'
+                        color: '#000'
                       }}
                     >
                       ₹{product.Price}
                     </p>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
 
@@ -623,208 +618,183 @@ export default function Home() {
         </section>
 
         {/* Why Choose Us Section */}
-          <section className="w-full py-16" style={{ backgroundColor: '#F7F0FE' }}>
-          <div className="max-w-7xl mx-auto px-4">
-            <h2 
-              className="text-black text-center mb-12"
-              style={{
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 600,
-                fontSize: '36px',
-                lineHeight: '100%',
-                letterSpacing: '0%'
-              }}
-            >
-              Why Choose Us?
-            </h2>
-            
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Feature 1 */}
-              <div className="text-left px-4">
-                <h3 
-                  className="text-black mb-2"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500,
-                    fontSize: 'clamp(18px, 1.5vw, 24px)',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap',
-                    overflow: 'visible'
-                  }}
-                >
-                  High-Quality Materials
-                </h3>
-                <p 
-                  className="text-black text-left"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 400,
-                    fontSize: 'clamp(12px, 1vw, 16px)',
-                    lineHeight: '1.3',
-                    height: '2.6em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '0 auto',
-                    maxWidth: '260px'
-                  }}
-                >
-                  Only the softest, coziest yarns make the cut.
-                </p>
-              </div>
-              
-              {/* Feature 2 */}
-              <div className="text-left px-4">
-                <h3 
-                  className="text-black mb-2"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500,
-                    fontSize: 'clamp(18px, 1.5vw, 24px)',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap',
-                    overflow: 'visible'
-                  }}
-                >
-                  Handmade with Care
-                </h3>
-                <p 
-                  className="text-black text-left mt-4"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 400,
-                    fontSize: 'clamp(12px, 1vw, 16px)',
-                    lineHeight: '1.3',
-                    height: '2.6em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '0 auto',
-                    maxWidth: '260px'
-                  }}
-                >
-                  No mass production - just real hands, real skill, real heart.
-                </p>
-              </div>
-              
-              {/* Feature 3 */}
-              <div className="text-left px-4">
-                <h3 
-                  className="text-black mb-2"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500,
-                    fontSize: 'clamp(18px, 1.5vw, 24px)',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap',
-                    overflow: 'visible'
-                  }}
-                >
-                  Uniquely Designed
-                </h3>
-                <p 
-                  className="text-black text-left mt-4"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 400,
-                    fontSize: 'clamp(12px, 1vw, 16px)',
-                    lineHeight: '1.3',
-                    height: '2.6em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '0 auto',
-                    maxWidth: '260px'
-                  }}
-                >
-                  Every product is crafted with detail and creativity.
-                </p>
-              </div>
-              
-              {/* Feature 4 */}
-              <div className="text-left px-4">
-                <h3 
-                  className="text-black mb-2"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500,
-                    fontSize: 'clamp(18px, 1.5vw, 24px)',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap',
-                    overflow: 'visible'
-                  }}
-                >
-                  Long Lasting
-                </h3>
-                <p 
-                  className="text-black text-left mt-4"
-                  style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 400,
-                    fontSize: 'clamp(12px, 1vw, 16px)',
-                    lineHeight: '1.3',
-                    height: '2.6em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    margin: '0 auto',
-                    maxWidth: '260px'
-                  }}
-                >
-                  Built to last and made to love, over and over again.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+<section className="w-full py-8 sm:py-12 md:py-16 lg:py-20" style={{ backgroundColor: '#F7F0FE' }}>
+  <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
+    <h2 
+      className="text-black text-center mb-8 sm:mb-10 md:mb-12 lg:mb-16"
+      style={{
+        fontFamily: 'Montserrat, sans-serif',
+        fontWeight: 600,
+        fontSize: 'clamp(24px, 4vw, 36px)',
+        lineHeight: '100%',
+        letterSpacing: '0%'
+      }}
+    >
+      Why Choose Us?
+    </h2>
+    
+    {/* Features Grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 md:gap-10 lg:gap-12">
+      {/* Feature 1 */}
+      <div className="text-left px-2 sm:px-4">
+        <h3 
+          className="text-black mb-3 sm:mb-4"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 500,
+            fontSize: 'clamp(18px, 2.5vw, 24px)',
+            lineHeight: '1.2'
+          }}
+        >
+          High-Quality Materials
+        </h3>
+        <p 
+          className="text-black text-left"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 400,
+            fontSize: 'clamp(14px, 1.8vw, 16px)',
+            lineHeight: '1.4',
+            maxWidth: '280px'
+          }}
+        >
+          Only the softest, coziest yarns make the cut.
+        </p>
+      </div>
+      
+      {/* Feature 2 */}
+      <div className="text-left px-2 sm:px-4">
+        <h3 
+          className="text-black mb-3 sm:mb-4"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 500,
+            fontSize: 'clamp(18px, 2.5vw, 24px)',
+            lineHeight: '1.2'
+          }}
+        >
+          Handmade with Care
+        </h3>
+        <p 
+          className="text-black text-left"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 400,
+            fontSize: 'clamp(14px, 1.8vw, 16px)',
+            lineHeight: '1.4',
+            maxWidth: '280px'
+          }}
+        >
+          No mass production - just real hands, real skill, real heart.
+        </p>
+      </div>
+      
+      {/* Feature 3 */}
+      <div className="text-left px-2 sm:px-4">
+        <h3 
+          className="text-black mb-3 sm:mb-4"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 500,
+            fontSize: 'clamp(18px, 2.5vw, 24px)',
+            lineHeight: '1.2'
+          }}
+        >
+          Uniquely Designed
+        </h3>
+        <p 
+          className="text-black text-left"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 400,
+            fontSize: 'clamp(14px, 1.8vw, 16px)',
+            lineHeight: '1.4',
+            maxWidth: '280px'
+          }}
+        >
+          Every product is crafted with detail and creativity.
+        </p>
+      </div>
+      
+      {/* Feature 4 */}
+      <div className="text-left px-2 sm:px-4">
+        <h3 
+          className="text-black mb-3 sm:mb-4"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 500,
+            fontSize: 'clamp(18px, 2.5vw, 24px)',
+            lineHeight: '1.2'
+          }}
+        >
+          Long Lasting
+        </h3>
+        <p 
+          className="text-black text-left"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 400,
+            fontSize: 'clamp(14px, 1.8vw, 16px)',
+            lineHeight: '1.4',
+            maxWidth: '280px'
+          }}
+        >
+          Built to last and made to love, over and over again.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* Instagram Section */}
         <section className="w-full py-16" style={{ backgroundColor: '#EAD4FF' }}>
-          <div className="max-w-7xl mx-auto px-4">
-            {/* Section Header */}
-            <div className="text-center mb-8">
-              <h2 
-                className="text-black mb-6"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '36px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%',
-                  textTransform: 'capitalize'
-                }}
-              >
-                Follow Us on Instagram
-              </h2>
-              <p 
-                className="text-black mx-auto max-w-2xl"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontWeight: 400,
-                  fontSize: 'clamp(14px, 4vw, 24px)', // Responsive scaling
-                  lineHeight: '1.3', // Better readability
-                  letterSpacing: '0%'
-                }}
-              >
-                Get behind-the-scenes peeks, cozy crochet inspo, and first dibs on new drops.
-              </p>
-            </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Section Header */}
+    <div className="text-center mb-12 md:mb-16">
+      <h2 
+        className="text-black mb-6"
+        style={{
+          fontFamily: 'Montserrat, sans-serif',
+          fontWeight: 600,
+          fontSize: '36px',
+          lineHeight: '100%',
+          letterSpacing: '0%',
+          textTransform: 'capitalize'
+        }}
+      >
+        Follow Us on Instagram
+      </h2>
+      <p 
+        className="text-black mx-auto max-w-2xl px-4"
+        style={{
+          fontFamily: 'Montserrat, sans-serif',
+          fontWeight: 400,
+          fontSize: 'clamp(14px, 4vw, 24px)',
+          lineHeight: '1.3',
+          letterSpacing: '0%'
+        }}
+      >
+        Get behind-the-scenes peeks, cozy crochet inspo, and first dibs on new drops.
+      </p>
+    </div>
 
-            {/* Instagram Image - Responsive */}
-            <div className="w-full overflow-hidden rounded-lg shadow-lg">
-              <div 
-                className="w-full bg-cover bg-center"
-                style={{
-                  // Maintain aspect ratio of 1542:386 (approx 4:1)
-                  paddingBottom: '25%', // 386/1542 ≈ 25%
-                  backgroundImage: 'url(/hero_insta.png)',
-                  minHeight: '200px' // Minimum height for mobile
-                }}
-              >
-                {/* This could be replaced with an actual Instagram embed or image */}
-              </div>
-            </div>
-
-            
-          </div>
-        </section>
+    {/* Instagram Image - Responsive with padding */}
+    <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+      <div className="w-full overflow-hidden rounded-lg shadow-lg">
+        <div 
+          className="w-full bg-cover bg-center"
+          style={{
+            paddingBottom: '25%',
+            backgroundImage: 'url(/hero_insta.png)',
+            minHeight: '200px'
+          }}
+        >
+          {/* Instagram embed or image content */}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* Frequently Asked Questions Section */}
 <section className="w-full py-8 bg-white">

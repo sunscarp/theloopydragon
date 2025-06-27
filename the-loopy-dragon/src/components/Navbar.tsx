@@ -42,13 +42,13 @@ export default function Navbar() {
       ref={navRef}
       className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100"
       style={{ 
-        background: "F5F9FF",  // Changed from #F5F9FF to red
-        boxShadow: "0 0 0 0 #F5F9FF"  // Updated shadow color to match
+        background: "#F5F9FF",
+        boxShadow: "0 0 0 0 #F5F9FF"
       }}
     >
       <div 
         className="h-20 max-w-screen-2xl mx-auto w-full px-4 sm:px-6 lg:px-8" 
-        style={{ background: "#F5F9FF" }}  // Changed div background to match
+        style={{ background: "#F5F9FF" }}
       >
         {/* DESKTOP LAYOUT (lg and above) */}
         <div className="hidden lg:grid items-center h-full gap-4" style={{ gridTemplateColumns: '1fr 3fr 0.8fr' }}>
@@ -100,8 +100,8 @@ export default function Navbar() {
               {[
                 { href: "/", label: "Home" },
                 { href: "/shop", label: "Shop" },
-                { href: "/collections", label: "Collections" },
                 { href: "/custom-order", label: "Customise" },
+                { href: "/profile", label: "Your Orders" },
                 { href: "/contact", label: "Contact us" }
               ].map((item) => (
                 <Link
@@ -123,28 +123,6 @@ export default function Navbar() {
 
           {/* Right Section: Icons */}
           <div className="flex items-center justify-start space-x-2 pl-2">
-            {/* Wishlist Icon */}
-            <Link 
-              href="/wishlist" 
-              className="p-2 rounded-lg transition-colors flex items-center justify-center"
-              style={{
-                width: "clamp(2rem, 2.5vw, 2.5rem)",
-                height: "clamp(2rem, 2.5vw, 2.5rem)"
-              }}
-            >
-              <Image
-                src="/heart.png"
-                alt="Wishlist"
-                width={20}
-                height={20}
-                className="object-contain"
-                style={{
-                  width: "clamp(18px, 1.8vw, 20px)",
-                  height: "clamp(18px, 1.8vw, 20px)",
-                }}
-              />
-            </Link>
-
             {/* Cart Icon */}
             <Link 
               href="/cart" 
@@ -210,8 +188,8 @@ export default function Navbar() {
                   
                   {/* User Dropdown */}
                   {menuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100 truncate">
                         {user.email}
                       </div>
                       <Link 
@@ -308,24 +286,6 @@ export default function Navbar() {
 
           {/* Right: Icons + Menu - Moved further inward */}
           <div className="flex items-center space-x-3 pr-6">
-            {/* Wishlist Icon */}
-            <Link 
-              href="/wishlist" 
-              className="p-2.5 hover:bg-gray-50 rounded-xl transition-all duration-150 flex items-center justify-center"
-              style={{
-                minWidth: '2.5rem',
-                minHeight: '2.5rem'
-              }}
-            >
-              <Image
-                src="/heart.png"
-                alt="Wishlist"
-                width={22}
-                height={22}
-                className="object-contain"
-              />
-            </Link>
-
             {/* Cart Icon */}
             <Link 
               href="/cart" 
@@ -506,13 +466,15 @@ export default function Navbar() {
             <div className="max-h-[calc(100vh-5rem)] overflow-y-auto">
               <div className="px-4 py-6 space-y-1">
                 <div className="space-y-2">
+                  {/*
+                    Removed wishlist from mobile/tablet menu
+                  */}
                   {[
                     { href: "/", label: "Home" },
                     { href: "/shop", label: "Shop" },
-                    { href: "/collections", label: "Collections" },
                     { href: "/custom-order", label: "Customise" },
-                    { href: "/contact", label: "Contact us" },
-                    { href: "/wishlist", label: "Wishlist" }
+                    { href: "/profile", label: "Your Orders" },
+                    { href: "/contact", label: "Contact us" }
                   ].map((item) => (
                     <Link 
                       key={item.href}
@@ -527,20 +489,6 @@ export default function Navbar() {
                       {item.label}
                     </Link>
                   ))}
-                  
-                  {user && (
-                    <Link 
-                      href="/profile" 
-                      className={`${montserrat.className} block py-3 px-4 rounded-xl transition-all duration-150 font-medium text-base touch-manipulation active:scale-[0.98] ${
-                        pathname === '/profile' 
-                          ? 'bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 font-semibold border border-purple-200' 
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      Your Orders
-                    </Link>
-                  )}
                   
                   {user?.email && ["sanskarisamazing@gmail.com", "snp480@gmail.com", "ssp3201@gmail.com", "f20231193@hyderabad.bits-pilani.ac.in"].includes(user.email) && (
                     <Link 
@@ -566,9 +514,9 @@ export default function Navbar() {
                             {user.email?.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900">Welcome back!</p>
-                          <p className="text-xs text-gray-600 truncate max-w-[12.5rem]">{user.email}</p>
+                          <p className="text-xs text-gray-600 truncate">{user.email}</p>
                         </div>
                       </div>
                     </div>

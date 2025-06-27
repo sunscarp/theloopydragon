@@ -11,12 +11,12 @@ export default function Footer() {
         }}
       >
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 text-black">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 text-black justify-items-center">
             
             {/* Left Column - Logo and Contact */}
-            <div className="space-y-4 sm:space-y-5 lg:pr-4 col-span-1 sm:col-span-2 lg:col-span-1">
+            <div className="space-y-4 sm:space-y-5 text-left w-full max-w-xs">
               {/* Logo */}
-              <div className="flex items-center justify-center sm:justify-start">
+              <div className="flex items-center justify-start">
                 <img 
                   src="circle-logo.png" 
                   alt="The Loopy Dragon Logo" 
@@ -30,9 +30,9 @@ export default function Footer() {
               </div>
               
               {/* Contact Information */}
-              <div className="space-y-3 text-center sm:text-left">
+              <div className="space-y-3 text-left">
                 {/* Location */}
-                <div className="flex items-start space-x-3 group justify-center sm:justify-start">
+                <div className="flex items-start space-x-3 group justify-start">
                   <div className="mt-1 flex-shrink-0">
                     <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-black/80 group-hover:text-black transition-colors duration-200" />
                   </div>
@@ -50,7 +50,7 @@ export default function Footer() {
                 </div>
                 
                 {/* Email */}
-                <div className="flex items-start space-x-3 group justify-center sm:justify-start">
+                <div className="flex items-start space-x-3 group justify-start">
                   <div className="mt-1 flex-shrink-0">
                     <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-black/80 group-hover:text-black transition-colors duration-200" />
                   </div>
@@ -71,16 +71,15 @@ export default function Footer() {
             </div>
 
             {/* Explore Column */}
-            <div className="space-y-4 sm:space-y-5 text-center sm:text-left">
+            <div className="space-y-4 sm:space-y-5 text-left w-full max-w-xs">
               <h3 
-                className="font-semibold tracking-wider relative text-black"
+                className="font-semibold tracking-wider text-black"
                 style={{
                   fontSize: '16px',
                   letterSpacing: '1px'
                 }}
               >
                 EXPLORE
-                <div className="absolute -bottom-2 left-1/2 sm:left-0 transform -translate-x-1/2 sm:translate-x-0 w-8 h-0.5 bg-black/60"></div>
               </h3>
               <nav className="space-y-2 sm:space-y-3">
                 <div>
@@ -152,16 +151,15 @@ export default function Footer() {
             </div>
 
             {/* Know More Column */}
-            <div className="space-y-4 sm:space-y-5 text-center sm:text-left">
+            <div className="space-y-4 sm:space-y-5 text-left w-full max-w-xs">
               <h3 
-                className="font-semibold tracking-wider relative text-black"
+                className="font-semibold tracking-wider text-black"
                 style={{
                   fontSize: '16px',
                   letterSpacing: '1px'
                 }}
               >
                 KNOW MORE
-                <div className="absolute -bottom-2 left-1/2 sm:left-0 transform -translate-x-1/2 sm:translate-x-0 w-8 h-0.5 bg-black/60"></div>
               </h3>
               <nav className="space-y-2 sm:space-y-3">
                 <div>
@@ -233,18 +231,17 @@ export default function Footer() {
             </div>
 
             {/* Follow Us Column */}
-            <div className="space-y-4 sm:space-y-5 text-center sm:text-left">
+            <div className="space-y-4 sm:space-y-5 text-left w-full max-w-xs">
               <h3 
-                className="font-semibold tracking-wider relative text-black"
+                className="font-semibold tracking-wider text-black"
                 style={{
                   fontSize: '16px',
                   letterSpacing: '1px'
                 }}
               >
                 FOLLOW US
-                <div className="absolute -bottom-2 left-1/2 sm:left-0 transform -translate-x-1/2 sm:translate-x-0 w-8 h-0.5 bg-black/60"></div>
               </h3>
-              <div className="flex space-x-4 justify-center sm:justify-start">
+              <div className="flex space-x-4 justify-start">
                 <a 
                   href="https://www.instagram.com/theloopydragon/" 
                   target="_blank"
