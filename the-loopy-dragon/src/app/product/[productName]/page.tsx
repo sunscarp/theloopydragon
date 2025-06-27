@@ -378,20 +378,6 @@ export default function ProductPage() {
                     </>
                   )}
                 </button>
-
-                <button
-                  disabled={isOutOfStock}
-                  className={`px-8 py-4 rounded-xl font-bold text-lg border-2 transition-all duration-200 ${
-                    isOutOfStock
-                      ? 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                      : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-white'
-                  }`}
-                >
-                  <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  Wishlist
-                </button>
               </div>
             </div>
 
