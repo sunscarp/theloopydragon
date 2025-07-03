@@ -5,10 +5,13 @@ import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { createClient } from '@supabase/supabase-js';
 import Footer from "@/components/Footer";
+import HomeMobile from "@/components/HomeMobile";
+import useMobileDetect from "@/hooks/useMobileDetect";
 
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
+  const isMobile = useMobileDetect();
 
   useEffect(() => {
     // Handle scroll effect for navbar
@@ -70,26 +73,29 @@ export default function Home() {
   const faqs = [
     {
       question: "Can I customize my crochet item?",
-      answer: "Absolutely! We love bringing your ideas to life. Just head to our Custom Order page and let us know what you have in mind."
+      answer: "Yes! We’d love to make something just for you. Head over to our Customise page to get started. Share your ideas with us and we will make sure to bring your vision to life!"
     },
     {
       question: "What materials do you use for your crochet items?",
-      answer: "We use premium, soft acrylic and cotton yarns to ensure comfort, durability, and vibrant colors in every piece."
+      answer: "We use a variety of yarns including acrylic, cotton, and velvet to create our pieces. The specific material used is always listed in the product description. If you have a preference, feel free to request a different yarn type — we’re happy to customize it for you!"
     },
     {
       question: "How long will it take to receive my order?",
-      answer: "Most orders ship within 3-5 business days. Custom orders may take a bit longer depending on complexity."
+      answer: "We usually take around 1–2 weeks to prepare and ship your order, making sure every detail is just right! Custom pieces or larger quantity orders may take a little longer, but don’t worry, we’ll keep you in the loop throughout the process."
     },
     {
       question: "How do I care for my crochet items?",
-      answer: "Hand wash gently in cold water and lay flat to dry. Avoid wringing or machine drying to keep your item looking its best."
+      answer: "To keep your crochet pieces looking their best, we recommend gentle hand washing with mild soap and water at room temperature. Lay flat to dry to maintain their shape. Avoid wringing, harsh detergents, or machine washing."
     },
     {
       question: "Do you offer gift wrapping or packaging?",
-      answer: "Yes! All orders come beautifully packaged, and we offer special gift wrapping upon request."
+      answer: "Yes! Gift wrapping is available as an add-on. Just select the option when you're choosing your product.  We’ll make sure your order arrives looking extra special and ready to gift!"
     }
   ];
 
+  if (isMobile) {
+    return <HomeMobile />;
+  }
   return (
     <>
       {/* Google Fonts Import */}
@@ -481,7 +487,7 @@ export default function Home() {
                         alt={product.Product}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4zNDMgNzAuNzY2IDEwMC4wODkgNzYuMzE4SzEwMC4wODkgMTI4LjMxOEM5NS4zNDMgMTMzLjg3IDEwOC4yODQgMTM1IDEwMCAxMzVTMTA0LjY1NyAxMzMuODcgOTkuOTExIDEyOC4zMThWNzYuMzE4Qzk0LjY1NyA7MC43NjYgOTEuNzE2IDcwIDEwMCA3MFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTEyMCA5MEM4Ni44NjI5IDkwIDYwIDExNi44NjMgNjAgMTUwUzg2Ljg2MjkgMjEwIDEyMCAyMTBTMTgwIDE4My4xMzcgMTgwIDE1MFMxNTMuMTM3IDkwIDEyMCA5MFoiIGZpbGw9IiNFNUU3RUIiLz4KPC9zdmc+';
+                          e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4zNDMgNzAuNzY2IDEwMC4wODkgNzYuMzE4SzEwMC4wODkgMTI4LjMxOEM5NS4zNDMgMTMzLjg3IDEwOC4yODQgMTM1IDEwMCAxMzVTMTA0LjY1NyAxMzMuODcgOTkuOTExIDEyOC4zMThWNzYuMzE4Qzk0LjY1NyA7MC43NjYgOTEuNzE2IDcwIDEwMCA3MFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTEyMCA5MEM4Ni44NjI5IDkwIDYwIDExNi44NjMgNjAgMTUwUzg2Ljg2MjkgMjEwIDEyMCAyMTBTMTgwIDE4My4xMzcgMTgwIDE1MFMxNTMuMTM3IDkwIDEyMCA9MFoiIGZpbGw9IiNFNUU3RUIiLz4KPC9zdmc+';
                         }}
                       />
                     ) : (

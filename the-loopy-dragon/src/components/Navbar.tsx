@@ -100,7 +100,7 @@ export default function Navbar() {
               {[
                 { href: "/", label: "Home" },
                 { href: "/shop", label: "Shop" },
-                { href: "/custom-order", label: "Customise" },
+                { href: "/custom-order", label: "Customize" },
                 { href: "/profile", label: "Your Orders" },
                 { href: "/contact", label: "Contact us" }
               ].map((item) => (
@@ -472,7 +472,7 @@ export default function Navbar() {
                   {[
                     { href: "/", label: "Home" },
                     { href: "/shop", label: "Shop" },
-                    { href: "/custom-order", label: "Customise" },
+                    { href: "/custom-order", label: "Customize" },
                     { href: "/profile", label: "Your Orders" },
                     { href: "/contact", label: "Contact us" }
                   ].map((item) => (
