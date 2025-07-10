@@ -4,34 +4,30 @@ export default function Footer() {
   return (
     <div>
       <footer 
-        className="relative bg-cover bg-center bg-no-repeat py-8 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8"
+        className="relative bg-[#D7B3FB] bg-cover bg-center bg-no-repeat py-8 sm:py-10 lg:py-12 px-4 sm:px-6 lg:px-8"
         style={{
-          backgroundImage: "url('footer.png')",
-          fontFamily: 'Montserrat, sans-serif'
+          backgroundImage: "url('/footer.png')",
+          fontFamily: 'Montserrat, sans-serif',
+          zIndex: 10
         }}
       >
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12 text-black justify-items-center">
-            
             {/* Left Column - Logo and Contact */}
             <div className="space-y-4 sm:space-y-5 text-left w-full max-w-xs">
-              {/* Logo */}
               <div className="flex items-center justify-start">
                 <img 
-                  src="circle-logo.png" 
+                  src="/circle-logo.png" 
                   alt="The Loopy Dragon Logo" 
                   className="object-contain drop-shadow-lg"
                   style={{
                     width: '100px',
                     height: '100px',
-                    border: '1px solid transparent'
                   }}
+                  onError={() => console.error("Failed to load logo")}
                 />
               </div>
-              
-              {/* Contact Information */}
               <div className="space-y-3 text-left">
-                {/* Location */}
                 <div className="flex items-start space-x-3 group justify-start">
                   <div className="mt-1 flex-shrink-0">
                     <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-black/80 group-hover:text-black transition-colors duration-200" />
@@ -48,8 +44,6 @@ export default function Footer() {
                     Pune, India
                   </span>
                 </div>
-                
-                {/* Email */}
                 <div className="flex items-start space-x-3 group justify-start">
                   <div className="mt-1 flex-shrink-0">
                     <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-black/80 group-hover:text-black transition-colors duration-200" />
@@ -268,7 +262,7 @@ export default function Footer() {
                   aria-label="Pinterest"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z"/>
+                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.138 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z"/>
                   </svg>
                 </a>
               </div>

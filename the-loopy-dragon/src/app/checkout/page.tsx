@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { supabase } from "@/utils/supabase";
+import { useCart } from "@/contexts/CartContext";
+import OrderSummary from "@/components/OrderSummary";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0);
   const [total, setTotal] = useState(0);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const { cartAddons } = useCart();
 
   // Form fields
   const [name, setName] = useState("");
@@ -47,12 +50,17 @@ export default function CheckoutPage() {
     const cartItems = Object.entries(cart)
       .map(([id, qty]) => {
         const product = products.find((p) => p.id === Number(id));
-        return product ? { ...product, quantity: qty } : null;
+        const addons = cartAddons[id] || {};
+        const addonUnitPrice =
+          (addons.keyChain ? 10 : 0) +
+          (addons.giftWrap ? 10 : 0) +
+          (addons.carMirror ? 50 : 0);
+        return product ? { ...product, quantity: qty, addonUnitPrice, totalPrice: (product.Price + addonUnitPrice) * qty } : null;
       })
-      .filter(Boolean) as Array<{ Price: number; quantity: number }>;
-    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + item.Price * item.quantity, 0);
+      .filter(Boolean) as Array<{ Price: number; quantity: number; addonUnitPrice: number; totalPrice: number }>;
+    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
     setSubtotal(calculatedSubtotal);
-  }, [cart, products]);
+  }, [cart, products, cartAddons]);
 
   useEffect(() => {
     setTotal(subtotal + (subtotal > 1000 ? 0 : shippingCost));
@@ -228,12 +236,21 @@ export default function CheckoutPage() {
           const productDetails = Object.entries(cart).map(([productId, qty]) => {
             const product = products.find((p) => p.id === Number(productId));
             if (!product) return null;
+            const addons = cartAddons[productId] || {};
+            const addonUnitPrice =
+              (addons.keyChain ? 10 : 0) +
+              (addons.giftWrap ? 10 : 0) +
+              (addons.carMirror ? 50 : 0);
             return {
               Product: product.Product || product.ProductName || product.name,
               Quantity: qty,
               Price: product.Price,
-              "Total Price": (product.Price * qty).toFixed(2),
-              "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2), // Ensure free shipping is stored as 0
+              keyChain: !!addons.keyChain,
+              giftWrap: !!addons.giftWrap,
+              carMirror: !!addons.carMirror,
+              customMessage: addons.customMessage || "",
+              "Total Price": ((product.Price + addonUnitPrice) * qty).toFixed(2),
+              "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2),
             };
           }).filter(Boolean);
 
@@ -242,7 +259,7 @@ export default function CheckoutPage() {
             .insert([{
               order_id: generatedOrderId,
               "Order Date": orderDate,
-              Products: productDetails, // Now includes shipping cost
+              Products: productDetails, // Now includes add-ons
               uid: user.id
             }]);
           if (profileError) {
@@ -254,6 +271,12 @@ export default function CheckoutPage() {
           for (const [productId, qty] of Object.entries(cart)) {
             const product = products.find((p) => p.id === Number(productId));
             if (!product) continue;
+            const addons = cartAddons[productId] || {};
+            const addonUnitPrice =
+              (addons.keyChain ? 10 : 0) +
+              (addons.giftWrap ? 10 : 0) +
+              (addons.carMirror ? 50 : 0);
+            const totalPrice = ((product.Price + addonUnitPrice) * qty).toFixed(2);
             const { error: orderError } = await supabase
               .from("Orders")
               .insert([{
@@ -266,8 +289,12 @@ export default function CheckoutPage() {
                 Product: product.Product || product.ProductName || product.name,
                 "Product ID": product.id,
                 Quantity: qty,
-                "Total Price": (product.Price * qty).toFixed(2),
-                "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2), // Ensure free shipping is stored as 0
+                keyChain: !!addons.keyChain,
+                giftWrap: !!addons.giftWrap,
+                carMirror: !!addons.carMirror,
+                customMessage: addons.customMessage || "",
+                "Total Price": totalPrice,
+                "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2),
                 uid: user.id,
                 payment_id: response.razorpay_payment_id,
                 "Order Date": orderDate
@@ -412,29 +439,14 @@ export default function CheckoutPage() {
               </div>
               
               {/* Order Summary */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Subtotal</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">₹{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Shipping</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {subtotal > 1000 ? (
-                      <span className="text-green-600">Free Shipping</span>
-                    ) : shippingCost > 0 ? (
-                      `₹${shippingCost.toFixed(2)}`
-                    ) : (
-                      'Enter pincode'
-                    )}
-                  </span>
-                </div>
-                <hr className="border-gray-200 dark:border-gray-600" />
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Total</span>
-                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">₹{total.toFixed(2)}</span>
-                </div>
-              </div>
+              <OrderSummary
+                cart={cart}
+                products={products}
+                cartAddons={cartAddons}
+                subtotal={subtotal}
+                shippingCost={shippingCost}
+                total={total}
+              />
 
               {error && (
                 <div className="text-red-500 text-sm text-center bg-red-50 dark:bg-red-900/50 rounded-lg p-3">

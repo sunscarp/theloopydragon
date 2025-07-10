@@ -19,7 +19,9 @@
     "nodemailer": "^7.0.3",
     "razorpay": "^2.9.6",
     "react": "^19.0.0",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^19.0.0",
+    "swiper": "^11.2.10",
     "twilio": "^5.7.1",
     "uuid": "^11.1.0"
   },

@@ -10,6 +10,9 @@ interface Product {
   qty?: number;
   Price?: number;
   price?: number;
+  keyChain?: boolean;
+  giftWrap?: boolean;
+  customMessage?: string;
 }
 
 interface OrderDetails {
@@ -442,17 +445,35 @@ export default function OrdersPage() {
                         <div className="w-full max-w-sm">
                           {products.length > 0 ? (
                             <div className="space-y-2">
-                              {products.map((prod, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-sm">
-                                  <div className="font-medium text-gray-900 dark:text-gray-100">
-                                    {prod.Product || prod.product_name || "Unknown Product"}
+                              {products.map((prod, idx) => {
+                                const addonUnitPrice =
+                                  (prod.keyChain ? 10 : 0) + (prod.giftWrap ? 10 : 0);
+                                const unitPrice = (Number(prod.Price) || 0) + addonUnitPrice;
+                                const subtotal = unitPrice * (prod.quantity || prod.Quantity || prod.qty || 0);
+                                return (
+                                  <div key={idx} className="flex justify-between items-center text-sm">
+                                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                                      {prod.Product || prod.product_name || "Unknown Product"}
+                                      {(prod.keyChain || prod.giftWrap || prod.customMessage) && (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                          {prod.keyChain && <span className="mr-2">+ Keychain <span className="text-[10px]">(+₹10)</span></span>}
+                                          {prod.giftWrap && <span className="mr-2">+ Gift Wrap <span className="text-[10px]">(+₹10)</span></span>}
+                                          {prod.customMessage && (
+                                            <div>
+                                              <span className="italic">Message:</span> {prod.customMessage}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="text-gray-500 dark:text-gray-400 ml-2">
+                                      <span className="mr-2">x{prod.quantity || prod.Quantity || prod.qty || 0}</span>
+                                      <span>₹{unitPrice.toFixed(2)}{addonUnitPrice > 0 && <span className="ml-1 text-xs text-purple-500">(+addons)</span>}</span>
+                                      <span className="ml-2 text-gray-400">Subtotal: ₹{subtotal.toFixed(2)}</span>
+                                    </div>
                                   </div>
-                                  <div className="text-gray-500 dark:text-gray-400 ml-2">
-                                    <span className="mr-2">x{prod.quantity || prod.Quantity || prod.qty || 0}</span>
-                                    <span>₹{prod.Price || prod.price || 0}</span>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           ) : (
                             <span className="text-sm text-gray-400">No products</span>

@@ -46,6 +46,30 @@ function OrderSummaryContent() {
     fetchOrder();
   }, [orderId]);
 
+  // Helper to generate a unique key for a cart item (based on product and options)
+  const getCartKey = (item: any) => {
+    return [
+      item.Product,
+      item.keyChain ? "keyChain" : "",
+      item.giftWrap ? "giftWrap" : "",
+      item.carMirror ? "carMirror" : "",
+      item.customMessage ? item.customMessage : ""
+    ].join("|");
+  };
+
+  // Get cart data from localStorage (client-side only)
+  let cartPriceMap: Record<string, number> = {};
+  if (typeof window !== "undefined") {
+    try {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      cart.forEach((cartItem: any) => {
+        const key = getCartKey(cartItem);
+        // Use the price from the cart (should be the base product price)
+        cartPriceMap[key] = Number(cartItem.Price) || 0;
+      });
+    } catch {}
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -116,18 +140,69 @@ function OrderSummaryContent() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((item, idx) => (
-                  <tr key={idx} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600/50">
-                    <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">{item.Product}</td>
-                    <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">{item.Quantity}</td>
-                    <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
-                      ₹{item.Price || (Number(item["Total Price"]) / Number(item.Quantity)).toFixed(2)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                      ₹{Number(item["Total Price"]).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {orders.map((item, idx) => {
+                  // Try to get base price from cart first
+                  const cartKey = getCartKey(item);
+                  let basePrice = cartPriceMap[cartKey];
+
+                  // Fallback to DB fields if not found in cart
+                  if (!basePrice || isNaN(basePrice) || basePrice === 0) {
+                    if (typeof item.Price === "number" && !isNaN(item.Price)) basePrice = item.Price;
+                    else if (item.Price && !isNaN(Number(item.Price))) basePrice = Number(item.Price);
+                    else if (item["Base Price"] && !isNaN(Number(item["Base Price"]))) basePrice = Number(item["Base Price"]);
+                    else if (item["Unit Price"] && !isNaN(Number(item["Unit Price"]))) basePrice = Number(item["Unit Price"]);
+                    else if (item["Total Price"] && item.Quantity && !isNaN(Number(item["Total Price"])) && !isNaN(Number(item.Quantity))) {
+                      basePrice = Number(item["Total Price"]) / Number(item.Quantity);
+                    } else {
+                      basePrice = 0;
+                    }
+                  }
+
+                  const isTrue = (v: any) => v === true || v === "true";
+                  const addonDetails: { label: string; price: number; display: string }[] = [];
+                  if (isTrue(item.keyChain)) addonDetails.push({ label: "Keychain", price: 10, display: "+ Keychain (+₹10)" });
+                  if (isTrue(item.giftWrap)) addonDetails.push({ label: "Gift Wrap", price: 10, display: "+ Gift Wrap (+₹10)" });
+                  if (isTrue(item.carMirror)) addonDetails.push({ label: "Car mirror accessory", price: 50, display: "+ Car mirror accessory (+₹50)" });
+                  const addonUnitPrice = addonDetails.reduce((sum, a) => sum + a.price, 0);
+                  const unitPrice = basePrice + addonUnitPrice;
+                  const subtotal = unitPrice * Number(item.Quantity);
+                  return (
+                    <tr key={idx} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600/50">
+                      <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
+                        <div>{item.Product}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {/* Show actual product price */}
+                          Product Price: ₹{basePrice.toFixed(2)}
+                          {addonUnitPrice > 0 && (
+                            <span className="ml-2 text-purple-500">
+                              + Addons ₹{addonUnitPrice}
+                            </span>
+                          )}
+                        </div>
+                        {(addonDetails.length > 0 || item.customMessage) && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {addonDetails.map(a => (
+                              <span key={a.label} className="mr-2">{a.display}</span>
+                            ))}
+                            {item.customMessage && (
+                              <div>
+                                <span className="italic">Message:</span> {item.customMessage}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">{item.Quantity}</td>
+                      <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                        {/* Show actual unit price (product + addons) */}
+                        ₹{unitPrice.toFixed(2)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                        ₹{subtotal.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
                 <tr className="border-t-2 border-gray-200 dark:border-gray-600">
                   <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
                     Subtotal

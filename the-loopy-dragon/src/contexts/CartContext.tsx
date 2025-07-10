@@ -9,6 +9,15 @@ type Product = {
   ImageUrl?: string;
 };
 
+type CartAddons = {
+  [productId: string]: {
+    keyChain?: boolean;
+    giftWrap?: boolean;
+    carMirror?: boolean;
+    customMessage?: string;
+  };
+};
+
 type CartContextType = {
   cart: { [id: string]: number };
   products: Product[];
@@ -17,6 +26,7 @@ type CartContextType = {
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
   isLoaded: boolean;
+  cartAddons: CartAddons;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -58,15 +68,30 @@ const loadProductsFromStorage = (): Product[] => {
   return [];
 };
 
+const loadCartAddonsFromStorage = (): CartAddons => {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("cartAddons");
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      console.error("Failed to load cartAddons from localStorage:", e);
+      return {};
+    }
+  }
+  return {};
+};
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<{ [id: string]: number }>({});
   const [products, setProducts] = useState<Product[]>([]);
+  const [cartAddons, setCartAddons] = useState<CartAddons>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setCart(loadCartFromStorage());
       setProducts(loadProductsFromStorage());
+      setCartAddons(loadCartAddonsFromStorage());
       setIsLoaded(true);
 
       // Listen for both storage events AND custom product updates
@@ -85,12 +110,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setProducts(e.detail);
       };
 
+      // Listen for cartAddons updates
+      const handleCartAddonsUpdate = (e: CustomEvent) => {
+        setCartAddons(e.detail);
+      };
+
       window.addEventListener("storage", handleStorage);
       window.addEventListener("productsUpdated", handleProductUpdate as EventListener);
-      
+      window.addEventListener("cartAddonsUpdated", handleCartAddonsUpdate as EventListener);
+
       return () => {
         window.removeEventListener("storage", handleStorage);
         window.removeEventListener("productsUpdated", handleProductUpdate as EventListener);
+        window.removeEventListener("cartAddonsUpdated", handleCartAddonsUpdate as EventListener);
       };
     }
   }, []);
@@ -134,6 +166,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = () => {
     setCart({});
     saveCartToStorage({});
+    setCartAddons({});
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cartAddons");
+    }
   };
 
   const value: CartContextType = {
@@ -144,6 +180,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateQuantity,
     clearCart,
     isLoaded,
+    cartAddons,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

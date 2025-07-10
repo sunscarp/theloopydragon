@@ -167,22 +167,52 @@ export default function ProfilePage() {
                               </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                              {order.Products.map((item: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    {item.Product}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
-                                    {item.Quantity}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
-                                    ₹{item.Price ? Number(item.Price).toFixed(2) : ((Number(item["Total Price"]) / Number(item.Quantity)) || 0).toFixed(2)}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right text-gray-900 dark:text-white">
-                                    ₹{Number(item["Total Price"]).toFixed(2)}
-                                  </td>
-                                </tr>
-                              ))}
+                              {order.Products.map((item: any, idx: number) => {
+                                const addonUnitPrice =
+                                  (item.keyChain ? 10 : 0) +
+                                  (item.giftWrap ? 10 : 0) +
+                                  (item.carMirror ? 50 : 0);
+                                const unitPrice = (Number(item.Price) || 0) + addonUnitPrice;
+                                const subtotal = unitPrice * Number(item.Quantity);
+                                return (
+                                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                      <div>
+                                        {item.Product}
+                                      </div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                                        ₹{Number(item.Price).toFixed(2)}
+                                        {addonUnitPrice > 0 && (
+                                          <span className="ml-2 text-purple-500">
+                                            + Addons ₹{addonUnitPrice}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {(item.keyChain || item.giftWrap || item.carMirror || item.customMessage) && (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                          {item.keyChain && <span className="mr-2">+ Keychain <span className="text-[10px]">(+₹10)</span></span>}
+                                          {item.giftWrap && <span className="mr-2">+ Gift Wrap <span className="text-[10px]">(+₹10)</span></span>}
+                                          {item.carMirror && <span className="mr-2">+ Car mirror accessory <span className="text-[10px]">(+₹50)</span></span>}
+                                          {item.customMessage && (
+                                            <div>
+                                              <span className="italic">Message:</span> {item.customMessage}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
+                                      {item.Quantity}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 dark:text-gray-300">
+                                      ₹{unitPrice.toFixed(2)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right text-gray-900 dark:text-white">
+                                      ₹{subtotal.toFixed(2)}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                               <tr>
                                 <td colSpan={3} className="px-6 py-4 text-right font-medium">Subtotal</td>
                                 <td className="px-6 py-4 text-right font-medium">

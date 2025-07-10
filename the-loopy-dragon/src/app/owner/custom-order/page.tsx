@@ -20,6 +20,8 @@ type ProductItem = {
   Quantity: number;
   "Total Price": string;
   "Shipping Cost": string;
+  keyChain?: boolean;
+  giftWrap?: boolean;
 };
 
 export default function CustomOrderPage() {
@@ -186,10 +188,12 @@ export default function CustomOrderPage() {
         newProducts[index] = { ...newProducts[index], [field]: value };
         
         // Auto-calculate total price when price or quantity changes
-        if (field === 'Price' || field === 'Quantity') {
+        if (field === 'Price' || field === 'Quantity' || field === 'keyChain' || field === 'giftWrap') {
           const price = field === 'Price' ? Number(value) : newProducts[index].Price;
           const quantity = field === 'Quantity' ? Number(value) : newProducts[index].Quantity;
-          newProducts[index]["Total Price"] = (price * quantity || 0).toFixed(2);
+          const addonUnitPrice =
+            (newProducts[index].keyChain ? 10 : 0) + (newProducts[index].giftWrap ? 10 : 0);
+          newProducts[index]["Total Price"] = ((price + addonUnitPrice) * quantity || 0).toFixed(2);
         }
       }
     }
@@ -463,7 +467,7 @@ export default function CustomOrderPage() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Product Name *</label>
                       <input
@@ -511,6 +515,23 @@ export default function CustomOrderPage() {
                         onChange={(e) => updateProduct(index, 'Shipping Cost', e.target.value)}
                         placeholder="0.00"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Keychain Add-on</label>
+                      <input
+                        type="checkbox"
+                        checked={!!product.keyChain}
+                        onChange={e => updateProduct(index, 'keyChain', Number(e.target.checked))}
+                      /> +₹10
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Gift Wrap Add-on</label>
+                      <input
+                        type="checkbox"
+                        checked={!!product.giftWrap}
+                        onChange={e => updateProduct(index, 'giftWrap', Number(e.target.checked))}
+                      /> +₹10
                     </div>
                   </div>
                   

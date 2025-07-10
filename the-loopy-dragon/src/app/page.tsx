@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { createClient } from '@supabase/supabase-js';
 import Footer from "@/components/Footer";
+
 import HomeMobile from "@/components/HomeMobile";
 import useMobileDetect from "@/hooks/useMobileDetect";
 

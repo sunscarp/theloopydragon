@@ -65,89 +65,88 @@ export default function HomeMobile() {
 
         {/* Mobile Hero Section */}
         <section className="relative w-full overflow-hidden" style={{ margin: 0, padding: 0, border: 'none', outline: 'none' }}>
-        {/* Background Image - Mobile optimized */}
-        <div 
-            className="w-full bg-cover bg-center bg-no-repeat"
-            style={{ 
-            backgroundImage: 'url(/mobile-hero.png)',
-            height: 'clamp(380px, 100vw, 500px)',
-            width: '100vw',
-            maxWidth: 'none',
-            margin: 0,
-            padding: 0,
-            border: 'none',
-            outline: 'none',
-            boxSizing: 'border-box',
-            marginLeft: 'calc(-50vw + 50%)'
-            }}
+  {/* Background Image - Mobile optimized */}
+  <div 
+    className="w-full bg-cover bg-center bg-no-repeat"
+    style={{ 
+      backgroundImage: 'url(/mobile-hero.png)',
+      height: 'clamp(380px, 100vw, 500px)',
+      width: '100vw',
+      maxWidth: 'none',
+      margin: 0,
+      padding: 0,
+      border: 'none',
+      outline: 'none',
+      boxSizing: 'border-box',
+      marginLeft: 'calc(-50vw + 50%)'
+    }}
+  >
+    {/* Content Container - Left aligned for mobile */}
+    <div className="relative h-full flex items-center">
+      <div 
+        className="flex flex-col justify-center w-full"
+        style={{
+          padding: '0 20px',
+          width: '100%',
+          height: 'auto',
+          maxWidth: '400px',
+          margin: '0'
+        }}
+      >
+        {/* Main Heading - Left aligned, line breaks as requested */}
+        <h1 
+          className="text-black mb-6 leading-none text-left !text-[27.5px] md:!text-[35px] lg:!text-[40px]"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 600,
+            letterSpacing: '0%',
+            lineHeight: '1.1'
+          }}
         >
-            {/* Content Container - Left aligned for mobile */}
-            <div className="relative h-full flex items-center">
-            <div 
-                className="flex flex-col justify-center w-full"
-                style={{
-                padding: '0 20px',
-                width: '100%',
-                height: 'auto',
-                maxWidth: '400px',
-                margin: '0' // Changed from '0 auto' to '0' for left alignment
-                }}
-            >
-                {/* Main Heading - Left aligned, line breaks as requested */}
-                <h1 
-                className="text-black mb-6 leading-none text-left !text-[27.5px] md:!text-[35px] lg:!text-[40px]"
-                style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 600,
-                    letterSpacing: '0%',
-                    lineHeight: '1.1'
-                }}
-                >
-                SHOP FOR<br />
-                CROCHET ITEMS
-                </h1>
-                                
-                {/* Subtitle - Left aligned with specified styling */}
-                <p 
-                className="text-black mb-8 text-left"
-                style={{
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500,
-                    fontSize: 'clamp(12.5px, 3vw, 16px)',
-                    lineHeight: '22px',
-                    marginBottom: '40px'
-                }}
-                >
-                Hey there! Welcome to The<br />
-                Loopy Dragon.
-                <br /><br />
-                We bring you cozy, handmade<br />
-                crochet pieces made with love<br />
-                and a whole lot of heart!
-                </p>
-                
-                {/* CTA Button - Left aligned instead of center */}
-                <div className="flex justify-start"> {/* Changed from justify-center to justify-start */}
-                <Link
-                    href="/shop"
-                    className="inline-flex items-center justify-center bg-white text-black hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    style={{
-                    width: 'clamp(280px, 85vw, 343px)',
-                    height: 'clamp(60px, 18vw, 70px)',
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 600,
-                    fontSize: 'clamp(12px, 5vw, 16px)',
-                    letterSpacing: '0.05em',
-                    borderRadius: 0
-                    }}
-                >
-                    Check us out
-                </Link>
-                </div>
-            </div>
-            </div>
+          SHOP FOR<br />
+          CROCHET ITEMS
+        </h1>
+                        
+        {/* Subtitle - Left aligned with specified styling */}
+        <p 
+          className="text-black mb-8 text-left"
+          style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontWeight: 500,
+            fontSize: 'clamp(12.5px, 3vw, 16px)',
+            lineHeight: '22px',
+            marginBottom: '40px'
+          }}
+        >
+          Hey there! Welcome to The<br />
+          Loopy Dragon.
+          <br /><br />
+          We bring you cozy, handmade<br />
+          crochet pieces made with love<br />
+          and a whole lot of heart!
+        </p>
+        
+        {/* CTA Button - Stretched end-to-end with padding */}
+        <div className="w-full" style={{ padding: '0 20px' }}>
+          <Link
+            href="/shop"
+            className="inline-flex items-center justify-center bg-white text-black hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
+            style={{
+              height: 'clamp(60px, 18vw, 70px)',
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 600,
+              fontSize: 'clamp(12px, 5vw, 16px)',
+              letterSpacing: '0.05em',
+              borderRadius: 0
+            }}
+          >
+            Check us out
+          </Link>
         </div>
-        </section>
+      </div>
+    </div>
+  </div>
+</section>
 
         {/* Top Picks Section - Mobile Layout */}
         <section 
@@ -370,9 +369,9 @@ export default function HomeMobile() {
         className="text-black text-left inline-block px-2"
         style={{
           fontFamily: 'Montserrat, sans-serif',
-          fontWeight: 700,  // Made bolder
-          fontSize: '38px',  // Increased from 32px
-          lineHeight: '1.1', // Tighter line height for larger text
+          fontWeight: 700,
+          fontSize: '38px',
+          lineHeight: '1.1',
           marginBottom: '28px',
           maxWidth: '280px'
         }}
@@ -384,111 +383,139 @@ export default function HomeMobile() {
     {/* Features List */}
     <div className="flex flex-col gap-7 pl-4">
       {/* Feature 1 */}
-      <div className="text-left pl-2">
-        <h3 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 500,
-            fontSize: '20px',
-            lineHeight: '1.3',
-            marginBottom: '6px'
-          }}
-        >
-          High-Quality Materials
-        </h3>
-        <p 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 400,
-            fontSize: '15px',
-            lineHeight: '1.4'
-          }}
-        >
-          Only the softest, coziest yarns make the cut.
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="mt-1 text-purple-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div className="text-left">
+          <h3 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 500,
+              fontSize: '20px',
+              lineHeight: '1.3',
+              marginBottom: '6px'
+            }}
+          >
+            High-Quality Materials
+          </h3>
+          <p 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 400,
+              fontSize: '15px',
+              lineHeight: '1.4'
+            }}
+          >
+            Only the softest, coziest yarns make the cut.
+          </p>
+        </div>
       </div>
       
       {/* Feature 2 */}
-      <div className="text-left pl-2">
-        <h3 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 500,
-            fontSize: '20px',
-            lineHeight: '1.3',
-            marginBottom: '6px'
-          }}
-        >
-          Handmade with Care
-        </h3>
-        <p 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 400,
-            fontSize: '15px',
-            lineHeight: '1.4'
-          }}
-        >
-          No mass production - just real hands, real skill, real heart.
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="mt-1 text-purple-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div className="text-left">
+          <h3 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 500,
+              fontSize: '20px',
+              lineHeight: '1.3',
+              marginBottom: '6px'
+            }}
+          >
+            Handmade with Care
+          </h3>
+          <p 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 400,
+              fontSize: '15px',
+              lineHeight: '1.4'
+            }}
+          >
+            No mass production - just real hands, real skill, real heart.
+          </p>
+        </div>
       </div>
       
       {/* Feature 3 */}
-      <div className="text-left pl-2">
-        <h3 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 500,
-            fontSize: '20px',
-            lineHeight: '1.3',
-            marginBottom: '6px'
-          }}
-        >
-          Uniquely Designed
-        </h3>
-        <p 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 400,
-            fontSize: '15px',
-            lineHeight: '1.4'
-          }}
-        >
-          Every product is crafted with detail and creativity.
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="mt-1 text-purple-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div className="text-left">
+          <h3 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 500,
+              fontSize: '20px',
+              lineHeight: '1.3',
+              marginBottom: '6px'
+            }}
+          >
+            Uniquely Designed
+          </h3>
+          <p 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 400,
+              fontSize: '15px',
+              lineHeight: '1.4'
+            }}
+          >
+            Every product is crafted with detail and creativity.
+          </p>
+        </div>
       </div>
       
       {/* Feature 4 */}
-      <div className="text-left pl-2">
-        <h3 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 500,
-            fontSize: '20px',
-            lineHeight: '1.3',
-            marginBottom: '6px'
-          }}
-        >
-          Long Lasting
-        </h3>
-        <p 
-          className="text-black"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontWeight: 400,
-            fontSize: '15px',
-            lineHeight: '1.4'
-          }}
-        >
-          Built to last and made to love, over and over again.
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="mt-1 text-purple-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div className="text-left">
+          <h3 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 500,
+              fontSize: '20px',
+              lineHeight: '1.3',
+              marginBottom: '6px'
+            }}
+          >
+            Long Lasting
+          </h3>
+          <p 
+            className="text-black"
+            style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 400,
+              fontSize: '15px',
+              lineHeight: '1.4'
+            }}
+          >
+            Built to last and made to love, over and over again.
+          </p>
+        </div>
       </div>
     </div>
   </div>

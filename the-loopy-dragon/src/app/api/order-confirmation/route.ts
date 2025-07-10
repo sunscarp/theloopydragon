@@ -57,21 +57,48 @@ export async function POST(req: NextRequest) {
     // Compose order details as HTML
     const orderRows = orders
       .map(
-        (item: any) => `
+        (item: any) => {
+          const addonUnitPrice =
+            (item.keyChain ? 10 : 0) +
+            (item.giftWrap ? 10 : 0) +
+            (item.carMirror ? 50 : 0);
+          const unitPrice = (Number(item.Price) || 0) + addonUnitPrice;
+          const subtotal = unitPrice * Number(item.Quantity);
+          return `
       <tr>
-        <td style="padding:8px;border:1px solid #ddd;">${item.Product}</td>
+        <td style="padding:8px;border:1px solid #ddd;">
+          <div>${item.Product}</div>
+          <div style="font-size:12px;color:#333;">₹${Number(item.Price).toFixed(2)}</div>
+          ${
+            addonUnitPrice > 0
+              ? `<div style="color:#a259ff;font-size:11px;">+ Addons ₹${addonUnitPrice}</div>`
+              : ""
+          }
+          ${
+            item.keyChain || item.giftWrap || item.carMirror || item.customMessage
+              ? `<div style='font-size:11px;color:#888;'>
+                  ${item.keyChain ? "+ Keychain (+₹10) " : ""}
+                  ${item.giftWrap ? "+ Gift Wrap (+₹10) " : ""}
+                  ${item.carMirror ? "+ Car mirror accessory (+₹50) " : ""}
+                  ${item.customMessage ? `<div><i>Message:</i> ${item.customMessage}</div>` : ""}
+                </div>`
+              : ""
+          }
+        </td>
         <td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.Quantity}</td>
-        <td style="padding:8px;border:1px solid #ddd;text-align:center;">₹${
-          item.Price || (Number(item["Total Price"]) / Number(item.Quantity)).toFixed(2)
-        }</td>
-        <td style="padding:8px;border:1px solid #ddd;text-align:right;">₹${Number(item["Total Price"]).toFixed(2)}</td>
+        <td style="padding:8px;border:1px solid #ddd;text-align:center;">₹${unitPrice.toFixed(2)}</td>
+        <td style="padding:8px;border:1px solid #ddd;text-align:right;">₹${subtotal.toFixed(2)}</td>
       </tr>
-    `
+    `;
+        }
       )
       .join("");
 
     const shippingCost = orders[0]?.["Shipping Cost"] || 0;
-    const subtotal = orders.reduce((sum: number, item: any) => sum + Number(item["Total Price"]), 0);
+    const subtotal = orders.reduce(
+      (sum: number, item: any) => sum + Number(item["Total Price"]),
+      0
+    );
     const grandTotal = subtotal + Number(shippingCost);
 
     const html = `

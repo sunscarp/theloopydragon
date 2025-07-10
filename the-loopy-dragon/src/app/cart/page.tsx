@@ -16,7 +16,7 @@ export default function CartPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const { cart, products, updateQuantity, removeFromCart, isLoaded, clearCart } = useCart();
+  const { cart, products, updateQuantity, removeFromCart, isLoaded, clearCart, cartAddons } = useCart();
 
   // Check auth status and handle post-login redirect
   useEffect(() => {
@@ -62,10 +62,19 @@ export default function CartPage() {
       Object.entries(cart)
         .map(([id, qty]) => {
           const product = products.find((p) => p.id === Number(id));
+          const addons = cartAddons[id] || {};
+          // Calculate addon price per unit
+          const addonUnitPrice =
+            (addons.keyChain ? 10 : 0) +
+            (addons.giftWrap ? 10 : 0) +
+            (addons.carMirror ? 50 : 0);
           return product
             ? {
                 ...product,
                 quantity: qty,
+                addons,
+                addonUnitPrice,
+                totalPrice: (product.Price + addonUnitPrice) * qty,
               }
             : null;
         })
@@ -80,12 +89,16 @@ export default function CartPage() {
           ImageUrl3?: string | null;
           ImageUrl4?: string | null;
           ImageUrl5?: string | null;
+          addons?: { keyChain?: boolean; giftWrap?: boolean; carMirror?: boolean; customMessage?: string };
+          addonUnitPrice: number;
+          totalPrice: number;
         }>,
-    [cart, products]
+    [cart, products, cartAddons]
   );
 
+  // Calculate total including add-ons
   const total = cartItems.reduce(
-    (sum, item) => sum + item.Price * item.quantity,
+    (sum, item) => sum + item.totalPrice,
     0
   );
 
@@ -216,8 +229,29 @@ export default function CartPage() {
                           <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm sm:text-lg mb-1 truncate">
                             {item.Product}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                          {/* Add-ons and message display */}
+                          {(item.addons?.keyChain || item.addons?.giftWrap || item.addons?.carMirror || item.addons?.customMessage) && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                              {item.addons?.keyChain && <span className="mr-2">+ Keychain <span className="text-[10px]">(+₹10)</span></span>}
+                              {item.addons?.giftWrap && <span className="mr-2">+ Gift Wrap <span className="text-[10px]">(+₹10)</span></span>}
+                              {item.addons?.carMirror && <span className="mr-2">+ Car mirror accessory <span className="text-[10px]">(+₹50)</span></span>}
+                              {item.addons?.customMessage && (
+                                <div>
+                                  <span className="italic">Message:</span> {item.addons.customMessage}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                             ₹{item.Price.toFixed(2)} each
+                            {item.addonUnitPrice > 0 && (
+                              <span className="ml-2 text-xs text-purple-500">
+                                + Addons ₹{item.addonUnitPrice} each
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mb-3">
+                            Item total: ₹{item.totalPrice.toFixed(2)}
                           </p>
 
                           {/* Mobile Layout */}
@@ -244,7 +278,7 @@ export default function CartPage() {
                                 </button>
                               </div>
                               <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                                ₹{(item.Price * item.quantity).toFixed(2)}
+                                ₹{item.totalPrice.toFixed(2)}
                               </div>
                             </div>
                             {/* Remove Button */}
@@ -283,7 +317,7 @@ export default function CartPage() {
                           {/* Price */}
                           <div className="text-right min-w-[100px]">
                             <div className="font-bold text-xl text-gray-900 dark:text-gray-100">
-                              ₹{(item.Price * item.quantity).toFixed(2)}
+                              ₹{item.totalPrice.toFixed(2)}
                             </div>
                           </div>
 
