@@ -14,7 +14,7 @@ export default function Footer() {
           {/* Mobile Layout */}
           <div className="block lg:hidden">
             {/* Logo - Centered */}
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-8">
               <img 
                 src="circle-logo.png" 
                 alt="The Loopy Dragon Logo" 
@@ -28,8 +28,8 @@ export default function Footer() {
             </div>
             
             {/* Contact Info */}
-            <div className="pl-6 mb-6">
-              <div className="space-y-3">
+            <div className="pl-6 mb-8">
+              <div className="space-y-4">
                 {/* Location */}
                 <div className="flex items-start space-x-3 group">
                   <div className="mt-1 flex-shrink-0">
@@ -71,9 +71,9 @@ export default function Footer() {
             
             {/* Explore and Know More - Side by Side */}
             <div className="pl-6 mb-8 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 {/* Explore Column */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h3 
                     className="font-semibold tracking-wider text-black text-xs"
                     style={{
@@ -82,7 +82,7 @@ export default function Footer() {
                   >
                     EXPLORE
                   </h3>
-                  <nav className="space-y-2">
+                  <nav className="space-y-3">
                     <div>
                       <a 
                         href="/" 
@@ -135,7 +135,7 @@ export default function Footer() {
                 </div>
                 
                 {/* Know More Column */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h3 
                     className="font-semibold tracking-wider text-black text-xs"
                     style={{
@@ -144,7 +144,7 @@ export default function Footer() {
                   >
                     KNOW MORE
                   </h3>
-                  <nav className="space-y-2">
+                  <nav className="space-y-3">
                     <div>
                       <a 
                         href="/about" 
@@ -199,12 +199,12 @@ export default function Footer() {
             </div>
             
             {/* White Line */}
-            <div className="border-t border-white/50 my-4 w-full"></div>
+            <div className="border-t border-white/50 my-6 w-full"></div>
             
             {/* Follow Us - Centered */}
             <div className="text-center">
               <h3 
-                className="font-semibold tracking-wider text-black mb-3"
+                className="font-semibold tracking-wider text-black mb-4"
                 style={{
                   fontSize: '14px',
                   letterSpacing: '0.8px'
@@ -212,7 +212,7 @@ export default function Footer() {
               >
                 FOLLOW US
               </h3>
-              <div className="flex justify-center space-x-4">
+              <div className="flex justify-center space-x-5">
                 <a 
                   href="https://www.instagram.com/theloopydragon/" 
                   target="_blank"
