@@ -805,15 +805,15 @@ export default function Home() {
 
         {/* Frequently Asked Questions Section */}
 <section className="w-full py-8 bg-white">
-  <div className="max-w-7xl mx-auto px-4">
+  <div className="max-w-6xl mx-auto px-4"> {/* Changed from max-w-7xl to max-w-6xl for slightly more width */}
     {/* Section Header */}
     <div className="text-center mb-6">
       <h2 
         className="text-black mb-2"
         style={{
           fontFamily: 'Montserrat, sans-serif',
-          fontWeight: 600,
-          fontSize: 'clamp(20px, 2.5vw, 28px)', // Smaller base size for mobile
+          fontWeight: 650, // Increased from 600
+          fontSize: 'clamp(20px, 2.5vw, 28px)',
           lineHeight: '100%',
           letterSpacing: '0%',
           textTransform: 'capitalize'
@@ -824,7 +824,7 @@ export default function Home() {
     </div>
 
     {/* FAQ Items */}
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto"> {/* Increased from max-w-4xl to max-w-5xl */}
       {faqs.map((faq, idx) => (
         <div className="mb-4" key={idx}>
           <div className="flex justify-between items-center py-2 gap-6">
@@ -832,8 +832,8 @@ export default function Home() {
               className="text-black flex-1"
               style={{
                 fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 500,
-                fontSize: 'clamp(14px, 1.5vw, 18px)', // Smaller base size for mobile
+                fontWeight: 500, // Increased from 580 to 620
+                fontSize: 'clamp(13px, 1.4vw, 16px)',
                 lineHeight: '120%',
               }}
             >
@@ -854,8 +854,8 @@ export default function Home() {
             </button>
           </div>
           <div 
-            className="w-full border-t my-2"
-            style={{ borderColor: '#EFDEFF', height: '1px' }}
+            className="w-full border-t my-3" 
+            style={{ borderColor: '#EFDEFF', height: '2px', width: '100%' }} 
           ></div>
           {/* Dropdown answer */}
           {openFaq === idx && (
@@ -863,8 +863,8 @@ export default function Home() {
               className="text-black py-2 pl-2"
               style={{
                 fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 400,
-                fontSize: 'clamp(12px, 1.2vw, 15px)', // Smaller base size for mobile
+                fontWeight: 450, // Slightly increased from 400
+                fontSize: 'clamp(12px, 1.2vw, 15px)',
                 lineHeight: '1.5',
               }}
             >

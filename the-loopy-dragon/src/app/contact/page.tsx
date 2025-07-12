@@ -13,7 +13,7 @@ export default function Contact() {
   // Handle scroll effect for sticky navbar
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50); // Trigger at 50px for smooth transition
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -42,8 +42,34 @@ export default function Contact() {
     }
   };
 
+  // FAQ Dropdown State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      question: "Can I customize my crochet item?",
+      answer: "Yes! We’d love to make something just for you. Head over to our Customise page to get started. Share your ideas with us and we will make sure to bring your vision to life!"
+    },
+    {
+      question: "What materials do you use for your crochet items?",
+      answer: "We use a variety of yarns including acrylic, cotton, and velvet to create our pieces. The specific material used is always listed in the product description. If you have a preference, feel free to request a different yarn type — we’re happy to customize it for you!"
+    },
+    {
+      question: "How long will it take to receive my order?",
+      answer: "We usually take around 1–2 weeks to prepare and ship your order, making sure every detail is just right! Custom pieces or larger quantity orders may take a little longer, but don’t worry, we’ll keep you in the loop throughout the process."
+    },
+    {
+      question: "How do I care for my crochet items?",
+      answer: "To keep your crochet pieces looking their best, we recommend gentle hand washing with mild soap and water at room temperature. Lay flat to dry to maintain their shape. Avoid wringing, harsh detergents, or machine washing."
+    },
+    {
+      question: "Do you offer gift wrapping or packaging?",
+      answer: "Yes! Gift wrapping is available as an add-on. Just select the option when you're choosing your product.  We’ll make sure your order arrives looking extra special and ready to gift!"
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col font-sans scroll-smooth">
+    <div className="min-h-screen bg-[#F5F9FF] dark:from-gray-900 dark:to-gray-800 flex flex-col font-sans scroll-smooth">
       {/* Sticky Navbar */}
       <div
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
@@ -58,114 +84,236 @@ export default function Contact() {
       {/* Spacer to prevent content overlap */}
       <div className="h-16 sm:h-20"></div>
 
-      {/* Hero Section */}
-      <section className="w-full bg-gradient-to-r from-pink-600 to-pink-800 dark:from-pink-900 dark:to-pink-700 py-16 sm:py-24 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 text-center tracking-tight">
-          Contact Us
-        </h1>
-        <p className="text-lg sm:text-xl text-pink-100 max-w-3xl text-center leading-relaxed">
-          Have questions or want a custom order? Reach out, and let's create something special together!
-        </p>
+      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '40px',
+            fontWeight: 700,
+            color: '#22223B',
+            marginBottom: '1rem',
+            letterSpacing: '0.05em'
+          }}>
+            CONTACT US
+          </h2>
+          <p style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '20px',
+            fontWeight: 400,
+            color: '#22223B',
+            maxWidth: '100%',
+            margin: '0 auto',
+            lineHeight: '1.2',
+            letterSpacing: '0.03em'
+          }}>
+            Have question or want to connect with us?
+          </p>
+        </div>
       </section>
 
-      <main className="max-w-5xl mx-auto py-12 sm:py-16 px-4 sm:px-6 lg:px-8 flex-1">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-pink-600 dark:text-pink-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Send Us a Message
+      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 pb-8 -mt-13">
+        <div className="bg-white shadow-lg overflow-hidden">
+          <div className="flex flex-col sm:flex-row">
+            {/* Left side - Contact Information */}
+            <div className="bg-[#EFDFFF] p-8 sm:p-12 w-full sm:w-[400px] max-w-full flex flex-col">
+              <h2 className="text-2xl font-semibold text-black mb-8" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                Contact Information
               </h2>
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition duration-200"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    required
-                    placeholder="Enter your name"
-                  />
+              <div className="space-y-8 w-full max-w-sm">
+                <div className="flex items-start space-x-4">
+                  <div>
+                    <h3 className="text-base font-medium text-black mb-1" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
+                      Send an email
+                    </h3>
+                    <a 
+                      href="mailto:theloopydragon123@gmail.com" 
+                      className="text-black hover:text-gray-700 font-semibold text-sm hover:underline"
+                      style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
+                    >
+                      theloopydragon123@gmail.com
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div>
+                    <h3 className="text-base font-medium text-black mb-1" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
+                      DM on Instagram
+                    </h3>
+                    <a 
+                      href="https://instagram.com/theloopydragon" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-black hover:text-gray-700 font-semibold text-sm hover:underline"
+                      style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
+                    >
+                      @theloopydragon
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Right side - Contact Form */}
+            <div className="bg-white p-8 sm:p-12 pb-0 flex flex-col justify-start flex-1">
+              <h2 className="text-2xl font-semibold text-black mb-8 text-left" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                Drop us a Message
+              </h2>
+              <div className="space-y-6 pb-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
+                      Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-300 bg-[#F5F9FF] text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      placeholder="Full Name"
+                      style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
+                      Your email ID (to contact if needed) 
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      className="w-full px-4 py-3 border border-gray-300 bg-[#F5F9FF] text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="Enter a valid email ID"
+                      style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition duration-200"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    placeholder="Enter your email"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                  <label htmlFor="message" className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
                     Message
                   </label>
                   <textarea
                     id="message"
                     rows={5}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition duration-200 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 bg-[#F5F9FF] text-black focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none"
                     value={message}
-                    onChange={e => setMessage(e.target.value)}
+                    onChange={(e) => setMessage(e.target.value)}
                     required
-                    placeholder="Tell us about your inquiry or custom order"
+                    placeholder="Type in your message"
+                    style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="w-full bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-semibold text-base sm:text-lg transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={status === "sending"}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                  {status === "sending" ? "Sending..." : "Send Message"}
-                </button>
-                {status === "sent" && (
-                  <div className="text-green-600 dark:text-green-400 text-center bg-green-50 dark:bg-green-900/50 rounded-lg p-3">
-                    Message sent successfully! We'll get back to you soon.
-                  </div>
-                )}
-                {status === "error" && (
-                  <div className="text-red-500 dark:text-red-400 text-center bg-red-50 dark:bg-red-900/50 rounded-lg p-3">
-                    Failed to send message. Please try again.
-                  </div>
-                )}
-              </form>
-            </div>
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 text-pink-600 dark:text-pink-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Contact Information
-              </h2>
-              <div className="space-y-4 text-gray-600 dark:text-gray-300 text-sm sm:text-base">
-                <p>
-                  <span className="font-semibold">Email:</span> <a href="mailto:theloopydragon123@gmail.com" className="text-pink-600 dark:text-pink-400 hover:underline">theloopydragon123@gmail.com</a>
-                </p>
-                <p>
-                  <span className="font-semibold">WhatsApp:</span> <a href="https://wa.me/911234567890" className="text-pink-600 dark:text-pink-400 hover:underline">+91 1234567890</a>
-                </p>
-                <p>
-                  <span className="font-semibold">Hours:</span> Mon-Sat, 10:00 AM - 6:00 PM
-                </p>
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <button
+                    type="submit"
+                    className="w-full md:w-[calc(50%-0.5rem)] px-6 py-3 bg-[#D8B6FA] hover:bg-[#C8A6EA] text-black font-semibold text-base transition duration-200 border-0"
+                    disabled={status === "sending"}
+                    onClick={handleSubmit}
+                    style={{ 
+                      fontFamily: 'Montserrat, sans-serif', 
+                      letterSpacing: '0.02em',
+                      borderRadius: '0'
+                    }}
+                  >
+                    {status === "sending" ? "Sending..." : "Submit"}
+                  </button>
+                  {status === "sent" && (
+                    <p 
+                      className="text-sm text-green-600 md:self-center"
+                      style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}
+                    >
+                      Message sent successfully
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Frequently Asked Questions Section */}
+      {/* Frequently Asked Questions Section */}
+      <section className="w-full py-8 bg-[#F5F9FF]">
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Section Header */}
+          <div className="text-center mb-6">
+            <h2 
+              className="text-black mb-2"
+              style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontWeight: 650, // Using Bold (700) instead of 650
+                fontSize: 'clamp(20px, 2.5vw, 28px)',
+                lineHeight: '100%',
+                letterSpacing: '0%',
+                textTransform: 'capitalize'
+              }}
+            >
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          {/* FAQ Items */}
+          <div className="max-w-5xl mx-auto">
+            {faqs.map((faq, idx) => (
+              <div className="mb-4" key={idx}>
+                <div className="flex justify-between items-center py-2 gap-6">
+                  <h3 
+                    className="text-black flex-1"
+                    style={{
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 550, // Using Medium (500) - standard weight
+                      fontSize: 'clamp(13px, 1.4vw, 16px)',
+                      lineHeight: '120%',
+                      fontStyle: 'normal',
+                      fontStretch: 'normal',
+                      textRendering: 'optimizeLegibility',
+                      WebkitFontSmoothing: 'antialiased',
+                      MozOsxFontSmoothing: 'grayscale'
+                    }}
+                  >
+                    {faq.question}
+                  </h3>
+                  <button
+                    className="text-black text-xl w-6 h-6 flex items-center justify-center transition-transform duration-300"
+                    aria-label={openFaq === idx ? "Collapse" : "Expand"}
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    style={{ color: 'black' }}
+                  >
+                    <span 
+                      className="block transition-transform duration-300"
+                      style={{ transform: openFaq === idx ? 'rotate(45deg)' : 'rotate(0deg)' }}
+                    >
+                      +
+                    </span>
+                  </button>
+                </div>
+                <div 
+                  className="w-full border-t my-3" 
+                  style={{ borderColor: '#EFDEFF', height: '2px', width: '100%' }} 
+                ></div>
+                {/* Dropdown answer */}
+                {openFaq === idx && (
+                  <div
+                    className="text-black py-2 pl-2"
+                    style={{
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 400, // Using Regular (400) instead of 450
+                      fontSize: 'clamp(12px, 1.2vw, 15px)',
+                      lineHeight: '1.5',
+                    }}
+                  >
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      <br></br>
       <Footer />
     </div>
   );

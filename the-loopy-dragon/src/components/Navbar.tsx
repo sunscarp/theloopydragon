@@ -82,7 +82,7 @@ export default function Navbar() {
                 className={`${arapey.className}`}
                 style={{
                   fontSize: "clamp(16px, 1.3vw, 20px)",
-                  letterSpacing: "clamp(0.09em, 0.13vw, 0.16em)",
+                  letterSpacing: "clamp(0.15em, 0.2vw, 0.25em)", // Increased letter spacing
                   lineHeight: "100%",
                   color: "#000",
                   fontWeight: 400,
