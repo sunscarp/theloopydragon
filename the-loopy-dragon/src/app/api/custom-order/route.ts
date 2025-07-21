@@ -14,11 +14,22 @@ export async function POST(req: NextRequest) {
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
     const details = formData.get("details") as string;
+    const quantity = formData.get("quantity") as string;
+    const material = formData.get("material") as string;
     
-    const images: File[] = [];
-    for (let i = 0; i < 3; i++) {
-      const image = formData.get(`image${i}`) as File;
-      if (image) images.push(image);
+    // Validate required fields
+    if (!name || !email || !phone || !details) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Get image URLs instead of files
+    const imageUrls: string[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const imageUrl = formData.get(`imageUrl${i}`) as string;
+      if (imageUrl) imageUrls.push(imageUrl);
     }
 
     const transporter = nodemailer.createTransport({
@@ -31,22 +42,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Convert images to attachments
-    const attachments = await Promise.all(
-      images.map(async (image, index) => {
-        const buffer = Buffer.from(await image.arrayBuffer());
-        return {
-          filename: `pattern-${index + 1}.${image.type.split("/")[1]}`,
-          content: buffer,
-        };
-      })
-    );
+    const imageLinksHtml = imageUrls.length > 0 
+      ? `<p><b>Reference Images:</b></p><ul>${imageUrls.map((url, i) => `<li><a href="${url}">Image ${i + 1}</a></li>`).join('')}</ul>`
+      : '';
 
     await transporter.sendMail({
       from: `"${name}" <${email}>`,
       to: TO_EMAIL,
       subject: `Custom Order Request from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nDetails: ${details}`,
+      text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nDetails: ${details}\nQuantity: ${quantity}\nMaterial: ${material}${imageUrls.length > 0 ? '\nImage URLs: ' + imageUrls.join(', ') : ''}`,
       html: `
         <h2>Custom Order Request</h2>
         <p><b>Name:</b> ${name}</p>
@@ -54,16 +58,17 @@ export async function POST(req: NextRequest) {
         <p><b>Phone:</b> ${phone}</p>
         <p><b>Details:</b></p>
         <p>${details.replace(/\n/g, "<br/>")}</p>
-        ${attachments.length ? "<p><b>Attached Pattern Images:</b> " + attachments.length + "</p>" : ""}
+        <p><b>Quantity:</b> ${quantity}</p>
+        <p><b>Material:</b> ${material}</p>
+        ${imageLinksHtml}
       `,
-      attachments,
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Custom order API error:", error);
     return NextResponse.json(
-      { error: "Failed to send custom order" },
+      { error: "Failed to send custom order", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
