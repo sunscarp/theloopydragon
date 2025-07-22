@@ -57,18 +57,28 @@ function OrderSummaryContent() {
     ].join("|");
   };
 
-  // Get cart data from localStorage (client-side only)
-  let cartPriceMap: Record<string, number> = {};
-  if (typeof window !== "undefined") {
-    try {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      cart.forEach((cartItem: any) => {
-        const key = getCartKey(cartItem);
-        // Use the price from the cart (should be the base product price)
-        cartPriceMap[key] = Number(cartItem.Price) || 0;
-      });
-    } catch {}
-  }
+  // Helper to get product price by product name (or id if available)
+  const getBasePrice = (item: any) => {
+    // Try to get from item.Price first
+    if (typeof item.Price === "number" && !isNaN(item.Price)) return item.Price;
+    if (item.Price && !isNaN(Number(item.Price))) return Number(item.Price);
+    // Try to get from item["Base Price"] or item["Unit Price"]
+    if (item["Base Price"] && !isNaN(Number(item["Base Price"]))) return Number(item["Base Price"]);
+    if (item["Unit Price"] && !isNaN(Number(item["Unit Price"]))) return Number(item["Unit Price"]);
+    // Try to get from products array in localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const products = JSON.parse(localStorage.getItem("products") || "[]");
+        // Try to match by Product name or Product ID
+        let found = products.find((p: any) => p.Product === item.Product);
+        if (!found && item["Product ID"]) {
+          found = products.find((p: any) => p.id === item["Product ID"]);
+        }
+        if (found && found.Price) return Number(found.Price);
+      } catch {}
+    }
+    return 0;
+  };
 
   if (loading) {
     return (
@@ -141,22 +151,7 @@ function OrderSummaryContent() {
               </thead>
               <tbody>
                 {orders.map((item, idx) => {
-                  // Try to get base price from cart first
-                  const cartKey = getCartKey(item);
-                  let basePrice = cartPriceMap[cartKey];
-
-                  // Fallback to DB fields if not found in cart
-                  if (!basePrice || isNaN(basePrice) || basePrice === 0) {
-                    if (typeof item.Price === "number" && !isNaN(item.Price)) basePrice = item.Price;
-                    else if (item.Price && !isNaN(Number(item.Price))) basePrice = Number(item.Price);
-                    else if (item["Base Price"] && !isNaN(Number(item["Base Price"]))) basePrice = Number(item["Base Price"]);
-                    else if (item["Unit Price"] && !isNaN(Number(item["Unit Price"]))) basePrice = Number(item["Unit Price"]);
-                    else if (item["Total Price"] && item.Quantity && !isNaN(Number(item["Total Price"])) && !isNaN(Number(item.Quantity))) {
-                      basePrice = Number(item["Total Price"]) / Number(item.Quantity);
-                    } else {
-                      basePrice = 0;
-                    }
-                  }
+                  const basePrice = getBasePrice(item);
 
                   const isTrue = (v: any) => v === true || v === "true";
                   const addonDetails: { label: string; price: number; display: string }[] = [];
@@ -164,26 +159,41 @@ function OrderSummaryContent() {
                   if (isTrue(item.giftWrap)) addonDetails.push({ label: "Gift Wrap", price: 10, display: "+ Gift Wrap (+₹10)" });
                   if (isTrue(item.carMirror)) addonDetails.push({ label: "Car mirror accessory", price: 50, display: "+ Car mirror accessory (+₹50)" });
                   const addonUnitPrice = addonDetails.reduce((sum, a) => sum + a.price, 0);
-                  const unitPrice = basePrice + addonUnitPrice;
-                  const subtotal = unitPrice * Number(item.Quantity);
+
+                  // Calculate unit price and subtotal
+                  let unitPrice = basePrice + addonUnitPrice;
+                  let subtotal = unitPrice * Number(item.Quantity);
+
+                  // If "Total Price" is present and matches expected, use it
+                  if (
+                    item["Total Price"] &&
+                    Math.abs(Number(item["Total Price"]) - subtotal) < 0.01
+                  ) {
+                    subtotal = Number(item["Total Price"]);
+                    unitPrice = subtotal / Number(item.Quantity);
+                  }
+
                   return (
                     <tr key={idx} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600/50">
                       <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
                         <div>{item.Product}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {/* Show actual product price */}
                           Product Price: ₹{basePrice.toFixed(2)}
                           {addonUnitPrice > 0 && (
-                            <span className="ml-2 text-purple-500">
-                              + Addons ₹{addonUnitPrice}
+                            <span className="ml-1 text-purple-500">
+                              (+ Addons: ₹{addonUnitPrice})
                             </span>
                           )}
                         </div>
                         {(addonDetails.length > 0 || item.customMessage) && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {addonDetails.map(a => (
-                              <span key={a.label} className="mr-2">{a.display}</span>
-                            ))}
+                            {addonDetails.length > 0 && (
+                              <div>
+                                {addonDetails.map(a => (
+                                  <span key={a.label} className="mr-2">{a.label}</span>
+                                ))}
+                              </div>
+                            )}
                             {item.customMessage && (
                               <div>
                                 <span className="italic">Message:</span> {item.customMessage}
@@ -194,7 +204,6 @@ function OrderSummaryContent() {
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">{item.Quantity}</td>
                       <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
-                        {/* Show actual unit price (product + addons) */}
                         ₹{unitPrice.toFixed(2)}
                       </td>
                       <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">

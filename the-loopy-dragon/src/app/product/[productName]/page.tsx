@@ -105,27 +105,15 @@ export default function ProductPage() {
     if (product) fetchRelatedProducts();
   }, [product]);
 
-  const saveCartAddons = (productId: number, addons: { keyChain: boolean; giftWrap: boolean; carMirror: boolean; customMessage: string }) => {
-    if (typeof window !== "undefined") {
-      const prev = JSON.parse(localStorage.getItem("cartAddons") || "{}");
-      prev[productId] = addons;
-      localStorage.setItem("cartAddons", JSON.stringify(prev));
-      window.dispatchEvent(new CustomEvent("cartAddonsUpdated", { detail: prev }));
-    }
-  };
-
   const handleAddToCart = async () => {
     if (!product || (product.Quantity !== undefined && product.Quantity <= 0)) return;
     
     setAddingToCart(true);
     try {
-      saveCartAddons(product.id, { ...addOns, customMessage });
-      for (let i = 0; i < quantity; i++) {
-        await addToCart(product.id);
-      }
+      // Show the cart confirmation modal first without adding to cart
       setShowCartConfirmation(true);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('Error:', error);
     } finally {
       setAddingToCart(false);
     }
@@ -133,7 +121,10 @@ export default function ProductPage() {
 
   const handleRemoveFromCart = async () => {
     if (!product) return;
-    await removeFromCart(product.id);
+    // We need to generate the same cart key as used when adding to cart
+    // and pass that to removeFromCart instead of just the product ID
+    const cartKey = generateCartKey(product.id, { ...addOns, customMessage });
+    await removeFromCart(cartKey);
     setShowCartConfirmation(false);
   };
 
@@ -146,9 +137,16 @@ export default function ProductPage() {
   };
 
   const handleSubmitRequest = () => {
-    if (product) {
-      saveCartAddons(product.id, { ...addOns, customMessage });
-    }
+    if (!product) return;
+    
+    // Add the item with selected add-ons directly
+    addToCart(product.id, {
+      keyChain: addOns.keyChain,
+      giftWrap: addOns.giftWrap,
+      carMirror: addOns.carMirror,
+      customMessage: customMessage
+    });
+    
     setShowCartConfirmation(false);
   };
 
@@ -419,7 +417,7 @@ export default function ProductPage() {
                   <h1 
                     className="text-gray-900 leading-tight"
                     style={{ 
-                      fontFamily: 'Montserrat, sans-serif',
+                      fontFamily: 'Montserrat',
                       fontWeight: '600',
                       fontSize: isMobile ? '28px' : '40px'
                     }}
@@ -798,87 +796,108 @@ export default function ProductPage() {
                   <h3 className="text-black font-normal mb-2" style={{ fontFamily: 'Montserrat', fontSize: '14px' }}>Add Ons?</h3>
                   <div className="space-y-2">
                     {/* Key Chain Add-on */}
-                    <div className="flex items-center justify-between border border-gray-200 overflow-hidden" style={{ borderRadius: '0' }}>
+                    <div
+                      className={`flex items-center justify-between border border-gray-200 overflow-hidden cursor-pointer transition-colors ${
+                        addOns.keyChain ? 'bg-[#D8B6FA] border-[#D8B6FA]' : 'bg-white'
+                      }`}
+                      style={{ borderRadius: '0' }}
+                      onClick={() => setAddOns(prev => ({ ...prev, keyChain: !prev.keyChain }))}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={addOns.keyChain}
+                    >
                       <div className="flex items-center p-2 flex-1">
-                        <input
-                          type="checkbox"
-                          id="keychain"
-                          checked={addOns.keyChain}
-                          onChange={() => setAddOns(prev => ({ ...prev, keyChain: !prev.keyChain }))}
-                          className="mr-2"
-                        />
-                        <label htmlFor="keychain" className="text-black cursor-pointer font-normal" style={{ fontFamily: 'Montserrat', fontSize: '14px' }}>
+                        <span
+                          className="text-black font-normal"
+                          style={{ fontFamily: 'Montserrat', fontSize: '14px' }}
+                        >
                           Add a Key chain
-                        </label>
+                        </span>
                       </div>
-                      <button
-                        onClick={() => setAddOns(prev => ({ ...prev, keyChain: !prev.keyChain }))}
-                        className="text-black px-3 py-2 font-normal transition-colors"
-                        style={{ 
-                          borderRadius: '0', 
-                          fontFamily: 'Montserrat', 
+                      <div
+                        className={`px-3 py-2 font-normal transition-colors ${
+                          addOns.keyChain ? 'bg-[#C4A2E6] text-white' : 'bg-[#D8B6FA] text-black'
+                        }`}
+                        style={{
+                          borderRadius: '0',
+                          fontFamily: 'Montserrat',
                           fontSize: '14px',
-                          backgroundColor: '#D8B6FA'
+                          minWidth: '60px',
+                          textAlign: 'center'
                         }}
                       >
                         +₹10
-                      </button>
+                      </div>
                     </div>
 
                     {/* Gift Wrap Add-on */}
-                    <div className="flex items-center justify-between border border-gray-200 overflow-hidden" style={{ borderRadius: '0' }}>
+                    <div
+                      className={`flex items-center justify-between border border-gray-200 overflow-hidden cursor-pointer transition-colors ${
+                        addOns.giftWrap ? 'bg-[#D8B6FA] border-[#D8B6FA]' : 'bg-white'
+                      }`}
+                      style={{ borderRadius: '0' }}
+                      onClick={() => setAddOns(prev => ({ ...prev, giftWrap: !prev.giftWrap }))}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={addOns.giftWrap}
+                    >
                       <div className="flex items-center p-2 flex-1">
-                        <input
-                          type="checkbox"
-                          id="giftwrap"
-                          checked={addOns.giftWrap}
-                          onChange={() => setAddOns(prev => ({ ...prev, giftWrap: !prev.giftWrap }))}
-                          className="mr-2"
-                        />
-                        <label htmlFor="giftwrap" className="text-black cursor-pointer font-normal" style={{ fontFamily: 'Montserrat', fontSize: '14px' }}>
+                        <span
+                          className="text-black font-normal"
+                          style={{ fontFamily: 'Montserrat', fontSize: '14px' }}
+                        >
                           Gift Wrap
-                        </label>
+                        </span>
                       </div>
-                      <button
-                        onClick={() => setAddOns(prev => ({ ...prev, giftWrap: !prev.giftWrap }))}
-                        className="text-black px-3 py-2 font-normal transition-colors"
-                        style={{ 
-                          borderRadius: '0', 
-                          fontFamily: 'Montserrat', 
+                      <div
+                        className={`px-3 py-2 font-normal transition-colors ${
+                          addOns.giftWrap ? 'bg-[#C4A2E6] text-white' : 'bg-[#D8B6FA] text-black'
+                        }`}
+                        style={{
+                          borderRadius: '0',
+                          fontFamily: 'Montserrat',
                           fontSize: '14px',
-                          backgroundColor: '#D8B6FA'
+                          minWidth: '60px',
+                          textAlign: 'center'
                         }}
                       >
                         +₹10
-                      </button>
+                      </div>
                     </div>
 
                     {/* Car Mirror Add-on */}
-                    <div className="flex items-center justify-between border border-gray-200 overflow-hidden" style={{ borderRadius: '0' }}>
+                    <div
+                      className={`flex items-center justify-between border border-gray-200 overflow-hidden cursor-pointer transition-colors ${
+                        addOns.carMirror ? 'bg-[#D8B6FA] border-[#D8B6FA]' : 'bg-white'
+                      }`}
+                      style={{ borderRadius: '0' }}
+                      onClick={() => setAddOns(prev => ({ ...prev, carMirror: !prev.carMirror }))}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={addOns.carMirror}
+                    >
                       <div className="flex items-center p-2 flex-1">
-                        <input
-                          type="checkbox"
-                          id="carMirror"
-                          checked={addOns.carMirror}
-                          onChange={() => setAddOns(prev => ({ ...prev, carMirror: !prev.carMirror }))}
-                          className="mr-2"
-                        />
-                        <label htmlFor="carMirror" className="text-black cursor-pointer font-normal" style={{ fontFamily: 'Montserrat', fontSize: '14px' }}>
+                        <span
+                          className="text-black font-normal"
+                          style={{ fontFamily: 'Montserrat', fontSize: '14px' }}
+                        >
                           Car mirror accessory
-                        </label>
+                        </span>
                       </div>
-                      <button
-                        onClick={() => setAddOns(prev => ({ ...prev, carMirror: !prev.carMirror }))}
-                        className="text-black px-3 py-2 font-normal transition-colors"
-                        style={{ 
-                          borderRadius: '0', 
-                          fontFamily: 'Montserrat', 
+                      <div
+                        className={`px-3 py-2 font-normal transition-colors ${
+                          addOns.carMirror ? 'bg-[#C4A2E6] text-white' : 'bg-[#D8B6FA] text-black'
+                        }`}
+                        style={{
+                          borderRadius: '0',
+                          fontFamily: 'Montserrat',
                           fontSize: '14px',
-                          backgroundColor: '#D8B6FA'
+                          minWidth: '60px',
+                          textAlign: 'center'
                         }}
                       >
                         +₹50
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -910,10 +929,7 @@ export default function ProductPage() {
 
                 {/* Submit Button */}
                 <button
-                  onClick={() => {
-                    handleSubmitRequest();
-                    setShowCartConfirmation(false);
-                  }}
+                  onClick={handleSubmitRequest}
                   className="w-full text-black font-normal py-3 px-4 transition-colors"
                   style={{ 
                     borderRadius: '0', 
@@ -922,7 +938,7 @@ export default function ProductPage() {
                     backgroundColor: '#EFDFFF'
                   }}
                 >
-                  Submit Request
+                  Update Cart
                 </button>
               </div>
             </div>
@@ -958,3 +974,16 @@ export default function ProductPage() {
     </>
   );
 }
+
+// Add helper function to generate cart key (same as in CartContext)
+const generateCartKey = (id: number, addons?: any): string => {
+  if (!addons) return `${id}`;
+  
+  // Create a consistent string representation of the add-ons
+  const keyChain = addons.keyChain ? '1' : '0';
+  const giftWrap = addons.giftWrap ? '1' : '0';
+  const carMirror = addons.carMirror ? '1' : '0';
+  const message = addons.customMessage?.substring(0, 10) || '';
+  
+  return `${id}_${keyChain}${giftWrap}${carMirror}_${message}`;
+};

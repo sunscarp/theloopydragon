@@ -9,13 +9,9 @@ import OrderSummary from "@/components/OrderSummary";
 export default function CheckoutPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [cart, setCart] = useState<{ [id: string]: number }>({});
-  const [products, setProducts] = useState<any[]>([]);
+  const { cart, products, cartAddons, shippingInfo, clearCart, getProductIdFromCartKey } = useCart();
   const [subtotal, setSubtotal] = useState(0);
-  const [shippingCost, setShippingCost] = useState(0);
   const [total, setTotal] = useState(0);
-  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
-  const { cartAddons } = useCart();
 
   // Form fields
   const [name, setName] = useState("");
@@ -37,156 +33,34 @@ export default function CheckoutPage() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Pre-fill pincode from shipping info
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedCart = localStorage.getItem("cart");
-      if (storedCart) setCart(JSON.parse(storedCart));
-      const storedProducts = localStorage.getItem("products");
-      if (storedProducts) setProducts(JSON.parse(storedProducts));
+    if (shippingInfo.pincode) {
+      setPincode(shippingInfo.pincode);
     }
-  }, []);
+  }, [shippingInfo.pincode]);
 
+  // Calculate subtotal and total
   useEffect(() => {
     const cartItems = Object.entries(cart)
-      .map(([id, qty]) => {
-        const product = products.find((p) => p.id === Number(id));
-        const addons = cartAddons[id] || {};
+      .map(([cartKey, qty]) => {
+        const productId = getProductIdFromCartKey(cartKey);
+        const product = products.find((p) => p.id === productId);
+        const addons = cartAddons[cartKey] || {};
         const addonUnitPrice =
           (addons.keyChain ? 10 : 0) +
           (addons.giftWrap ? 10 : 0) +
           (addons.carMirror ? 50 : 0);
         return product ? { ...product, quantity: qty, addonUnitPrice, totalPrice: (product.Price + addonUnitPrice) * qty } : null;
       })
-      .filter(Boolean) as Array<{ Price: number; quantity: number; addonUnitPrice: number; totalPrice: number }>;
+      .filter(Boolean);
+
     const calculatedSubtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
     setSubtotal(calculatedSubtotal);
-  }, [cart, products, cartAddons]);
 
-  useEffect(() => {
-    setTotal(subtotal + (subtotal > 1000 ? 0 : shippingCost));
-  }, [subtotal, shippingCost]);
-
-  // Add this function to fetch complete product data
-  const fetchProductDetails = async (productIds: string[]) => {
-    const { data, error } = await supabase
-      .from('Inventory')
-      .select('*')
-      .in('id', productIds.map(Number));
-    
-    if (error) {
-      console.error('Error fetching product details:', error);
-      return;
-    }
-
-    console.log('Fetched products:', data); // Debug log
-    if (data) {
-      setProducts(data);
-      localStorage.setItem('products', JSON.stringify(data));
-    }
-  };
-
-  // Update the useEffect for cart/products
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedCart = localStorage.getItem("cart");
-      if (storedCart) {
-        const cartData = JSON.parse(storedCart);
-        setCart(cartData);
-        // Fetch fresh product data from Supabase
-        fetchProductDetails(Object.keys(cartData));
-      }
-    }
-  }, []);
-
-  // Make shipping free if subtotal > 1000
-  useEffect(() => {
-    if (subtotal > 1000) {
-      setShippingCost(0);
-    }
-  }, [subtotal]);
-
-  // Calculate total volumetric weight and physical weight
-  const calculateWeights = () => {
-    const details = Object.entries(cart).map(([id, qty]) => {
-      const product = products.find((p) => p.id === Number(id));
-      const length = Number(product?.Length || 10); // cm
-      const width = Number(product?.Width || 10);   // cm
-      const height = Number(product?.Height || 10);  // cm
-      const weight = Number(product?.Weight || 500); // grams
-      
-      // Calculate per item
-      const volumetricWeight = (length * width * height) / 4000; // volumetric weight in kg
-      const physicalWeight = weight / 1000; // physical weight in kg
-      
-      // Multiply by quantity
-      const totalVolumetricWeight = volumetricWeight * qty;
-      const totalPhysicalWeight = physicalWeight * qty;
-
-      return {
-        id,
-        name: product?.Product,
-        dimensions: `${length}x${width}x${height}cm`,
-        volumetricWeight: totalVolumetricWeight,
-        physicalWeight: totalPhysicalWeight
-      };
-    });
-
-    // Use higher of volumetric or physical weight
-    const totalVolumetricWeight = details.reduce((sum, item) => sum + item.volumetricWeight, 0);
-    const totalPhysicalWeight = details.reduce((sum, item) => sum + item.physicalWeight, 0);
-    const chargeableWeight = Math.max(totalVolumetricWeight, totalPhysicalWeight);
-
-    console.log('Weight details:', {
-      items: details,
-      totalVolumetric: totalVolumetricWeight,
-      totalPhysical: totalPhysicalWeight,
-      chargeable: chargeableWeight
-    });
-
-    return {
-      weightInGrams: Math.ceil(chargeableWeight * 1000), // Convert to grams
-      dimensions: details.map(d => d.dimensions)
-    };
-  };
-
-  // Calculate Delhivery shipping cost
-  const calculateShippingCost = async (destinationPincode: string) => {
-    if (!destinationPincode || destinationPincode.length !== 6) {
-      setShippingCost(0);
-      return;
-    }
-    
-    setIsCalculatingShipping(true);
-    try {
-      const { weightInGrams, dimensions } = calculateWeights();
-      
-      const response = await fetch(`/api/shipping?d_pin=${destinationPincode}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('Shipping API Error:', data.error);
-        setShippingCost(50);
-        return;
-      }
-
-      setShippingCost(data.total || 50);
-    } catch (error) {
-      console.error('Shipping calculation error:', error);
-      setShippingCost(50);
-    } finally {
-      setIsCalculatingShipping(false);
-    }
-  };
-
-  // Handle pincode change and calculate shipping
-  const handlePincodeChange = (value: string) => {
-    setPincode(value);
-    if (value.length === 6 && /^\d{6}$/.test(value)) {
-      calculateShippingCost(value);
-    } else {
-      setShippingCost(0);
-    }
-  };
+    const finalShippingCost = calculatedSubtotal >= 1000 ? 0 : shippingInfo.shippingCost;
+    setTotal(calculatedSubtotal + finalShippingCost);
+  }, [cart, products, cartAddons, shippingInfo.shippingCost, getProductIdFromCartKey]);
 
   const validate = () => {
     if (!name.trim() || !address.trim() || !pincode.trim() || !phone.trim() || !email.trim()) {
@@ -201,6 +75,13 @@ export default function CheckoutPage() {
       setError("Please enter a valid 10-digit phone number.");
       return false;
     }
+
+    // Check if user changed pincode in checkout form
+    if (pincode !== shippingInfo.pincode) {
+      setError("Pincode doesn't match the one used for shipping calculation. Please go back to cart and recalculate shipping.");
+      return false;
+    }
+
     setError(null);
     return true;
   };
@@ -211,6 +92,7 @@ export default function CheckoutPage() {
       return;
     }
     if (!validate()) return;
+
     try {
       const response = await fetch("/api/razorpay", {
         method: "POST",
@@ -232,17 +114,19 @@ export default function CheckoutPage() {
           let generatedOrderId = `ODR-${Math.floor(100000 + Math.random() * 900000)}`;
           let supabaseErrorMsg = "";
           const orderDate = new Date().toISOString();
+          const finalShippingCost = subtotal >= 1000 ? 0 : shippingInfo.shippingCost;
 
-          const productDetails = Object.entries(cart).map(([productId, qty]) => {
-            const product = products.find((p) => p.id === Number(productId));
+          const productDetails = Object.entries(cart).map(([cartKey, qty]) => {
+            const productId = getProductIdFromCartKey(cartKey);
+            const product = products.find((p) => p.id === productId);
             if (!product) return null;
-            const addons = cartAddons[productId] || {};
+            const addons = cartAddons[cartKey] || {};
             const addonUnitPrice =
               (addons.keyChain ? 10 : 0) +
               (addons.giftWrap ? 10 : 0) +
               (addons.carMirror ? 50 : 0);
             return {
-              Product: product.Product || product.ProductName || product.name,
+              Product: product.Product,
               Quantity: qty,
               Price: product.Price,
               keyChain: !!addons.keyChain,
@@ -250,7 +134,7 @@ export default function CheckoutPage() {
               carMirror: !!addons.carMirror,
               customMessage: addons.customMessage || "",
               "Total Price": ((product.Price + addonUnitPrice) * qty).toFixed(2),
-              "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2),
+              "Shipping Cost": finalShippingCost.toFixed(2),
             };
           }).filter(Boolean);
 
@@ -268,10 +152,11 @@ export default function CheckoutPage() {
             console.error("Supabase Your Profile Insert Error:", profileError);
           }
 
-          for (const [productId, qty] of Object.entries(cart)) {
-            const product = products.find((p) => p.id === Number(productId));
+          for (const [cartKey, qty] of Object.entries(cart)) {
+            const productId = getProductIdFromCartKey(cartKey);
+            const product = products.find((p) => p.id === productId);
             if (!product) continue;
-            const addons = cartAddons[productId] || {};
+            const addons = cartAddons[cartKey] || {};
             const addonUnitPrice =
               (addons.keyChain ? 10 : 0) +
               (addons.giftWrap ? 10 : 0) +
@@ -286,7 +171,7 @@ export default function CheckoutPage() {
                 Pincode: pincode,
                 Contact: phone,
                 Email: email,
-                Product: product.Product || product.ProductName || product.name,
+                Product: product.Product,
                 "Product ID": product.id,
                 Quantity: qty,
                 keyChain: !!addons.keyChain,
@@ -294,7 +179,7 @@ export default function CheckoutPage() {
                 carMirror: !!addons.carMirror,
                 customMessage: addons.customMessage || "",
                 "Total Price": totalPrice,
-                "Shipping Cost": subtotal > 1000 ? "0.00" : shippingCost.toFixed(2),
+                "Shipping Cost": shippingInfo.shippingCost.toFixed(2),
                 uid: user.id,
                 payment_id: response.razorpay_payment_id,
                 "Order Date": orderDate
@@ -307,11 +192,10 @@ export default function CheckoutPage() {
             }
             await supabase
               .from("Inventory")
-              .update({ Quantity: (product.Quantity || product.quantity || 1) - qty })
+              .update({ Quantity: (product.Quantity || 1) - qty })
               .eq("id", product.id);
           }
-          setCart({});
-          localStorage.removeItem("cart");
+          clearCart(); // This will clear cart, addons, and shipping info
           if (allSuccess) {
             router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
@@ -350,6 +234,22 @@ export default function CheckoutPage() {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white text-center mb-8 sm:mb-10">
               Checkout
             </h2>
+
+            {/* Shipping Info Display */}
+            {shippingInfo.pincode && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="font-medium">
+                    Delivery to: {shippingInfo.pincode} | Shipping: {subtotal >= 1000 ? 'FREE' : `₹${shippingInfo.shippingCost.toFixed(2)}`}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <form
               className="space-y-6"
               onSubmit={e => { e.preventDefault(); handlePayment(); }}
@@ -394,14 +294,14 @@ export default function CheckoutPage() {
                       placeholder="6-digit Pincode"
                       className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       value={pincode}
-                      onChange={e => handlePincodeChange(e.target.value)}
+                      onChange={e => setPincode(e.target.value)}
                       required
                       maxLength={6}
                       pattern="\d{6}"
                     />
-                    {isCalculatingShipping && (
-                      <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                        Calculating shipping cost...
+                    {pincode !== shippingInfo.pincode && pincode.length === 6 && (
+                      <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                        ⚠️ This pincode differs from shipping calculation. Please recalculate in cart.
                       </p>
                     )}
                   </div>
@@ -437,14 +337,14 @@ export default function CheckoutPage() {
                   />
                 </div>
               </div>
-              
+
               {/* Order Summary */}
               <OrderSummary
                 cart={cart}
                 products={products}
                 cartAddons={cartAddons}
                 subtotal={subtotal}
-                shippingCost={shippingCost}
+                shippingCost={subtotal >= 1000 ? 0 : shippingInfo.shippingCost}
                 total={total}
               />
 
@@ -455,13 +355,12 @@ export default function CheckoutPage() {
               )}
               <button
                 type="submit"
-                disabled={isCalculatingShipping}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold text-lg transition duration-200 flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {isCalculatingShipping ? 'Calculating...' : 'Pay with Razorpay'}
+                Pay with Razorpay
               </button>
             </form>
           </div>
