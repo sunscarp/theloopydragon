@@ -55,7 +55,7 @@ export default function CheckoutPage() {
       })
       .filter(Boolean);
 
-    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + (item ? item.totalPrice : 0), 0);
     setSubtotal(calculatedSubtotal);
 
     const finalShippingCost = calculatedSubtotal >= 1000 ? 0 : shippingInfo.shippingCost;
