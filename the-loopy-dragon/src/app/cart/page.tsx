@@ -6,6 +6,7 @@ import { supabase } from "@/utils/supabase";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { SPECIAL_OFFER_PRODUCTS } from "@/utils/dragonOffers";
 
 declare global {
   interface Window {
@@ -29,7 +30,9 @@ export default function CartPage() {
     shippingInfo,
     updateShippingInfo,
     calculateShipping,
-    getProductIdFromCartKey
+    getProductIdFromCartKey,
+    activeDragonOffer,
+    calculateOrderTotals
   } = useCart();
 
   // Handle scroll effect for navbar
@@ -86,27 +89,36 @@ export default function CartPage() {
       Object.entries(cart)
         .map(([cartKey, qty]) => {
           const productId = getProductIdFromCartKey(cartKey);
-          const product = products.find((p) => p.id === productId);
+          
+          // Check if it's a special offer product
+          const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+          let product;
+          
+          if (specialOffer) {
+            product = specialOffer;
+          } else {
+            product = products.find((p) => p.id === productId);
+          }
+          
+          if (!product) return null;
+          
           const addons = cartAddons[cartKey] || {};
-          // Calculate addon price per unit
           const addonUnitPrice =
             (addons.keyChain ? 10 : 0) +
             (addons.giftWrap ? 10 : 0) +
             (addons.carMirror ? 50 : 0);
-          return product
-            ? {
-                ...product,
-                cartKey, // Store the cart key for updates and removal
-                quantity: qty,
-                addons,
-                addonUnitPrice,
-                totalPrice: (product.Price + addonUnitPrice) * qty,
-              }
-            : null;
+          return {
+            ...product,
+            cartKey,
+            quantity: qty,
+            addons,
+            addonUnitPrice,
+            totalPrice: (product.Price + addonUnitPrice) * qty,
+          };
         })
         .filter(Boolean) as Array<{
           id: number;
-          cartKey: string; // Added cartKey
+          cartKey: string;
           Product: string;
           Price: number;
           Quantity: number;
@@ -123,9 +135,16 @@ export default function CartPage() {
           Width?: number;
           Height?: number;
           Weight?: number;
+          isSpecialOffer?: boolean;
         }>,
+
     [cart, products, cartAddons, getProductIdFromCartKey]
   );
+
+  // Calculate totals using the new function
+  const orderTotals = calculateOrderTotals();
+  const { subtotal, dragonDiscount, finalTotal } = orderTotals;
+  const freeItems: any = orderTotals.freeItems ?? [];
 
   // Calculate total including add-ons
   const total = cartItems.reduce(
@@ -144,7 +163,7 @@ export default function CartPage() {
     }
   };
 
-  const grandTotal = total + shippingInfo.shippingCost;
+  const grandTotal = finalTotal + shippingInfo.shippingCost;
 
   const handleProceedToCheckout = () => {
     if (!user) {
@@ -152,6 +171,23 @@ export default function CartPage() {
       router.push("/login?redirect=/cart&checkout=true");
       return;
     }
+    
+    // Check if pincode is provided and valid
+    if (!shippingInfo.pincode || shippingInfo.pincode.length !== 6) {
+      alert("Please enter a valid 6-digit pincode to calculate shipping before checkout.");
+      return;
+    }
+    
+    // Check if there are any paid items in cart
+    const hasPaidItems = cartItems.some(item => 
+      !item.isSpecialOffer && !freeItems.includes(item.cartKey)
+    );
+    
+    if (!hasPaidItems) {
+      alert("You cannot checkout with only free items. Please add at least one paid item to your cart.");
+      return;
+    }
+    
     router.push("/checkout");
   };
 
@@ -345,15 +381,33 @@ export default function CartPage() {
                       {/* Product */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{
-                          width: '130px', // Increased from 110px
-                          height: '130px', // Increased from 110px
+                          width: '130px',
+                          height: '130px',
                           backgroundColor: '#F3F4F6',
                           borderRadius: '0',
                           overflow: 'hidden',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          position: 'relative'
                         }}>
+                          {/* Special offer badge */}
+                          {item.isSpecialOffer && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '4px',
+                              right: '4px',
+                              backgroundColor: '#059669',
+                              color: 'white',
+                              fontSize: '10px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              zIndex: 1
+                            }}>
+                              FREE
+                            </div>
+                          )}
                           {(() => {
                             const images = [
                               item.ImageUrl1,
@@ -372,7 +426,9 @@ export default function CartPage() {
                               );
                             }
                             return (
-                              <span style={{ fontSize: '2rem', opacity: 0.7 }}>🧶</span>
+                              <span style={{ fontSize: '2rem', opacity: 0.7 }}>
+                                {item.isSpecialOffer ? '🎁' : '🧶'}
+                              </span>
                             );
                           })()}
                         </div>
@@ -385,6 +441,19 @@ export default function CartPage() {
                             marginBottom: '0.25rem'
                           }}>
                             {item.Product}
+                            {item.isSpecialOffer && (
+                              <span style={{
+                                marginLeft: '0.5rem',
+                                fontSize: '12px',
+                                backgroundColor: '#059669',
+                                color: 'white',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold'
+                              }}>
+                                Fire Offer
+                              </span>
+                            )}
                           </div>
                           {(item.addons?.keyChain || item.addons?.giftWrap || item.addons?.carMirror || item.addons?.customMessage) && (
                             <div style={{
@@ -407,7 +476,7 @@ export default function CartPage() {
                             color: '#6B7280',
                             marginTop: '0.25rem'
                           }}>
-                            ₹{item.Price.toFixed(2)} each
+                            {item.isSpecialOffer ? 'FREE' : `₹${item.Price.toFixed(2)} each`}
                             {item.addonUnitPrice > 0 && (
                               <span style={{ marginLeft: '0.5rem', color: '#8B5CF6' }}>
                                 + Addons ₹{item.addonUnitPrice}
@@ -418,58 +487,72 @@ export default function CartPage() {
                       </div>
                       {/* Quantity */}
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <button
-                          onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: '#F9FAFB',
-                            border: 'none',
-                            borderRadius: '0',
-                            cursor: 'pointer',
+                        {item.isSpecialOffer ? (
+                          // Special offer items can't have quantity changed
+                          <span style={{
                             fontFamily: 'Montserrat, sans-serif',
-                            fontSize: '18px',
+                            fontSize: '16px',
                             fontWeight: 600,
-                            color: '#374151'
-                          }}
-                          className="hover:bg-gray-100"
-                        >
-                          −
-                        </button>
-                        <span style={{
-                          width: '40px',
-                          textAlign: 'center',
-                          fontFamily: 'Montserrat, sans-serif',
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          color: '#22223B'
-                        }}>
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: '#F9FAFB',
-                            border: 'none',
-                            borderRadius: '0',
-                            cursor: 'pointer',
-                            fontFamily: 'Montserrat, sans-serif',
-                            fontSize: '18px',
-                            fontWeight: 600,
-                            color: '#374151'
-                          }}
-                          className="hover:bg-gray-100"
-                        >
-                          +
-                        </button>
+                            color: '#22223B'
+                          }}>
+                            {item.quantity}
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#F9FAFB',
+                                border: 'none',
+                                borderRadius: '0',
+                                cursor: 'pointer',
+                                fontFamily: 'Montserrat, sans-serif',
+                                fontSize: '18px',
+                                fontWeight: 600,
+                                color: '#374151'
+                              }}
+                              className="hover:bg-gray-100"
+                            >
+                              −
+                            </button>
+                            <span style={{
+                              width: '40px',
+                              textAlign: 'center',
+                              fontFamily: 'Montserrat, sans-serif',
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              color: '#22223B'
+                            }}>
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#F9FAFB',
+                                border: 'none',
+                                borderRadius: '0',
+                                cursor: 'pointer',
+                                fontFamily: 'Montserrat, sans-serif',
+                                fontSize: '18px',
+                                fontWeight: 600,
+                                color: '#374151'
+                              }}
+                              className="hover:bg-gray-100"
+                            >
+                              +
+                            </button>
+                          </>
+                        )}
                       </div>
                       {/* Total */}
                       <div style={{
@@ -479,7 +562,7 @@ export default function CartPage() {
                         fontWeight: 700,
                         color: '#22223B'
                       }}>
-                        ₹{item.totalPrice.toFixed(2)}
+                        {(item.isSpecialOffer || freeItems.includes(item.cartKey)) ? 'FREE' : `₹${item.totalPrice.toFixed(2)}`}
                       </div>
                       {/* Remove Button */}
                       <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -583,9 +666,47 @@ export default function CartPage() {
                         fontWeight: 600,
                         color: '#22223B'
                       }}>
-                        ₹{total.toFixed(2)}
+                        ₹{subtotal.toFixed(2)}
                       </span>
                     </div>
+                    
+                    {/* Fire Offer Discount */}
+                    {activeDragonOffer && dragonDiscount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{
+                          fontFamily: 'Montserrat, sans-serif',
+                          fontSize: '16px',
+                          color: '#059669'
+                        }}>
+                          {activeDragonOffer.title}
+                        </span>
+                        <span style={{
+                          fontFamily: 'Montserrat, sans-serif',
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          color: '#059669'
+                        }}>
+                          -₹{dragonDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Free Product Items Notice */}
+                    {cartItems.some(item => item.isSpecialOffer) && (
+                      <div style={{
+                        backgroundColor: '#F0FDF4',
+                        border: '1px solid #10B981',
+                        borderRadius: '4px',
+                        padding: '0.75rem',
+                        fontSize: '14px',
+                        color: '#059669',
+                        fontFamily: 'Montserrat, sans-serif',
+                        textAlign: 'center'
+                      }}>
+                        You have {cartItems.filter(item => item.isSpecialOffer).length} free item(s) in your cart!
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{
                         fontFamily: 'Montserrat, sans-serif',
@@ -598,12 +719,12 @@ export default function CartPage() {
                         fontFamily: 'Montserrat, sans-serif',
                         fontSize: '16px',
                         fontWeight: 600,
-                        color: total >= 1000 ? '#10B981' : '#22223B'
+                        color: finalTotal >= 1000 ? '#10B981' : '#22223B'
                       }}>
-                        {total >= 1000 ? 'FREE' : (shippingInfo.pincode && shippingInfo.pincode.length === 6 ? `₹${shippingInfo.shippingCost.toFixed(2)}` : 'Enter pincode')}
+                        {finalTotal >= 1000 ? 'FREE' : (shippingInfo.pincode && shippingInfo.pincode.length === 6 ? `₹${shippingInfo.shippingCost.toFixed(2)}` : 'Enter pincode')}
                       </span>
                     </div>
-                    {total >= 1000 && (
+                    {finalTotal >= 1000 && (
                       <div style={{
                         backgroundColor: '#F0FDF4',
                         border: '1px solid #10B981',

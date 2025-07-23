@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { getActiveDragonOffer, clearActiveDragonOffer, calculateDiscountAmount, SPECIAL_OFFER_PRODUCTS, type DragonOffer } from "@/utils/dragonOffers";
 
 type Product = {
   id: number;
@@ -39,7 +40,7 @@ type ProductAddons = {
 type CartContextType = {
   cart: { [cartKey: string]: number };
   products: Product[];
-  addToCart: (id: number, addons?: ProductAddons) => void;
+  addToCart: (id: number, addons?: ProductAddons, quantity?: number) => void;
   removeFromCart: (cartKey: string) => void;
   updateQuantity: (cartKey: string, quantity: number) => void;
   clearCart: () => void;
@@ -49,6 +50,14 @@ type CartContextType = {
   updateShippingInfo: (info: Partial<ShippingInfo>) => void;
   calculateShipping: (pincode: string, cartItems: any[]) => Promise<void>;
   getProductIdFromCartKey: (cartKey: string) => number;
+  activeDragonOffer: DragonOffer | null;
+  calculateOrderTotals: () => {
+    subtotal: number;
+    dragonDiscount: number;
+    finalTotal: number;
+    freeItems: string[]; // <-- Add this line
+  };
+  hasPaidItems: () => boolean;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -165,6 +174,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isCalculating: false,
   });
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeDragonOffer, setActiveDragonOffer] = useState<DragonOffer | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -173,6 +183,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCartAddons(loadCartAddonsFromStorage());
       setShippingInfo(loadShippingInfoFromStorage());
       setIsLoaded(true);
+
+      // Load active dragon offer
+      setActiveDragonOffer(getActiveDragonOffer());
 
       // Listen for both storage events AND custom product updates
       const handleStorage = (e: StorageEvent) => {
@@ -195,14 +208,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartAddons(e.detail);
       };
 
+      // Listen for dragon offer events
+      const handleDragonOfferApplied = (e: CustomEvent) => {
+        setActiveDragonOffer(e.detail);
+      };
+
+      const handleDragonOfferCleared = () => {
+        setActiveDragonOffer(null);
+      };
+
       window.addEventListener("storage", handleStorage);
       window.addEventListener("productsUpdated", handleProductUpdate as EventListener);
       window.addEventListener("cartAddonsUpdated", handleCartAddonsUpdate as EventListener);
+      window.addEventListener("dragonOfferApplied", handleDragonOfferApplied as EventListener);
+      window.addEventListener("dragonOfferCleared", handleDragonOfferCleared as EventListener);
 
       return () => {
         window.removeEventListener("storage", handleStorage);
         window.removeEventListener("productsUpdated", handleProductUpdate as EventListener);
         window.removeEventListener("cartAddonsUpdated", handleCartAddonsUpdate as EventListener);
+        window.removeEventListener("dragonOfferApplied", handleDragonOfferApplied as EventListener);
+        window.removeEventListener("dragonOfferCleared", handleDragonOfferCleared as EventListener);
       };
     }
   }, []);
@@ -290,17 +316,81 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addToCart = (id: number, addons?: ProductAddons) => {
-    const product = products.find((p) => p.id === id);
-    if (!product || (product.Quantity !== undefined && product.Quantity <= 0)) return;
+  // Helper to remove all Fire Offer items from cart
+  const removeAllFireOfferItems = () => {
+    setCart((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(cartKey => {
+        const productId = getProductIdFromCartKey(cartKey);
+        if (SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS]) {
+          delete updated[cartKey];
+        }
+      });
+      saveCartToStorage(updated);
+      return updated;
+    });
+    setCartAddons((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(cartKey => {
+        const productId = getProductIdFromCartKey(cartKey);
+        if (SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS]) {
+          delete updated[cartKey];
+        }
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cartAddons", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("cartAddonsUpdated", { detail: updated }));
+      }
+      return updated;
+    });
+  };
+
+  // Listen for dragon offer applied event to enforce only one Fire Offer
+  useEffect(() => {
+    const handleDragonOfferApplied = (e: CustomEvent) => {
+      const offer = e.detail;
+      // Remove all Fire Offer items from cart if new offer is not a free_product
+      if (offer.type === 'discount') {
+        removeAllFireOfferItems();
+      }
+      setActiveDragonOffer(offer);
+    };
+    window.addEventListener("dragonOfferApplied", handleDragonOfferApplied as EventListener);
+    return () => {
+      window.removeEventListener("dragonOfferApplied", handleDragonOfferApplied as EventListener);
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  const addToCart = (id: number, addons?: ProductAddons, quantity: number = 1) => {
+    // Check if it's a special offer product
+    const isSpecialOffer = SPECIAL_OFFER_PRODUCTS[id as keyof typeof SPECIAL_OFFER_PRODUCTS];
+
+    // If adding a Fire Offer product, remove all previous Fire Offer items and clear any discount offer
+    if (isSpecialOffer) {
+      removeAllFireOfferItems();
+      // Remove any active discount offer
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("activeDragonOffer");
+        window.dispatchEvent(new CustomEvent("dragonOfferCleared"));
+      }
+    }
+
+    let product;
+    if (isSpecialOffer) {
+      product = isSpecialOffer;
+    } else {
+      product = products.find((p) => p.id === id);
+      if (!product || (product.Quantity !== undefined && product.Quantity <= 0)) return;
+    }
     
     // Generate cart key
     const cartKey = generateCartKey(id, addons);
     
     setCart((prev) => {
       const newCart = { ...prev };
-      // If item exists, increment quantity, otherwise set to 1
-      newCart[cartKey] = (newCart[cartKey] || 0) + 1;
+      // Add the specified quantity instead of always adding 1
+      newCart[cartKey] = (newCart[cartKey] || 0) + quantity;
       saveCartToStorage(newCart);
       return newCart;
     });
@@ -383,10 +473,85 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveCartToStorage({});
     setCartAddons({});
     setShippingInfo({ pincode: "", shippingCost: 0, isCalculating: false });
+    clearActiveDragonOffer();
+    setActiveDragonOffer(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("cartAddons");
       localStorage.removeItem("shippingInfo");
     }
+  };
+
+  const calculateOrderTotals = () => {
+    const cartItems = Object.entries(cart)
+      .map(([cartKey, qty]) => {
+        const productId = getProductIdFromCartKey(cartKey);
+        
+        // Check if it's a special offer product
+        const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+        let product;
+        
+        if (specialOffer) {
+          product = specialOffer;
+        } else {
+          product = products.find((p) => p.id === productId);
+        }
+        
+        if (!product) return null;
+        
+        const addons = cartAddons[cartKey] || {};
+        const addonUnitPrice =
+          (addons.keyChain ? 10 : 0) +
+          (addons.giftWrap ? 10 : 0) +
+          (addons.carMirror ? 50 : 0);
+        
+        return {
+          ...product,
+          cartKey,
+          quantity: qty,
+          addons,
+          addonUnitPrice,
+          totalPrice: (product.Price + addonUnitPrice) * qty,
+        };
+      })
+      .filter(Boolean);
+
+    // Only allow one Fire Offer: if activeDragonOffer is a free_product, ignore any discount, and vice versa
+    let dragonDiscount = 0;
+    let filteredCartItems = cartItems;
+    let freeItems: string[] = [];
+
+    if (activeDragonOffer) {
+      if (activeDragonOffer.type === 'discount') {
+        // Remove all Fire Offer products from cart if a discount offer is active
+        filteredCartItems = cartItems.filter(item => item && !SPECIAL_OFFER_PRODUCTS[item.id as keyof typeof SPECIAL_OFFER_PRODUCTS]);
+        dragonDiscount = calculateDiscountAmount(activeDragonOffer, filteredCartItems.reduce((sum, item) => sum + (item?.totalPrice || 0), 0));
+      } else if (activeDragonOffer.type === 'free_product') {
+        // Only allow the Fire Offer product, ignore any discount
+        dragonDiscount = 0;
+        // Mark the Fire Offer product as free
+        freeItems = filteredCartItems
+          .filter(item => item && SPECIAL_OFFER_PRODUCTS[item.id as keyof typeof SPECIAL_OFFER_PRODUCTS])
+          .map(item => item!.cartKey);
+      }
+    }
+
+    const subtotal = filteredCartItems.reduce((sum, item) => sum + (item?.totalPrice || 0), 0);
+    const finalTotal = Math.max(0, subtotal - dragonDiscount);
+
+    return {
+      subtotal,
+      dragonDiscount,
+      finalTotal,
+      freeItems
+    };
+  };
+
+  const hasPaidItems = () => {
+    return Object.keys(cart).some(cartKey => {
+      const productId = getProductIdFromCartKey(cartKey);
+      const isSpecialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+      return !isSpecialOffer;
+    });
   };
 
   const value: CartContextType = {
@@ -402,6 +567,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     updateShippingInfo,
     calculateShipping,
     getProductIdFromCartKey,
+    activeDragonOffer,
+    calculateOrderTotals,
+    hasPaidItems,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
@@ -414,3 +582,5 @@ export function useCart() {
   }
   return context;
 }
+
+// No UI changes needed here, but if you reference Tag: 'Dragon Offer' anywhere in your UI, update to 'Fire Offer'

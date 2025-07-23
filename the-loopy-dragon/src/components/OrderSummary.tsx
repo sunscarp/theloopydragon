@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useCart } from "@/contexts/CartContext";
+import { SPECIAL_OFFER_PRODUCTS, type DragonOffer } from "@/utils/dragonOffers";
 
 interface OrderSummaryProps {
   cart: { [cartKey: string]: number };
@@ -10,74 +11,156 @@ interface OrderSummaryProps {
   subtotal: number;
   shippingCost: number;
   total: number;
+  activeDragonOffer?: DragonOffer | null;
+  dragonDiscount?: number;
+  buyXGetYDiscount?: number;
 }
 
-export default function OrderSummary({ cart, products, cartAddons, subtotal, shippingCost, total }: OrderSummaryProps) {
+export default function OrderSummary({ 
+  cart, 
+  products, 
+  cartAddons, 
+  subtotal, 
+  shippingCost, 
+  total,
+  activeDragonOffer,
+  dragonDiscount = 0,
+  buyXGetYDiscount = 0
+}: OrderSummaryProps) {
   const { getProductIdFromCartKey } = useCart();
 
+  // Calculate the subtotal after dragon discounts
+  const totalDragonDiscount = dragonDiscount + buyXGetYDiscount;
+  const subtotalAfterDiscount = subtotal - totalDragonDiscount;
+  const finalTotal = subtotalAfterDiscount + shippingCost;
+
+  const cartItems = Object.entries(cart).map(([cartKey, qty]) => {
+    const productId = getProductIdFromCartKey(cartKey);
+    
+    // Check if it's a special offer product
+    const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+    let product;
+    
+    if (specialOffer) {
+      product = specialOffer;
+    } else {
+      product = products.find((p) => p.id === productId);
+    }
+    
+    if (!product) return null;
+    
+    const addons = cartAddons[cartKey] || {};
+    const addonUnitPrice =
+      (addons.keyChain ? 10 : 0) +
+      (addons.giftWrap ? 10 : 0) +
+      (addons.carMirror ? 50 : 0);
+    
+    return {
+      ...product,
+      cartKey,
+      quantity: qty,
+      addons,
+      addonUnitPrice,
+      totalPrice: (product.Price + addonUnitPrice) * qty,
+    };
+  }).filter(Boolean);
+
   return (
-    <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h3>
+    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Order Summary</h3>
       
-      <div className="space-y-4 mb-6">
-        {Object.entries(cart).map(([cartKey, qty]) => {
-          const productId = getProductIdFromCartKey(cartKey);
-          const product = products.find(p => p.id === productId);
-          const addons = cartAddons[cartKey] || {};
-          
-          if (!product) return null;
-          
-          const addonUnitPrice = 
-            (addons.keyChain ? 10 : 0) +
-            (addons.giftWrap ? 10 : 0) +
-            (addons.carMirror ? 50 : 0);
-          
-          const basePrice = product.Price; // Use actual base product price
-          const itemTotal = (basePrice + addonUnitPrice) * qty;
-          
-          return (
-            <div key={cartKey} className="flex justify-between text-sm">
-              <div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {product.Product} × {qty}
+      {/* Cart Items */}
+      <div className="space-y-3">
+        {cartItems.map((item) => (
+          <div key={item.cartKey} className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {item.Product}
                 </span>
-                {(addons.keyChain || addons.giftWrap || addons.carMirror || addons.customMessage) && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    <div>
-                      Product Price: ₹{basePrice.toFixed(2)}
-                      {addonUnitPrice > 0 && <span className="ml-1 text-purple-600">(+ Addons: ₹{addonUnitPrice})</span>}
-                    </div>
-                    {addons.keyChain && <span className="mr-1">+ Keychain</span>}
-                    {addons.giftWrap && <span className="mr-1">+ Gift Wrap</span>}
-                    {addons.carMirror && <span>+ Car Mirror</span>}
-                    {addons.customMessage && (
-                      <div className="italic truncate max-w-[200px]">
-                        Message: "{addons.customMessage}"
-                      </div>
-                    )}
-                  </div>
+                {item.isSpecialOffer && (
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                    FREE
+                  </span>
                 )}
               </div>
-              <span className="text-gray-900 dark:text-gray-100">₹{itemTotal.toFixed(2)}</span>
+              {item.addons && (Object.values(item.addons).some(Boolean) || item.addons.customMessage) && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {item.addons.keyChain && <span className="mr-2">+ Keychain</span>}
+                  {item.addons.giftWrap && <span className="mr-2">+ Gift Wrap</span>}
+                  {item.addons.carMirror && <span className="mr-2">+ Car Mirror</span>}
+                  {item.addons.customMessage && <span>+ Custom Message</span>}
+                </div>
+              )}
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                Qty: {item.quantity} × ₹{(item.Price + item.addonUnitPrice).toFixed(2)}
+              </div>
             </div>
-          );
-        })}
+            <div className="font-medium text-gray-900 dark:text-white">
+              ₹{item.totalPrice.toFixed(2)}
+            </div>
+          </div>
+        ))}
       </div>
+
+      <hr className="border-gray-300 dark:border-gray-600" />
       
-      <div className="space-y-2 text-sm">
+      {/* Summary */}
+      <div className="space-y-2">
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-          <span className="text-gray-900 dark:text-gray-100 font-medium">₹{subtotal.toFixed(2)}</span>
+          <span className="text-gray-600 dark:text-gray-300">Subtotal</span>
+          <span className="font-medium text-gray-900 dark:text-white">₹{subtotal.toFixed(2)}</span>
         </div>
+        
+        {/* Dragon Offer Discounts */}
+        {activeDragonOffer && dragonDiscount > 0 && (
+          <div className="flex justify-between text-green-600 dark:text-green-400">
+            <span>🐉 {activeDragonOffer.title}</span>
+            <span>-₹{dragonDiscount.toFixed(2)}</span>
+          </div>
+        )}
+        
+        {activeDragonOffer && buyXGetYDiscount > 0 && (
+          <div className="flex flex-col text-green-600 dark:text-green-400">
+            <div className="flex justify-between">
+              <span>🐉 Buy 3 Get 1 Free</span>
+              <span>-₹{buyXGetYDiscount.toFixed(2)}</span>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Cheapest items made free
+            </div>
+          </div>
+        )}
+
+        {/* Free Product Items Notice */}
+        {cartItems.some((item) => item.isSpecialOffer) && (
+          <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800">
+            <div className="text-xs text-green-700 dark:text-green-300">
+              🎁 {cartItems.filter((item) => item.isSpecialOffer).length} free dragon offer item(s) included
+            </div>
+          </div>
+        )}
+        
+        {/* Show subtotal after discount if there was a discount */}
+        {totalDragonDiscount > 0 && (
+          <div className="flex justify-between border-t border-gray-300 dark:border-gray-600 pt-2">
+            <span className="text-gray-600 dark:text-gray-300">Subtotal after discount</span>
+            <span className="font-medium text-gray-900 dark:text-white">₹{subtotalAfterDiscount.toFixed(2)}</span>
+          </div>
+        )}
+        
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-400">Shipping</span>
-          <span className={`${shippingCost === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'} font-medium`}>
+          <span className="text-gray-600 dark:text-gray-300">Shipping</span>
+          <span className="font-medium text-gray-900 dark:text-white">
             {shippingCost === 0 ? 'FREE' : `₹${shippingCost.toFixed(2)}`}
           </span>
         </div>
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2 flex justify-between">
-          <span className="font-medium text-gray-900 dark:text-white">Total</span>
-          <span className="font-bold text-gray-900 dark:text-white">₹{total.toFixed(2)}</span>
+        
+        <hr className="border-gray-300 dark:border-gray-600" />
+        
+        <div className="flex justify-between text-lg font-bold">
+          <span className="text-gray-900 dark:text-white">Total</span>
+          <span className="text-gray-900 dark:text-white">₹{finalTotal.toFixed(2)}</span>
         </div>
       </div>
     </div>

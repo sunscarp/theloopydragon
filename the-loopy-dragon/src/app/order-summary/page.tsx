@@ -8,17 +8,28 @@ function OrderSummaryContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams ? searchParams.get("order_id") : null;
   const [orders, setOrders] = useState<any[]>([]);
+  const [profileOrder, setProfileOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchOrder() {
       if (!orderId) return;
+      
+      // Fetch from Orders table
       const { data: ordersData } = await supabase
         .from("Orders")
         .select("*")
         .eq("order_id", orderId);
 
+      // Fetch from Your Profile table for dragon offer info
+      const { data: profileData } = await supabase
+        .from("Your Profile")
+        .select("*")
+        .eq("order_id", orderId)
+        .single();
+
       setOrders(ordersData || []);
+      setProfileOrder(profileData);
       setLoading(false);
 
       if (ordersData && ordersData.length > 0) {
@@ -101,10 +112,16 @@ function OrderSummaryContent() {
   }
 
   const order = orders[0];
-  const total = orders.reduce(
+  const subtotal = orders.reduce(
     (sum, item) => sum + (Number(item["Total Price"]) || 0),
     0
   );
+  const shippingCost = Number(orders[0]["Shipping Cost"] || 0);
+  const dragonDiscount = Number(profileOrder?.["Total Discount"] || 0);
+  
+  // Calculate the final total after applying dragon discount
+  const finalTotalAfterDiscount = subtotal - dragonDiscount;
+  const totalPaid = finalTotalAfterDiscount + shippingCost;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
@@ -135,6 +152,23 @@ function OrderSummaryContent() {
             <div className="sm:col-span-2">
               <span className="font-semibold">Email:</span> {order.Email}
             </div>
+            {/* Display Dragon Offer if present */}
+            {profileOrder?.["Dragon Offer"] && (
+              <div className="sm:col-span-2 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                <span className="font-semibold text-green-800 dark:text-green-200">🐉 Dragon Offer Applied:</span>
+                <span className="text-green-700 dark:text-green-300 ml-2">{profileOrder["Dragon Offer"]}</span>
+                {dragonDiscount > 0 && (
+                  <span className="text-green-600 dark:text-green-400 ml-2 font-semibold">
+                    (Discount: -₹{dragonDiscount.toFixed(2)})
+                  </span>
+                )}
+                {orders.some(item => item.isSpecialOffer) && (
+                  <div className="text-green-700 dark:text-green-300 text-sm mt-1">
+                    🎁 Includes {orders.filter(item => item.isSpecialOffer).length} free dragon offer item(s)
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="mb-6 sm:mb-8">
@@ -176,7 +210,14 @@ function OrderSummaryContent() {
                   return (
                     <tr key={idx} className="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600/50">
                       <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
-                        <div>{item.Product}</div>
+                        <div className="flex items-center gap-2">
+                          <span>{item.Product}</span>
+                          {item.isSpecialOffer && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                              FREE (Dragon Offer)
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           Product Price: ₹{basePrice.toFixed(2)}
                           {addonUnitPrice > 0 && (
@@ -217,15 +258,42 @@ function OrderSummaryContent() {
                     Subtotal
                   </td>
                   <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                    ₹{total.toFixed(2)}
+                    ₹{subtotal.toFixed(2)}
                   </td>
                 </tr>
+                {/* Dragon Discount Row */}
+                {dragonDiscount > 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-green-700 dark:text-green-300">
+                      🐉 Dragon Discount
+                      {profileOrder?.["Dragon Offer"]?.includes('Buy 3 Get 1 Free') && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          (Cheapest items made free)
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right font-semibold text-green-600 dark:text-green-400">
+                      -₹{dragonDiscount.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
+                {/* Show subtotal after discount if there was a discount */}
+                {dragonDiscount > 0 && (
+                  <tr className="border-t border-gray-200 dark:border-gray-600">
+                    <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+                      Subtotal after discount
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
+                      ₹{finalTotalAfterDiscount.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
                     Shipping
                   </td>
                   <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
-                    ₹{Number(orders[0]["Shipping Cost"] || 0).toFixed(2)}
+                    ₹{shippingCost.toFixed(2)}
                   </td>
                 </tr>
                 <tr>
@@ -233,7 +301,7 @@ function OrderSummaryContent() {
                     Total Paid
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-right font-bold text-base sm:text-lg text-green-600 dark:text-green-400">
-                    ₹{(total + Number(orders[0]["Shipping Cost"] || 0)).toFixed(2)}
+                    ₹{totalPaid.toFixed(2)}
                   </td>
                 </tr>
               </tbody>

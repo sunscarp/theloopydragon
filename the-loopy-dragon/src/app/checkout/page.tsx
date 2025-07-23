@@ -5,13 +5,21 @@ import Script from "next/script";
 import { supabase } from "@/utils/supabase";
 import { useCart } from "@/contexts/CartContext";
 import OrderSummary from "@/components/OrderSummary";
+import { SPECIAL_OFFER_PRODUCTS } from "@/utils/dragonOffers";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const { cart, products, cartAddons, shippingInfo, clearCart, getProductIdFromCartKey } = useCart();
-  const [subtotal, setSubtotal] = useState(0);
-  const [total, setTotal] = useState(0);
+  const { 
+    cart, 
+    products, 
+    cartAddons, 
+    shippingInfo, 
+    clearCart, 
+    getProductIdFromCartKey,
+    activeDragonOffer,
+    calculateOrderTotals
+  } = useCart();
 
   // Form fields
   const [name, setName] = useState("");
@@ -40,27 +48,9 @@ export default function CheckoutPage() {
     }
   }, [shippingInfo.pincode]);
 
-  // Calculate subtotal and total
-  useEffect(() => {
-    const cartItems = Object.entries(cart)
-      .map(([cartKey, qty]) => {
-        const productId = getProductIdFromCartKey(cartKey);
-        const product = products.find((p) => p.id === productId);
-        const addons = cartAddons[cartKey] || {};
-        const addonUnitPrice =
-          (addons.keyChain ? 10 : 0) +
-          (addons.giftWrap ? 10 : 0) +
-          (addons.carMirror ? 50 : 0);
-        return product ? { ...product, quantity: qty, addonUnitPrice, totalPrice: (product.Price + addonUnitPrice) * qty } : null;
-      })
-      .filter(Boolean);
-
-    const calculatedSubtotal = cartItems.reduce((sum, item) => sum + (item ? item.totalPrice : 0), 0);
-    setSubtotal(calculatedSubtotal);
-
-    const finalShippingCost = calculatedSubtotal >= 1000 ? 0 : shippingInfo.shippingCost;
-    setTotal(calculatedSubtotal + finalShippingCost);
-  }, [cart, products, cartAddons, shippingInfo.shippingCost, getProductIdFromCartKey]);
+  // Calculate totals using the new function
+  const { subtotal, dragonDiscount, finalTotal } = calculateOrderTotals();
+  const total = finalTotal + (finalTotal >= 1000 ? 0 : shippingInfo.shippingCost);
 
   const validate = () => {
     if (!name.trim() || !address.trim() || !pincode.trim() || !phone.trim() || !email.trim()) {
@@ -93,12 +83,30 @@ export default function CheckoutPage() {
     }
     if (!validate()) return;
 
+    // Additional validation: Check if there are any paid items
+    const hasPaidItems = cartItems.some(item => item && !item.isSpecialOffer);
+    if (!hasPaidItems) {
+      setError("You cannot checkout with only free items. Please add at least one paid item to your cart.");
+      return;
+    }
+
+    // Additional validation: Ensure pincode is valid
+    if (!shippingInfo.pincode || shippingInfo.pincode.length !== 6) {
+      setError("Please go back to cart and enter a valid pincode for shipping calculation.");
+      return;
+    }
+
     try {
       const response = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: total }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const order = await response.json();
       if (!order || !order.id) throw new Error("Error creating payment order");
 
@@ -114,12 +122,23 @@ export default function CheckoutPage() {
           let generatedOrderId = `ODR-${Math.floor(100000 + Math.random() * 900000)}`;
           let supabaseErrorMsg = "";
           const orderDate = new Date().toISOString();
-          const finalShippingCost = subtotal >= 1000 ? 0 : shippingInfo.shippingCost;
+          const finalShippingCost = finalTotal >= 1000 ? 0 : shippingInfo.shippingCost;
 
           const productDetails = Object.entries(cart).map(([cartKey, qty]) => {
             const productId = getProductIdFromCartKey(cartKey);
-            const product = products.find((p) => p.id === productId);
+            
+            // Check if it's a special offer product
+            const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+            let product;
+            
+            if (specialOffer) {
+              product = specialOffer;
+            } else {
+              product = products.find((p) => p.id === productId);
+            }
+            
             if (!product) return null;
+            
             const addons = cartAddons[cartKey] || {};
             const addonUnitPrice =
               (addons.keyChain ? 10 : 0) +
@@ -135,72 +154,131 @@ export default function CheckoutPage() {
               customMessage: addons.customMessage || "",
               "Total Price": ((product.Price + addonUnitPrice) * qty).toFixed(2),
               "Shipping Cost": finalShippingCost.toFixed(2),
+              "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
+              "Dragon Discount": dragonDiscount.toFixed(2),
+              isSpecialOffer: !!specialOffer
             };
           }).filter(Boolean);
 
-          const { error: profileError } = await supabase
-            .from("Your Profile")
-            .insert([{
-              order_id: generatedOrderId,
-              "Order Date": orderDate,
-              Products: productDetails, // Now includes add-ons
-              uid: user.id
-            }]);
-          if (profileError) {
+          // Retry logic for Supabase operations
+          const retryOperation = async (operation: () => Promise<any>, maxRetries = 3) => {
+            for (let i = 0; i < maxRetries; i++) {
+              try {
+                return await operation();
+              } catch (error: any) {
+                console.log(`Attempt ${i + 1} failed:`, error);
+                if (i === maxRetries - 1) throw error;
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+              }
+            }
+          };
+
+          try {
+            // Save to Your Profile with retry
+            await retryOperation(async () => {
+              const { error: profileError } = await supabase
+                .from("Your Profile")
+                .insert([{
+                  order_id: generatedOrderId,
+                  "Order Date": orderDate,
+                  Products: productDetails,
+                  uid: user.id,
+                  "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
+                  "Total Discount": dragonDiscount.toFixed(2)
+                }]);
+              if (profileError) throw profileError;
+            });
+          } catch (profileError: any) {
             allSuccess = false;
             supabaseErrorMsg = profileError.message || JSON.stringify(profileError);
             console.error("Supabase Your Profile Insert Error:", profileError);
           }
 
+          // Save individual orders with retry
           for (const [cartKey, qty] of Object.entries(cart)) {
             const productId = getProductIdFromCartKey(cartKey);
-            const product = products.find((p) => p.id === productId);
+            
+            // Check if it's a special offer product
+            const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+            let product;
+            
+            if (specialOffer) {
+              product = specialOffer;
+            } else {
+              product = products.find((p) => p.id === productId);
+            }
+            
             if (!product) continue;
+            
             const addons = cartAddons[cartKey] || {};
             const addonUnitPrice =
               (addons.keyChain ? 10 : 0) +
               (addons.giftWrap ? 10 : 0) +
               (addons.carMirror ? 50 : 0);
             const totalPrice = ((product.Price + addonUnitPrice) * qty).toFixed(2);
-            const { error: orderError } = await supabase
-              .from("Orders")
-              .insert([{
-                order_id: generatedOrderId,
-                Name: name,
-                Address: address,
-                Pincode: pincode,
-                Contact: phone,
-                Email: email,
-                Product: product.Product,
-                "Product ID": product.id,
-                Quantity: qty,
-                keyChain: !!addons.keyChain,
-                giftWrap: !!addons.giftWrap,
-                carMirror: !!addons.carMirror,
-                customMessage: addons.customMessage || "",
-                "Total Price": totalPrice,
-                "Shipping Cost": shippingInfo.shippingCost.toFixed(2),
-                uid: user.id,
-                payment_id: response.razorpay_payment_id,
-                "Order Date": orderDate
-              }]);
-            if (orderError) {
+            
+            try {
+              await retryOperation(async () => {
+                const { error: orderError } = await supabase
+                  .from("Orders")
+                  .insert([{
+                    order_id: generatedOrderId,
+                    Name: name,
+                    Address: address,
+                    Pincode: pincode,
+                    Contact: phone,
+                    Email: email,
+                    Product: product.Product,
+                    "Product ID": product.id,
+                    Quantity: qty,
+                    keyChain: !!addons.keyChain,
+                    giftWrap: !!addons.giftWrap,
+                    carMirror: !!addons.carMirror,
+                    customMessage: addons.customMessage || "",
+                    "Total Price": totalPrice,
+                    "Shipping Cost": shippingInfo.shippingCost.toFixed(2),
+                    uid: user.id,
+                    payment_id: response.razorpay_payment_id,
+                    "Order Date": orderDate,
+                    "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
+                    "Dragon Discount": "0.00", // Individual items don't get discount
+                    isSpecialOffer: !!specialOffer
+                  }]);
+                if (orderError) throw orderError;
+              });
+            } catch (orderError: any) {
               allSuccess = false;
               supabaseErrorMsg = orderError.message || JSON.stringify(orderError);
               console.error("Supabase Order Insert Error:", orderError);
               continue;
             }
-            await supabase
-              .from("Inventory")
-              .update({ Quantity: (product.Quantity || 1) - qty })
-              .eq("id", product.id);
+            
+            // Only update inventory for real products, not special offer products
+            if (!specialOffer) {
+              try {
+                await retryOperation(async () => {
+                  const { error: updateError } = await supabase
+                    .from("Inventory")
+                    .update({ Quantity: (product.Quantity || 1) - qty })
+                    .eq("id", product.id);
+                  if (updateError) throw updateError;
+                });
+              } catch (updateError) {
+                console.error("Inventory update error:", updateError);
+                // Don't fail the entire order for inventory update issues
+              }
+            }
           }
-          clearCart(); // This will clear cart, addons, and shipping info
+          
+          clearCart(); // This will clear cart, addons, shipping info, and dragon offers
+          
           if (allSuccess) {
             router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
-            alert("Order failed! Supabase error: " + supabaseErrorMsg);
-            router.push("/order-failed");
+            console.error("Order partially failed. Supabase error:", supabaseErrorMsg);
+            // Still redirect to success page since payment went through
+            router.push(`/order-summary?order_id=${generatedOrderId}&warning=partial_save`);
           }
         },
         prefill: {
@@ -219,11 +297,58 @@ export default function CheckoutPage() {
       };
       const paymentObject = new window.Razorpay(options);
       paymentObject.open();
-    } catch (error) {
-      alert("Order failed! JS error: " + (error as any)?.message);
-      router.push("/order-failed");
+    } catch (error: any) {
+      console.error("Payment setup error:", error);
+      let errorMessage = "Order failed! ";
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage += "Network error: Please check your internet connection and try again.";
+      } else {
+        errorMessage += error.message || "Unknown error occurred.";
+      }
+      
+      alert(errorMessage);
+      // Don't redirect to order-failed for network issues, let user retry
+      if (!error.message.includes('fetch')) {
+        router.push("/order-failed");
+      }
     }
   };
+
+  // Calculate cart items for checkout display
+  const cartItems = Object.entries(cart)
+    .map(([cartKey, qty]) => {
+      const productId = getProductIdFromCartKey(cartKey);
+      
+      // Check if it's a special offer product
+      const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
+      let product;
+      
+      if (specialOffer) {
+        product = specialOffer;
+      } else {
+        product = products.find((p) => p.id === productId);
+      }
+      
+      if (!product) return null;
+      
+      const addons = cartAddons[cartKey] || {};
+      const addonUnitPrice =
+        (addons.keyChain ? 10 : 0) +
+        (addons.giftWrap ? 10 : 0) +
+        (addons.carMirror ? 50 : 0);
+      
+      return {
+        ...product,
+        cartKey,
+        quantity: qty,
+        addons,
+        addonUnitPrice,
+        totalPrice: (product.Price + addonUnitPrice) * qty,
+        isSpecialOffer: !!specialOffer,
+      };
+    })
+    .filter(Boolean);
 
   return (
     <>
@@ -234,6 +359,29 @@ export default function CheckoutPage() {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white text-center mb-8 sm:mb-10">
               Checkout
             </h2>
+
+            {/* Fire Offer Display */}
+            {activeDragonOffer && (dragonDiscount > 0 || cartItems.some(item => item && item.isSpecialOffer)) && (
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      Fire Offer Applied: {activeDragonOffer.title}
+                    </span>
+                    {dragonDiscount > 0 && (
+                      <span className="text-sm">
+                        Discount: -₹{dragonDiscount.toFixed(2)}
+                      </span>
+                    )}
+                    {activeDragonOffer.type === 'free_product' && (
+                      <span className="text-sm">
+                        Free item added to your cart!
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Shipping Info Display */}
             {shippingInfo.pincode && (
@@ -301,7 +449,7 @@ export default function CheckoutPage() {
                     />
                     {pincode !== shippingInfo.pincode && pincode.length === 6 && (
                       <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                        ⚠️ This pincode differs from shipping calculation. Please recalculate in cart.
+                        This pincode differs from shipping calculation. Please recalculate in cart.
                       </p>
                     )}
                   </div>
@@ -344,8 +492,10 @@ export default function CheckoutPage() {
                 products={products}
                 cartAddons={cartAddons}
                 subtotal={subtotal}
-                shippingCost={subtotal >= 1000 ? 0 : shippingInfo.shippingCost}
+                shippingCost={finalTotal >= 1000 ? 0 : shippingInfo.shippingCost}
                 total={total}
+                activeDragonOffer={activeDragonOffer}
+                dragonDiscount={dragonDiscount}
               />
 
               {error && (

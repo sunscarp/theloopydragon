@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
       Email,
       orders, // array of products
       total,
+      dragonOffer, // Add dragon offer info
+      dragonDiscount, // Add dragon discount info
     } = body;
 
     // --- Ensure order_id is unique in Orders table ---
@@ -63,11 +65,17 @@ export async function POST(req: NextRequest) {
             (item.giftWrap ? 10 : 0) +
             (item.carMirror ? 50 : 0);
           const unitPrice = (Number(item.Price) || 0) + addonUnitPrice;
-          const subtotal = unitPrice * Number(item.Quantity);
+          const subtotal = item.isSpecialOffer ? 0 : (unitPrice * Number(item.Quantity));
+          const isFreeFromBuyXGetY = item.isFreeFromBuyXGetY || false;
+          
           return `
       <tr>
         <td style="padding:8px;border:1px solid #ddd;">
-          <div>${item.Product}</div>
+          <div>
+            ${item.Product}
+            ${item.isSpecialOffer ? '<span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:12px;font-size:10px;margin-left:8px;">FREE (Fire Offer)</span>' : ''}
+            ${isFreeFromBuyXGetY ? '<span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:12px;font-size:10px;margin-left:8px;">FREE (Buy 3 Get 1)</span>' : ''}
+          </div>
           <div style="font-size:12px;color:#333;">₹${Number(item.Price).toFixed(2)}</div>
           ${
             addonUnitPrice > 0
@@ -87,7 +95,9 @@ export async function POST(req: NextRequest) {
         </td>
         <td style="padding:8px;border:1px solid #ddd;text-align:center;">${item.Quantity}</td>
         <td style="padding:8px;border:1px solid #ddd;text-align:center;">₹${unitPrice.toFixed(2)}</td>
-        <td style="padding:8px;border:1px solid #ddd;text-align:right;">₹${subtotal.toFixed(2)}</td>
+        <td style="padding:8px;border:1px solid #ddd;text-align:right;">
+          ${(item.isSpecialOffer || isFreeFromBuyXGetY) ? 'FREE' : `₹${subtotal.toFixed(2)}`}
+        </td>
       </tr>
     `;
         }
@@ -99,7 +109,11 @@ export async function POST(req: NextRequest) {
       (sum: number, item: any) => sum + Number(item["Total Price"]),
       0
     );
-    const grandTotal = subtotal + Number(shippingCost);
+    const discount = Number(dragonDiscount || 0);
+    
+    // Calculate the correct final total after discount
+    const subtotalAfterDiscount = subtotal - discount;
+    const grandTotal = subtotalAfterDiscount + Number(shippingCost);
 
     const html = `
       <h2>Order Confirmation - The Loopy Dragon</h2>
@@ -109,6 +123,12 @@ export async function POST(req: NextRequest) {
       <b>Address:</b> ${Address}, ${Pincode}<br/>
       <b>Contact (WhatsApp):</b> ${Contact}<br/>
       <b>Email:</b> ${Email}<br/>
+      ${dragonOffer ? `<br/><div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin:10px 0;">
+        <b>Fire Offer Applied:</b> ${dragonOffer}
+        ${discount > 0 ? `<br/>Discount Applied: -₹${discount.toFixed(2)}` : ''}
+        ${orders.some((item: any) => item.isSpecialOffer) ? `<br/>Includes ${orders.filter((item: any) => item.isSpecialOffer).length} free fire offer item(s)` : ''}
+        ${orders.some((item: any) => item.isFreeFromBuyXGetY) ? `<br/>Includes ${orders.filter((item: any) => item.isFreeFromBuyXGetY).length} free item(s) from Buy 3 Get 1 Free offer` : ''}
+      </div>` : ''}
       <br/>
       <table style="border-collapse:collapse;width:100%;margin-top:10px;">
         <thead>
@@ -125,6 +145,19 @@ export async function POST(req: NextRequest) {
             <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">Subtotal</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">₹${subtotal.toFixed(2)}</td>
           </tr>
+          ${discount > 0 ? `
+          <tr>
+            <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;color:#16a34a;font-weight:bold;">
+              Fire Discount
+              ${dragonOffer?.includes('Buy 3 Get 1 Free') ? '<br/><small>(Cheapest items made free)</small>' : ''}
+            </td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:right;color:#16a34a;font-weight:bold;">-₹${discount.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">Subtotal after discount</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold;">₹${subtotalAfterDiscount.toFixed(2)}</td>
+          </tr>
+          ` : ''}
           <tr>
             <td colspan="3" style="padding:8px;border:1px solid #ddd;text-align:right;">Shipping</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">₹${Number(shippingCost).toFixed(2)}</td>

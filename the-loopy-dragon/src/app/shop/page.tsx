@@ -7,6 +7,10 @@ import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import Footer from "@/components/Footer";
 import { redirectToMobile } from "@/utils/deviceDetection";
+import { getRandomDragonOffer, applyOfferToCart } from "@/utils/dragonOffers";
+
+// Import DragonOffer type from utils to ensure consistency
+import type { DragonOffer } from "@/utils/dragonOffers";
 
 type ProductRow = {
   id: number;
@@ -85,6 +89,254 @@ export default function Shop() {
     fetchProducts();
   }, []);
 
+  // Dragon popup state
+  const [showDragon, setShowDragon] = useState<boolean>(false);
+  const [showDragonPopup, setShowDragonPopup] = useState<boolean>(false);
+  const [dragonCaught, setDragonCaught] = useState<boolean>(false);
+  const [dragonOffer, setDragonOffer] = useState<DragonOffer | null>(null);
+
+  // Dragon flight pause and count state (track each dragon separately)
+  const [dragonPause, setDragonPause] = useState<boolean>(false);
+  const [dragon1FlightCount, setDragon1FlightCount] = useState<number>(0);
+  const [dragon2FlightCount, setDragon2FlightCount] = useState<number>(0);
+
+  // Dragon animation state for two dragons
+  const [dragon1Start, setDragon1Start] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [dragon1End, setDragon1End] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [dragon1Angle, setDragon1Angle] = useState<number>(0);
+  const [dragon1Key, setDragon1Key] = useState<number>(1); // Start from 1
+
+  const [dragon2Start, setDragon2Start] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [dragon2End, setDragon2End] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [dragon2Angle, setDragon2Angle] = useState<number>(0);
+  const [dragon2Key, setDragon2Key] = useState<number>(2); // Start from 2
+
+  // Rare dragon state
+  const [rareDragonStart, setRareDragonStart] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [rareDragonEnd, setRareDragonEnd] = useState<{x: number, y: number}>({x: 0, y: 0});
+  const [rareDragonAngle, setRareDragonAngle] = useState<number>(0);
+  const [rareDragonKey, setRareDragonKey] = useState<number>(1);
+  const [showRareDragon, setShowRareDragon] = useState<boolean>(false);
+  const [showRareDragonWarning, setShowRareDragonWarning] = useState<boolean>(false);
+
+  // Always use a high speed (short duration)
+  const DRAGON_SPEED_SECONDS = 1.2; // fast, but visible
+  const RARE_DRAGON_SPEED_SECONDS = 1.1; // a little slower than before
+
+  // Helper to get random position and angle (reuse)
+  function getRandomDragonFlight() {
+    const padding = 60;
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const h = typeof window !== "undefined" ? window.innerHeight : 800;
+    const edges = ["top", "bottom", "left", "right"];
+    const startEdge = edges[Math.floor(Math.random() * 4)];
+    let start = {x: 0, y: 0};
+    let end = {x: 0, y: 0};
+
+    if (startEdge === "top") {
+      start = {x: Math.random() * (w - padding * 2) + padding, y: -80};
+      const endEdge = ["bottom", "left", "right"][Math.floor(Math.random() * 3)];
+      if (endEdge === "bottom") end = {x: Math.random() * (w - padding * 2) + padding, y: h + 80};
+      if (endEdge === "left") end = {x: -140, y: Math.random() * (h - padding * 2) + padding};
+      if (endEdge === "right") end = {x: w + 140, y: Math.random() * (h - padding * 2) + padding};
+    } else if (startEdge === "bottom") {
+      start = {x: Math.random() * (w - padding * 2) + padding, y: h + 80};
+      const endEdge = ["top", "left", "right"][Math.floor(Math.random() * 3)];
+      if (endEdge === "top") end = {x: Math.random() * (w - padding * 2) + padding, y: -80};
+      if (endEdge === "left") end = {x: -140, y: Math.random() * (h - padding * 2) + padding};
+      if (endEdge === "right") end = {x: w + 140, y: Math.random() * (h - padding * 2) + padding};
+    } else if (startEdge === "left") {
+      start = {x: -140, y: Math.random() * (h - padding * 2) + padding};
+      const endEdge = ["top", "bottom", "right"][Math.floor(Math.random() * 3)];
+      if (endEdge === "top") end = {x: Math.random() * (w - padding * 2) + padding, y: -80};
+      if (endEdge === "bottom") end = {x: Math.random() * (w - padding * 2) + padding, y: h + 80};
+      if (endEdge === "right") end = {x: w + 140, y: Math.random() * (h - padding * 2) + padding};
+    } else {
+      start = {x: w + 140, y: Math.random() * (h - padding * 2) + padding};
+      const endEdge = ["top", "bottom", "left"][Math.floor(Math.random() * 3)];
+      if (endEdge === "top") end = {x: Math.random() * (w - padding * 2) + padding, y: -80};
+      if (endEdge === "bottom") end = {x: Math.random() * (w - padding * 2) + padding, y: h + 80};
+      if (endEdge === "left") end = {x: -140, y: Math.random() * (h - padding * 2) + padding};
+    }
+    const angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
+    return {start, end, angle};
+  }
+
+  // Show dragon unless dismissed in this session
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const dismissed = sessionStorage.getItem("dragonDismissed");
+      if (!dismissed) setShowDragon(true);
+    }
+  }, []);
+
+  // Rare dragon timer - appears every minute with warning
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showDragonPopup && !dragonCaught) {
+        // Show warning first
+        setShowRareDragonWarning(true);
+        
+        // Hide warning and show rare dragon after 3 seconds
+        setTimeout(() => {
+          setShowRareDragonWarning(false);
+          
+          // Generate rare dragon path
+          const {start, end, angle} = getRandomDragonFlight();
+          setRareDragonStart(start);
+          setRareDragonEnd(end);
+          setRareDragonAngle(angle);
+          setRareDragonKey(prev => prev + 1);
+          setShowRareDragon(true);
+          
+          // Hide rare dragon after animation completes
+          setTimeout(() => {
+            setShowRareDragon(false);
+          }, RARE_DRAGON_SPEED_SECONDS * 1000 + 100);
+        }, 3000);
+      }
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [showDragonPopup, dragonCaught]);
+
+  // Pause after 4 flights per dragon, resume after 2 minutes
+  useEffect(() => {
+    if ((dragon1FlightCount >= 4 && dragon2FlightCount >= 4) && !dragonPause) {
+      setDragonPause(true);
+      setShowDragon(false);
+      const timeout = setTimeout(() => {
+        setDragon1FlightCount(0);
+        setDragon2FlightCount(0);
+        setDragonPause(false);
+        setShowDragon(true);
+      }, 1 * 60 * 1000); // 1 minute
+      return () => clearTimeout(timeout);
+    }
+  }, [dragon1FlightCount, dragon2FlightCount, dragonPause]);
+
+  // Always randomize direction and position for both dragons
+  useEffect(() => {
+    if (showDragon) {
+      const {start, end, angle} = getRandomDragonFlight();
+      setDragon1Start(start);
+      setDragon1End(end);
+      setDragon1Angle(angle);
+      setDragon1Key(prev => prev + 2); // Always even
+
+      // Make sure the second dragon has a different path
+      let s2, e2, a2;
+      do {
+        const {start: s, end: e, angle: a} = getRandomDragonFlight();
+        s2 = s; e2 = e; a2 = a;
+      } while (
+        Math.abs(s2.x - start.x) < 100 && Math.abs(s2.y - start.y) < 100
+      );
+      setDragon2Start(s2);
+      setDragon2End(e2);
+      setDragon2Angle(a2);
+      setDragon2Key(prev => prev + 2); // Always odd
+    }
+  }, [showDragon, dragonCaught]);
+
+  // Listen for animation end to restart both dragons and count flights
+  useEffect(() => {
+    if (!showDragon) return;
+    const handler1 = () => {
+      if (!showDragonPopup && !dragonCaught) {
+        setDragon1FlightCount(count => count + 1);
+        if (dragon1FlightCount < 3) { // 0,1,2,3 = 4 flights
+          const {start, end, angle} = getRandomDragonFlight();
+          setDragon1Start(start);
+          setDragon1End(end);
+          setDragon1Angle(angle);
+          setDragon1Key(prev => prev + 1);
+        }
+      }
+    };
+    const handler2 = () => {
+      if (!showDragonPopup && !dragonCaught) {
+        setDragon2FlightCount(count => count + 1);
+        if (dragon2FlightCount < 3) {
+          const {start, end, angle} = getRandomDragonFlight();
+          setDragon2Start(start);
+          setDragon2End(end);
+          setDragon2Angle(angle);
+          setDragon2Key(prev => prev + 1);
+        }
+      }
+    };
+    const el1 = document.getElementById("flying-dragon-1");
+    const el2 = document.getElementById("flying-dragon-2");
+    if (el1) el1.addEventListener("animationend", handler1);
+    if (el2) el2.addEventListener("animationend", handler2);
+    return () => {
+      if (el1) el1.removeEventListener("animationend", handler1);
+      if (el2) el2.removeEventListener("animationend", handler2);
+    };
+  }, [showDragon, showDragonPopup, dragonCaught, dragon1Key, dragon2Key, dragon1FlightCount, dragon2FlightCount]);
+
+  const handleDragonClick = () => {
+    const offer = getRandomDragonOffer();
+    setDragonOffer(offer);
+    setShowDragonPopup(true);
+    setDragonCaught(true);
+  };
+
+  const handleRareDragonClick = () => {
+    const rareDragonOffer: DragonOffer = {
+      id: 'rare_dragon_50',
+      type: 'discount',
+      title: '🌟 RARE DRAGON SPECIAL! 50% OFF! 🌟',
+      description: 'The legendary rare dragon grants you 50% off your entire order!',
+      value: 50,
+      code: 'RAREDRAGON50',
+      weight: 0
+    };
+    setDragonOffer(rareDragonOffer);
+    setShowDragonPopup(true);
+    setDragonCaught(true);
+    setShowRareDragon(false);
+  };
+
+  const handleDragonPopupClose = () => {
+    setShowDragon(false);
+    setShowDragonPopup(false);
+    setDragonOffer(null);
+  };
+
+  const handleDragonTryAgain = () => {
+    setShowDragon(false);
+    setShowDragonPopup(false);
+    setDragonOffer(null);
+    setTimeout(() => {
+      setDragonCaught(false);
+      setShowDragon(true);
+    }, 50);
+  };
+
+  const handleClaimOffer = () => {
+    if (dragonOffer) {
+      // Apply the offer first
+      applyOfferToCart(dragonOffer);
+      
+      // If it's a free product, add to cart
+      if (dragonOffer.type === 'free_product' && dragonOffer.productId) {
+        addToCart(dragonOffer.productId);
+        // Redirect to cart to show the free item
+        setTimeout(() => {
+          router.push('/cart');
+        }, 500);
+      } 
+      // If it's a discount offer, redirect to cart
+      else if (dragonOffer.type === 'discount') {
+        router.push('/cart');
+      }
+    }
+    
+    handleDragonPopupClose();
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#F5F9FF]">
@@ -100,7 +352,10 @@ export default function Shop() {
     );
   }
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products
+    // Hide special offer products (IDs 999001–999004)
+    .filter(product => ![999001, 999002, 999003, 999004].includes(product.id))
+    .filter(product => {
     const matchesSearch = product.Product.toLowerCase().includes(search.toLowerCase());
     
     // Category filtering logic
@@ -236,6 +491,374 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: 'sans-serif' }}>
+      {/* Rare Dragon Warning */}
+      {showRareDragonWarning && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+            color: "#92400e",
+            padding: "12px 24px",
+            borderRadius: "12px",
+            boxShadow: "0 8px 32px rgba(251, 191, 36, 0.4)",
+            zIndex: 1500,
+            fontFamily: "Montserrat, sans-serif",
+            fontWeight: 700,
+            fontSize: "16px",
+            textAlign: "center",
+            border: "2px solid #d97706",
+            animation: "pulse-warning 0.5s ease-in-out infinite alternate"
+          }}
+        >
+          ⚡ RARE DRAGON INCOMING! GET READY! ⚡
+        </div>
+      )}
+
+      {/* Rare Dragon */}
+      {showRareDragon && (
+        <div
+          id="rare-dragon"
+          key={`rare-dragon-${rareDragonKey}`}
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width: "150px",
+            height: "100px",
+            zIndex: 1000,
+            pointerEvents: showDragonPopup ? "none" : "auto",
+            transform: `translate(${rareDragonStart.x}px, ${rareDragonStart.y}px) rotate(${rareDragonAngle}deg)`,
+            transition: "none",
+            animation: `rare-dragon-fly-${rareDragonKey} ${RARE_DRAGON_SPEED_SECONDS}s linear forwards`,
+            cursor: "pointer",
+            userSelect: "none",
+            filter: "drop-shadow(0 0 20px #fbbf24) drop-shadow(0 0 40px #f59e0b)",
+          }}
+          onClick={handleRareDragonClick}
+          aria-label="Rare Flying Dragon"
+        >
+          <img
+            src="/loopydragon3.jpg"
+            alt="Rare Flying Dragon"
+            width={150}
+            height={100}
+            style={{
+              width: "150px",
+              height: "100px",
+              display: "block",
+              pointerEvents: "none",
+              userSelect: "none"
+            }}
+            draggable={false}
+          />
+          <style>{`
+            @keyframes rare-dragon-fly-${rareDragonKey} {
+              from {
+                transform: translate(${rareDragonStart.x}px, ${rareDragonStart.y}px) rotate(${rareDragonAngle}deg);
+              }
+              to {
+                transform: translate(${rareDragonEnd.x}px, ${rareDragonEnd.y}px) rotate(${rareDragonAngle}deg);
+              }
+            }
+            @keyframes pulse-warning {
+              from {
+                transform: translateX(-50%) scale(1);
+              }
+              to {
+                transform: translateX(-50%) scale(1.05);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Two Flying Dragons - random angle and random places, infinite */}
+      {showDragon && !dragonPause && (
+        <>
+          <div
+            id="flying-dragon-1"
+            key={`dragon1-${dragon1Key}`}
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "120px",
+              height: "80px",
+              zIndex: 0,
+              pointerEvents: showDragonPopup ? "none" : "auto",
+              transform: `translate(${dragon1Start.x}px, ${dragon1Start.y}px) rotate(${dragon1Angle}deg)`,
+              transition: "none",
+              animation: `dragon-fly-xy-1-${dragon1Key} ${DRAGON_SPEED_SECONDS}s linear forwards`,
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            onClick={handleDragonClick}
+            aria-label="Flying Dragon"
+          >
+            <img
+              src="/loopydragon.png"
+              alt="Flying Dragon"
+              width={120}
+              height={80}
+              style={{
+                width: "120px",
+                height: "80px",
+                display: "block",
+                pointerEvents: "none",
+                userSelect: "none"
+              }}
+              draggable={false}
+            />
+            <style>{`
+              @keyframes dragon-fly-xy-1-${dragon1Key} {
+                from {
+                  transform: translate(${dragon1Start.x}px, ${dragon1Start.y}px) rotate(${dragon1Angle}deg);
+                }
+                to {
+                  transform: translate(${dragon1End.x}px, ${dragon1End.y}px) rotate(${dragon1Angle}deg);
+                }
+              }
+            `}</style>
+          </div>
+          <div
+            id="flying-dragon-2"
+            key={`dragon2-${dragon2Key}`}
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "120px",
+              height: "80px",
+              zIndex: 0,
+              pointerEvents: showDragonPopup ? "none" : "auto",
+              transform: `translate(${dragon2Start.x}px, ${dragon2Start.y}px) rotate(${dragon2Angle}deg)`,
+              transition: "none",
+              animation: `dragon-fly-xy-2-${dragon2Key} ${DRAGON_SPEED_SECONDS}s linear forwards`,
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            onClick={handleDragonClick}
+            aria-label="Flying Dragon"
+          >
+            <img
+              src="/loopydragon2.png"
+              alt="Flying Dragon 2"
+              width={120}
+              height={80}
+              style={{
+                width: "120px",
+                height: "80px",
+                display: "block",
+                pointerEvents: "none",
+                userSelect: "none"
+              }}
+              draggable={false}
+            />
+            <style>{`
+              @keyframes dragon-fly-xy-2-${dragon2Key} {
+                from {
+                  transform: translate(${dragon2Start.x}px, ${dragon2Start.y}px) rotate(${dragon2Angle}deg);
+                }
+                to {
+                  transform: translate(${dragon2End.x}px, ${dragon2End.y}px) rotate(${dragon2Angle}deg);
+                }
+              }
+            `}</style>
+          </div>
+        </>
+      )}
+
+      {/* Dragon Popup */}
+      {showDragonPopup && dragonOffer && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.35)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            style={{
+              background: dragonOffer.id === 'rare_dragon_50' 
+                ? "linear-gradient(135deg, #fef3c7, #fbbf24)" 
+                : "#fff",
+              borderRadius: "1.5rem",
+              boxShadow: dragonOffer.id === 'rare_dragon_50'
+                ? "0 8px 32px rgba(251, 191, 36, 0.5)"
+                : "0 8px 32px rgba(0,0,0,0.18)",
+              padding: "2.5rem 2rem 2rem",
+              maxWidth: "400px",
+              textAlign: "center",
+              position: "relative",
+              border: dragonOffer.id === 'rare_dragon_50' ? "3px solid #f59e0b" : "none"
+            }}
+          >
+            {/* Special styling for rare dragon offer */}
+            {dragonOffer.id === 'rare_dragon_50' && (
+              <div style={{
+                position: "absolute",
+                top: "-10px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                color: "#fff",
+                padding: "4px 12px",
+                borderRadius: "12px",
+                fontSize: "12px",
+                fontWeight: 700,
+                fontFamily: "Montserrat, sans-serif"
+              }}>
+                LEGENDARY RARE
+              </div>
+            )}
+            
+            <div style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontWeight: 700,
+              fontSize: dragonOffer.id === 'rare_dragon_50' ? "1.4rem" : "1.25rem",
+              color: dragonOffer.id === 'rare_dragon_50' ? "#92400e" : "#6b21a8",
+              marginBottom: "0.5rem"
+            }}>
+              {dragonCaught ? "You caught the offer!" : "Hi there, traveler!"}
+            </div>
+            
+            {dragonOffer.value === 0 && dragonOffer.title.includes('Try Again') ? (
+              // Try again offer
+              <>
+                <div style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  fontWeight: 400,
+                  fontSize: "1rem",
+                  color: "#22223B",
+                  marginBottom: "1.5rem"
+                }}>
+                  {dragonOffer.description}
+                </div>
+                <button
+                  onClick={handleDragonTryAgain}
+                  style={{
+                    background: "linear-gradient(90deg, #a21caf 0%, #f472b6 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "0.75rem",
+                    padding: "0.75rem 2rem",
+                    fontWeight: 600,
+                    fontFamily: "Montserrat, sans-serif",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    transition: "background 0.2s",
+                    marginRight: "0.5rem"
+                  }}
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={handleDragonPopupClose}
+                  style={{
+                    background: "transparent",
+                    color: "#6b7280",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "0.75rem",
+                    padding: "0.75rem 2rem",
+                    fontWeight: 600,
+                    fontFamily: "Montserrat, sans-serif",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    marginTop: "0.5rem"
+                  }}
+                >
+                  Maybe Later
+                </button>
+              </>
+            ) : (
+              // Actual offer
+              <>
+                <div style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  fontWeight: 600,
+                  fontSize: dragonOffer.id === 'rare_dragon_50' ? "1.3rem" : "1.1rem",
+                  color: dragonOffer.id === 'rare_dragon_50' ? "#92400e" : "#059669",
+                  marginBottom: "0.5rem"
+                }}>
+                  {dragonOffer.title}
+                </div>
+                <div style={{
+                  fontFamily: "Montserrat, sans-serif",
+                  fontWeight: 400,
+                  fontSize: "0.9rem",
+                  color: dragonOffer.id === 'rare_dragon_50' ? "#92400e" : "#22223B",
+                  marginBottom: "1.5rem"
+                }}>
+                  {dragonOffer.type === 'free_product' 
+                    ? `Congratulations! You've won a ${dragonOffer.title.replace('Free ', '').replace('!', '')}. It will be added to your cart for free!`
+                    : dragonOffer.description
+                  }
+                </div>
+                <button
+                  onClick={handleClaimOffer}
+                  style={{
+                    background: dragonOffer.id === 'rare_dragon_50' 
+                      ? "linear-gradient(90deg, #d97706 0%, #f59e0b 100%)"
+                      : "linear-gradient(90deg, #059669 0%, #10b981 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "0.75rem",
+                    padding: "0.75rem 2rem",
+                    fontWeight: 600,
+                    fontFamily: "Montserrat, sans-serif",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    transition: "background 0.2s",
+                    marginRight: "0.5rem"
+                  }}
+                >
+                  {dragonOffer.type === 'free_product' ? 'Add Free Item!' : 'Claim Offer!'}
+                </button>
+                <button
+                  onClick={handleDragonPopupClose}
+                  style={{
+                    background: "transparent",
+                    color: "#6b7280",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "0.75rem",
+                    padding: "0.75rem 2rem",
+                    fontWeight: 600,
+                    fontFamily: "Montserrat, sans-serif",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    marginTop: "0.5rem"
+                  }}
+                >
+                  No Thanks
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Dragon flying animation keyframes */}
+      <style>{`
+        @keyframes dragon-fly-right {
+          0% { left: -140px; }
+          100% { left: 100vw; }
+        }
+        @keyframes dragon-fly-left {
+          0% { right: -140px; }
+          100% { right: 100vw; }
+        }
+      `}</style>
       <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
           ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50' 
@@ -510,3 +1133,4 @@ export default function Shop() {
     </div>
   );
 }
+

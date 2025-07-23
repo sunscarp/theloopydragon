@@ -16,8 +16,15 @@ type ProfileOrder = {
     Price: number;
     "Total Price": string;
     "Shipping Cost"?: string;
+    keyChain?: boolean;
+    giftWrap?: boolean;
+    carMirror?: boolean;
+    customMessage?: string;
+    isSpecialOffer?: boolean;
   }>;
   uid?: string;
+  "Dragon Offer"?: string;
+  "Total Discount"?: string;
 };
 
 export default function ProfilePage() {
@@ -141,9 +148,31 @@ export default function ProfilePage() {
                         {order["Order Date"] ? new Date(order["Order Date"]).toLocaleString() : "N/A"}
                       </div>
                     </div>
+                    
+                    {/* Fire Offer Display */}
+                    {order["Dragon Offer"] && (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-lg border border-green-200 dark:border-green-800 mb-2">
+                        <div className="text-xs sm:text-sm text-green-800 dark:text-green-200">
+                          <span className="font-semibold">Fire Offer Applied:</span>
+                          <span className="ml-2">{order["Dragon Offer"]}</span>
+                          {order["Total Discount"] && Number(order["Total Discount"]) > 0 && (
+                            <span className="ml-2 font-semibold text-green-600 dark:text-green-400">
+                              (Discount: -₹{Number(order["Total Discount"]).toFixed(2)})
+                            </span>
+                          )}
+                          {order.Products?.some((item: any) => item.isSpecialOffer) && (
+                            <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                              Includes {order.Products?.filter((item: any) => item.isSpecialOffer).length} free fire offer item(s)
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm mb-2">
                       <b>Status:</b> {order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
                     </div>
+                    
                     {/* Order Summary Table */}
                     {Array.isArray(order.Products) && order.Products.length > 0 && (
                       <div className="mt-2">
@@ -177,8 +206,13 @@ export default function ProfilePage() {
                                 return (
                                   <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                      <div>
-                                        {item.Product}
+                                      <div className="flex items-center gap-2">
+                                        <span>{item.Product}</span>
+                                        {item.isSpecialOffer && (
+                                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                                            FREE
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="text-xs text-gray-500 dark:text-gray-400">
                                         ₹{Number(item.Price).toFixed(2)}
@@ -219,6 +253,31 @@ export default function ProfilePage() {
                                   ₹{order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0).toFixed(2)}
                                 </td>
                               </tr>
+                              {/* Dragon Discount Row */}
+                              {order["Total Discount"] && Number(order["Total Discount"]) > 0 ? (
+                                <tr>
+                                  <td colSpan={3} className="px-6 py-4 text-right font-medium text-green-700 dark:text-green-300">
+                                    Fire Discount
+                                    {order["Dragon Offer"]?.includes('Buy 3 Get 1 Free') && (
+                                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                                        (Cheapest items made free)
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right font-medium text-green-600 dark:text-green-400">
+                                    -₹{Number(order["Total Discount"]).toFixed(2)}
+                                  </td>
+                                </tr>
+                              ) : null}
+                              {/* Show subtotal after discount if there was a discount */}
+                              {order["Total Discount"] && Number(order["Total Discount"]) > 0 ? (
+                                <tr>
+                                  <td colSpan={3} className="px-6 py-4 text-right font-medium">Subtotal after discount</td>
+                                  <td className="px-6 py-4 text-right font-medium">
+                                    ₹{(order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0) - Number(order["Total Discount"])).toFixed(2)}
+                                  </td>
+                                </tr>
+                              ) : null}
                               <tr>
                                 <td colSpan={3} className="px-6 py-4 text-right font-medium">Shipping</td>
                                 <td className="px-6 py-4 text-right font-medium">
@@ -228,7 +287,13 @@ export default function ProfilePage() {
                               <tr>
                                 <td colSpan={3} className="px-6 py-4 text-right font-bold">Total Paid</td>
                                 <td className="px-6 py-4 text-right font-bold text-green-700 dark:text-green-300">
-                                  ₹{(order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0) + Number(order.Products[0]?.["Shipping Cost"] || 0)).toFixed(2)}
+                                  ₹{(() => {
+                                    const subtotal = order.Products.reduce((sum: number, item: any) => sum + (Number(item["Total Price"]) || 0), 0);
+                                    const discount = Number(order["Total Discount"] || 0);
+                                    const shipping = Number(order.Products[0]?.["Shipping Cost"] || 0);
+                                    const finalTotal = (subtotal - discount) + shipping;
+                                    return finalTotal.toFixed(2);
+                                  })()}
                                 </td>
                               </tr>
                             </tbody>
@@ -236,7 +301,6 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     )}
-                    {/* Removed Track your order button */}
                   </div>
                 ))}
               </div>

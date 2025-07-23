@@ -139,13 +139,13 @@ export default function ProductPage() {
   const handleSubmitRequest = () => {
     if (!product) return;
     
-    // Add the item with selected add-ons directly
+    // Add the item with selected add-ons and quantity
     addToCart(product.id, {
       keyChain: addOns.keyChain,
       giftWrap: addOns.giftWrap,
       carMirror: addOns.carMirror,
       customMessage: customMessage
-    });
+    }, quantity); // Pass the quantity as third parameter
     
     setShowCartConfirmation(false);
   };
