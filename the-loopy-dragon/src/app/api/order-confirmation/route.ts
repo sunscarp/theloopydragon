@@ -9,6 +9,9 @@ export async function POST(req: NextRequest) {
       Name,
       Address,
       Pincode,
+      Country, // NEW
+      City,    // NEW
+      State,   // NEW
       Contact,
       Email,
       orders, // array of products
@@ -120,7 +123,7 @@ export async function POST(req: NextRequest) {
       <p>Thank you for your order! Here are your order details:</p>
       <b>Order ID:</b> ${order_id}<br/>
       <b>Name:</b> ${Name}<br/>
-      <b>Address:</b> ${Address}, ${Pincode}<br/>
+      <b>Address:</b> ${Address}, ${City}, ${State}, ${Pincode}, ${Country}<br/>
       <b>Contact (WhatsApp):</b> ${Contact}<br/>
       <b>Email:</b> ${Email}<br/>
       ${dragonOffer ? `<br/><div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin:10px 0;">

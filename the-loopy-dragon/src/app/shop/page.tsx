@@ -95,6 +95,16 @@ export default function Shop() {
   const [dragonCaught, setDragonCaught] = useState<boolean>(false);
   const [dragonOffer, setDragonOffer] = useState<DragonOffer | null>(null);
 
+  // Track if free offer has been claimed
+  const [freeOfferClaimed, setFreeOfferClaimed] = useState<boolean>(false);
+
+  // Initialize freeOfferClaimed from sessionStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setFreeOfferClaimed(sessionStorage.getItem("freeOfferClaimed") === "true");
+    }
+  }, []);
+
   // Dragon flight pause and count state (track each dragon separately)
   const [dragonPause, setDragonPause] = useState<boolean>(false);
   const [dragon1FlightCount, setDragon1FlightCount] = useState<number>(0);
@@ -119,8 +129,11 @@ export default function Shop() {
   const [showRareDragon, setShowRareDragon] = useState<boolean>(false);
   const [showRareDragonWarning, setShowRareDragonWarning] = useState<boolean>(false);
 
+  // Lightning effect state for rare dragon
+  const [showLightningEffect, setShowLightningEffect] = useState<boolean>(false);
+
   // Always use a high speed (short duration)
-  const DRAGON_SPEED_SECONDS = 1.2; // fast, but visible
+  const DRAGON_SPEED_SECONDS = 1.4; // fast, but visible
   const RARE_DRAGON_SPEED_SECONDS = 1.1; // a little slower than before
 
   // Helper to get random position and angle (reuse)
@@ -162,43 +175,63 @@ export default function Shop() {
     return {start, end, angle};
   }
 
-  // Show dragon unless dismissed in this session
+  // Show dragon unless dismissed in this session or free offer claimed
   useEffect(() => {
     if (typeof window !== "undefined") {
       const dismissed = sessionStorage.getItem("dragonDismissed");
-      if (!dismissed) setShowDragon(true);
+      const freeClaimed = sessionStorage.getItem("freeOfferClaimed") === "true";
+      if (!dismissed && !freeClaimed) {
+        const timeout = setTimeout(() => {
+          setShowDragon(true);
+          setDragonCaught(false);
+          setDragon1FlightCount(0);
+          setDragon2FlightCount(0);
+        }, 10000); // 10 seconds
+        return () => clearTimeout(timeout);
+      }
     }
   }, []);
 
-  // Rare dragon timer - appears every minute with warning
+  // Normal dragons timer - every 30 seconds, but not if free offer claimed
   useEffect(() => {
+    if (freeOfferClaimed) return;
     const interval = setInterval(() => {
-      if (!showDragonPopup && !dragonCaught) {
-        // Show warning first
-        setShowRareDragonWarning(true);
+      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed) {
+        setShowDragon(true);
+        setDragonCaught(false);
+        setDragon1FlightCount(0);
+        setDragon2FlightCount(0);
+        setDragonPause(false);
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [showDragonPopup, dragonCaught, freeOfferClaimed]);
+
+  // Rare dragon timer - every 2 minutes, but not if free offer claimed
+  useEffect(() => {
+    if (freeOfferClaimed) return;
+    const interval = setInterval(() => {
+      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed) {
+        // Start lightning effect
+        setShowLightningEffect(true);
         
-        // Hide warning and show rare dragon after 3 seconds
+        // End lightning effect and show rare dragon after 3 seconds
         setTimeout(() => {
-          setShowRareDragonWarning(false);
-          
-          // Generate rare dragon path
+          setShowLightningEffect(false);
           const {start, end, angle} = getRandomDragonFlight();
           setRareDragonStart(start);
           setRareDragonEnd(end);
           setRareDragonAngle(angle);
           setRareDragonKey(prev => prev + 1);
           setShowRareDragon(true);
-          
-          // Hide rare dragon after animation completes
           setTimeout(() => {
             setShowRareDragon(false);
           }, RARE_DRAGON_SPEED_SECONDS * 1000 + 100);
         }, 3000);
       }
-    }, 30000); // Every 30 seconds
-
+    }, 120000); // 2 minutes
     return () => clearInterval(interval);
-  }, [showDragonPopup, dragonCaught]);
+  }, [showDragonPopup, dragonCaught, freeOfferClaimed]);
 
   // Pause after 4 flights per dragon, resume after 2 minutes
   useEffect(() => {
@@ -277,6 +310,7 @@ export default function Shop() {
   }, [showDragon, showDragonPopup, dragonCaught, dragon1Key, dragon2Key, dragon1FlightCount, dragon2FlightCount]);
 
   const handleDragonClick = () => {
+    if (freeOfferClaimed) return;
     const offer = getRandomDragonOffer();
     setDragonOffer(offer);
     setShowDragonPopup(true);
@@ -284,6 +318,7 @@ export default function Shop() {
   };
 
   const handleRareDragonClick = () => {
+    if (freeOfferClaimed) return;
     const rareDragonOffer: DragonOffer = {
       id: 'rare_dragon_50',
       type: 'discount',
@@ -303,37 +338,52 @@ export default function Shop() {
     setShowDragon(false);
     setShowDragonPopup(false);
     setDragonOffer(null);
+    // Reset dragon state for next appearance, but not if free offer claimed
+    setTimeout(() => {
+      setDragonCaught(false);
+      setDragon1FlightCount(0);
+      setDragon2FlightCount(0);
+      setDragonPause(false);
+    }, 1000);
   };
 
   const handleDragonTryAgain = () => {
+    // Allow dragons again
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("freeOfferClaimed");
+    }
+    setFreeOfferClaimed(false);
     setShowDragon(false);
     setShowDragonPopup(false);
     setDragonOffer(null);
     setTimeout(() => {
       setDragonCaught(false);
+      setDragon1FlightCount(0);
+      setDragon2FlightCount(0);
       setShowDragon(true);
     }, 50);
   };
 
   const handleClaimOffer = () => {
     if (dragonOffer) {
-      // Apply the offer first
       applyOfferToCart(dragonOffer);
-      
-      // If it's a free product, add to cart
+
+      // If it's a free product, add to cart and block all future dragons
       if (dragonOffer.type === 'free_product' && dragonOffer.productId) {
         addToCart(dragonOffer.productId);
-        // Redirect to cart to show the free item
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("freeOfferClaimed", "true");
+        }
+        setFreeOfferClaimed(true);
         setTimeout(() => {
           router.push('/cart');
         }, 500);
       } 
-      // If it's a discount offer, redirect to cart
+      // If it's a discount offer, allow dragons as usual
       else if (dragonOffer.type === 'discount') {
         router.push('/cart');
       }
     }
-    
     handleDragonPopupClose();
   };
 
@@ -490,35 +540,27 @@ export default function Shop() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: 'sans-serif' }}>
-      {/* Rare Dragon Warning */}
-      {showRareDragonWarning && (
+    <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: 'sans-serif', position: 'relative', zIndex: 0 }}>
+      {/* Page Flicker Effect - only background flashes, content stays visible */}
+      {showLightningEffect && (
         <div
           style={{
             position: "fixed",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
-            color: "#92400e",
-            padding: "12px 24px",
-            borderRadius: "12px",
-            boxShadow: "0 8px 32px rgba(251, 191, 36, 0.4)",
-            zIndex: 1500,
-            fontFamily: "Montserrat, sans-serif",
-            fontWeight: 700,
-            fontSize: "16px",
-            textAlign: "center",
-            border: "2px solid #d97706",
-            animation: "pulse-warning 0.5s ease-in-out infinite alternate"
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            mixBlendMode: "darken",
+            background: "transparent", // Start as transparent
+            animation: "pageFlickerBg 1s ease-in-out"
           }}
-        >
-          ⚡ RARE DRAGON INCOMING! GET READY! ⚡
-        </div>
+        />
       )}
 
       {/* Rare Dragon */}
-      {showRareDragon && (
+      {showRareDragon && !freeOfferClaimed && (
         <div
           id="rare-dragon"
           key={`rare-dragon-${rareDragonKey}`}
@@ -528,9 +570,9 @@ export default function Shop() {
             top: 0,
             width: "150px",
             height: "100px",
-            zIndex: 1000,
+            zIndex: 10,
             pointerEvents: showDragonPopup ? "none" : "auto",
-            transform: `translate(${rareDragonStart.x}px, ${rareDragonStart.y}px) rotate(${rareDragonAngle}deg)`,
+            transform: `translate(${rareDragonStart.x}px, ${rareDragonStart.y}px)`,
             transition: "none",
             animation: `rare-dragon-fly-${rareDragonKey} ${RARE_DRAGON_SPEED_SECONDS}s linear forwards`,
             cursor: "pointer",
@@ -541,7 +583,7 @@ export default function Shop() {
           aria-label="Rare Flying Dragon"
         >
           <img
-            src="/loopydragon3.jpg"
+            src="/loopydragon3.png"
             alt="Rare Flying Dragon"
             width={150}
             height={100}
@@ -550,17 +592,22 @@ export default function Shop() {
               height: "100px",
               display: "block",
               pointerEvents: "none",
-              userSelect: "none"
+              userSelect: "none",
+              // Left to right: flip horizontally and invert angle; right to left: keep as is
+              transform:
+                rareDragonEnd.x > rareDragonStart.x
+                  ? `scaleX(-1) rotate(${-rareDragonAngle}deg)`
+                  : `scaleX(-1) scaleY(-1) rotate(${rareDragonAngle}deg)`,
             }}
             draggable={false}
           />
           <style>{`
             @keyframes rare-dragon-fly-${rareDragonKey} {
               from {
-                transform: translate(${rareDragonStart.x}px, ${rareDragonStart.y}px) rotate(${rareDragonAngle}deg);
+                transform: translate(${rareDragonStart.x}px, ${rareDragonStart.y}px);
               }
               to {
-                transform: translate(${rareDragonEnd.x}px, ${rareDragonEnd.y}px) rotate(${rareDragonAngle}deg);
+                transform: translate(${rareDragonEnd.x}px, ${rareDragonEnd.y}px);
               }
             }
             @keyframes pulse-warning {
@@ -576,7 +623,7 @@ export default function Shop() {
       )}
 
       {/* Two Flying Dragons - random angle and random places, infinite */}
-      {showDragon && !dragonPause && (
+      {showDragon && !dragonPause && !freeOfferClaimed && (
         <>
           <div
             id="flying-dragon-1"
@@ -587,9 +634,9 @@ export default function Shop() {
               top: 0,
               width: "120px",
               height: "80px",
-              zIndex: 0,
+              zIndex: 10,
               pointerEvents: showDragonPopup ? "none" : "auto",
-              transform: `translate(${dragon1Start.x}px, ${dragon1Start.y}px) rotate(${dragon1Angle}deg)`,
+              transform: `translate(${dragon1Start.x}px, ${dragon1Start.y}px)`,
               transition: "none",
               animation: `dragon-fly-xy-1-${dragon1Key} ${DRAGON_SPEED_SECONDS}s linear forwards`,
               cursor: "pointer",
@@ -608,17 +655,22 @@ export default function Shop() {
                 height: "80px",
                 display: "block",
                 pointerEvents: "none",
-                userSelect: "none"
+                userSelect: "none",
+                // Left to right: flip horizontally and invert angle; right to left: keep as is
+                transform:
+                  dragon1End.x > dragon1Start.x
+                    ? `scaleX(-1) rotate(${-dragon1Angle}deg)`
+                    : `scaleX(-1) scaleY(-1) rotate(${dragon1Angle}deg)`,
               }}
               draggable={false}
             />
             <style>{`
               @keyframes dragon-fly-xy-1-${dragon1Key} {
                 from {
-                  transform: translate(${dragon1Start.x}px, ${dragon1Start.y}px) rotate(${dragon1Angle}deg);
+                  transform: translate(${dragon1Start.x}px, ${dragon1Start.y}px);
                 }
                 to {
-                  transform: translate(${dragon1End.x}px, ${dragon1End.y}px) rotate(${dragon1Angle}deg);
+                  transform: translate(${dragon1End.x}px, ${dragon1End.y}px);
                 }
               }
             `}</style>
@@ -632,9 +684,9 @@ export default function Shop() {
               top: 0,
               width: "120px",
               height: "80px",
-              zIndex: 0,
+              zIndex: 10,
               pointerEvents: showDragonPopup ? "none" : "auto",
-              transform: `translate(${dragon2Start.x}px, ${dragon2Start.y}px) rotate(${dragon2Angle}deg)`,
+              transform: `translate(${dragon2Start.x}px, ${dragon2Start.y}px)`,
               transition: "none",
               animation: `dragon-fly-xy-2-${dragon2Key} ${DRAGON_SPEED_SECONDS}s linear forwards`,
               cursor: "pointer",
@@ -653,17 +705,22 @@ export default function Shop() {
                 height: "80px",
                 display: "block",
                 pointerEvents: "none",
-                userSelect: "none"
+                userSelect: "none",
+                // Left to right: flip horizontally and invert angle; right to left: keep as is
+                transform:
+                  dragon2End.x > dragon2Start.x
+                    ? `scaleX(-1) rotate(${-dragon2Angle}deg)`
+                    : `scaleX(-1) scaleY(-1) rotate(${dragon2Angle}deg)`,
               }}
               draggable={false}
             />
             <style>{`
               @keyframes dragon-fly-xy-2-${dragon2Key} {
                 from {
-                  transform: translate(${dragon2Start.x}px, ${dragon2Start.y}px) rotate(${dragon2Angle}deg);
+                  transform: translate(${dragon2Start.x}px, ${dragon2Start.y}px);
                 }
                 to {
-                  transform: translate(${dragon2End.x}px, ${dragon2End.y}px) rotate(${dragon2Angle}deg);
+                  transform: translate(${dragon2End.x}px, ${dragon2End.y}px);
                 }
               }
             `}</style>
@@ -858,6 +915,22 @@ export default function Shop() {
           0% { right: -140px; }
           100% { right: 100vw; }
         }
+        @keyframes pageFlicker {
+          0% { opacity: 0; }
+          20% { opacity: 0.7; }
+          40% { opacity: 0.2; }
+          60% { opacity: 0.8; }
+          80% { opacity: 0.1; }
+          100% { opacity: 0; }
+        }
+        @keyframes pageFlickerBg {
+          0% { background: transparent; opacity: 0; }
+          10% { background: #000; opacity: 0.7; }
+          30% { background: #000; opacity: 0.2; }
+          50% { background: #000; opacity: 0.8; }
+          70% { background: #000; opacity: 0.1; }
+          100% { background: transparent; opacity: 0; }
+        }
       `}</style>
       <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
@@ -870,7 +943,7 @@ export default function Shop() {
       <div style={{ height: '80px' }}></div>
       
       {/* Header Section */}
-      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1.5rem' }}>
+      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 1.5rem', position: 'relative', zIndex: 20 }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{
             fontFamily: 'Montserrat, sans-serif',
@@ -927,7 +1000,7 @@ export default function Shop() {
       </section>
 
       {/* Main Content Section */}
-      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem 5rem' }}>
+      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem 5rem', position: 'relative', zIndex: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '256px 1fr', gap: '1.5rem' }}>
           {/* Categories Sidebar */}
           <div>
@@ -1133,4 +1206,3 @@ export default function Shop() {
     </div>
   );
 }
-

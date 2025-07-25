@@ -27,6 +27,7 @@ type ShippingInfo = {
   pincode: string;
   shippingCost: number;
   isCalculating: boolean;
+  isOutOfRange?: boolean; // Add this field
 };
 
 // Create a type for add-ons to be passed to addToCart
@@ -145,13 +146,14 @@ const loadShippingInfoFromStorage = (): ShippingInfo => {
         pincode: parsed.pincode || "",
         shippingCost: parsed.shippingCost || 0,
         isCalculating: false,
+        isOutOfRange: parsed.isOutOfRange || false,
       };
     } catch (e) {
       console.error("Failed to load shipping info from localStorage:", e);
-      return { pincode: "", shippingCost: 0, isCalculating: false };
+      return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false };
     }
   }
-  return { pincode: "", shippingCost: 0, isCalculating: false };
+  return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false };
 };
 
 const saveShippingInfoToStorage = (shippingInfo: ShippingInfo) => {
@@ -172,6 +174,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     pincode: "",
     shippingCost: 0,
     isCalculating: false,
+    isOutOfRange: false,
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeDragonOffer, setActiveDragonOffer] = useState<DragonOffer | null>(null);
@@ -271,7 +274,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const calculateShipping = async (pincode: string, cartItems: any[]) => {
     if (!pincode || pincode.length !== 6) {
-      updateShippingInfo({ shippingCost: 0, isCalculating: false });
+      updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false });
       return;
     }
 
@@ -280,11 +283,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     
     // Check if shipping should be free
     if (subtotal >= 1000) {
-      updateShippingInfo({ shippingCost: 0, isCalculating: false });
+      updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false });
       return;
     }
     
-    updateShippingInfo({ isCalculating: true });
+    updateShippingInfo({ isCalculating: true, isOutOfRange: false });
     
     try {
       const { weightInGrams, dimensions } = calculateWeights(cartItems);
@@ -294,17 +297,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
       
       if (data.error) {
         console.error('Shipping API Error:', data.error);
-        updateShippingInfo({ shippingCost: 80, isCalculating: false }); // Fallback shipping cost
+        // Mark as out of range when API fails
+        updateShippingInfo({ shippingCost: 80, isCalculating: false, isOutOfRange: true });
         return;
       }
 
+      // --- Custom shipping cost logic ---
+      let apiCost = Number(data.total || 80);
+      let shippingCost = 80;
+      let isOutOfRange = false;
+      
+      // If API returned a valid cost, apply tiered pricing
+      if (data.total && !data.error) {
+        if (apiCost < 60) {
+          shippingCost = 60;
+        } else if (apiCost >= 60 && apiCost <= 90) {
+          shippingCost = 90;
+        } else if (apiCost > 90) {
+          shippingCost = 120;
+        }
+      } else {
+        // If we're using fallback cost, mark as out of range
+        isOutOfRange = true;
+      }
+      // ----------------------------------
+
       updateShippingInfo({ 
-        shippingCost: data.total || 80, 
-        isCalculating: false 
+        shippingCost,
+        isCalculating: false,
+        isOutOfRange
       });
     } catch (error) {
       console.error('Shipping calculation error:', error);
-      updateShippingInfo({ shippingCost: 80, isCalculating: false }); // Fallback shipping cost
+      // Mark as out of range when there's an error
+      updateShippingInfo({ shippingCost: 80, isCalculating: false, isOutOfRange: true });
     }
   };
 

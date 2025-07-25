@@ -45,6 +45,42 @@ export default function CustomOrder() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Check if coming from out-of-range cart and pre-fill details
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get('source');
+      
+      if (source === 'out-of-range') {
+        const cartData = localStorage.getItem('outOfRangeCartData');
+        if (cartData) {
+          try {
+            const parsedData = JSON.parse(cartData);
+            
+            // Pre-fill the details field with cart information
+            let detailsText = `Delivery to pincode: ${parsedData.pincode}\n\nItems from cart:\n`;
+            parsedData.items.forEach((item: any, index: number) => {
+              detailsText += `${index + 1}. ${item.name} (Qty: ${item.quantity})`;
+              if (item.addons?.keyChain) detailsText += ' + Keychain';
+              if (item.addons?.giftWrap) detailsText += ' + Gift Wrap';
+              if (item.addons?.carMirror) detailsText += ' + Car Mirror';
+              if (item.addons?.customMessage) detailsText += ` + Message: "${item.addons.customMessage}"`;
+              detailsText += `\n`;
+            });
+            detailsText += `\nTotal cart value: ₹${parsedData.totalValue}\n\nPlease help with delivery to this location or suggest alternative delivery methods.`;
+            
+            setDetails(detailsText);
+            
+            // Clean up
+            localStorage.removeItem('outOfRangeCartData');
+          } catch (error) {
+            console.error('Error parsing cart data:', error);
+          }
+        }
+      }
+    }
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -399,38 +435,61 @@ export default function CustomOrder() {
       <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
         {/* CUSTOMIZE header with decorative circles */}
         <div style={{ position: 'relative', textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h2
-            style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: isMobile ? '32px' : '50px',
-              fontWeight: 900,
-              color: '#22223B',
-              marginBottom: '0.5rem',
-              letterSpacing: '0.05em',
-              position: 'relative',
-              zIndex: 2,
-              display: 'inline-block'
-            }}
-          >
+          {/* Inline styles for mobile header - using !important to override */}
+          <style jsx>{`
+            .customize-header {
+              font-family: Montserrat, sans-serif;
+              font-size: 50px;
+              font-weight: 900;
+              color: #22223B;
+              margin-bottom: 0.5rem;
+              letter-spacing: 0.05em;
+              position: relative;
+              z-index: 2;
+              display: inline-block;
+              text-transform: none;
+              line-height: 1.1;
+            }
+            
+            @media (max-width: 767px) {
+              .customize-header {
+                font-size: 48px !important;
+                letter-spacing: 0.12em !important;
+                line-height: 0.9 !important;
+                font-weight: 900 !important;
+                text-transform: none !important;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .customize-header {
+                font-size: 44px !important;
+                letter-spacing: 0.15em !important;
+              }
+            }
+          `}</style>
+          
+          <h2 className="customize-header">
             <span style={{ position: 'relative', display: 'inline-block' }}>
               {/* Main filled circle behind 'C', slightly higher and more overlapped */}
               <span
-              style={{
-                position: 'absolute',
-                left: isMobile ? '-10px' : '-16px',
-                top: isMobile ? '4px' : '10px', // moved up
-                width: isMobile ? '32px' : '48px',
-                height: isMobile ? '32px' : '48px',
-                background: '#EFDFFF',
-                borderRadius: '50%',
-                zIndex: 0,
-                pointerEvents: 'none'
-              }}
+                style={{
+                  position: 'absolute',
+                  left: isMobile ? '-12px' : '-16px',
+                  top: isMobile ? '2px' : '10px',
+                  width: isMobile ? '36px' : '48px',
+                  height: isMobile ? '36px' : '48px',
+                  background: '#EFDFFF',
+                  borderRadius: '50%',
+                  zIndex: 0,
+                  pointerEvents: 'none'
+                }}
               />
               <span style={{ position: 'relative', zIndex: 2 }}>C</span>
             </span>
             <span style={{ position: 'relative', zIndex: 2 }}>USTOMIZE</span>
           </h2>
+          
           <div
             style={{
               fontFamily: 'Montserrat, sans-serif',
@@ -775,7 +834,19 @@ export default function CustomOrder() {
                 <div className="flex flex-col items-center py-8">
                   <button
                     onClick={handleGoogleLogin}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold text-lg flex items-center gap-2"
+                    className="px-6 py-3 rounded-lg font-semibold text-lg flex items-center gap-2"
+                    style={{
+                      background: "#D8B6FA",
+                      color: "#22223B",
+                      fontFamily: "Montserrat, sans-serif",
+                      fontWeight: 600,
+                      letterSpacing: "0.02em",
+                      border: "none",
+                      borderRadius: 0,
+                      transition: "background 0.2s",
+                    }}
+                    onMouseOver={e => (e.currentTarget.style.background = "#C8A6EA")}
+                    onMouseOut={e => (e.currentTarget.style.background = "#D8B6FA")}
                   >
                     <svg className="w-5 h-5" viewBox="0 0 48 48">
                       <g>

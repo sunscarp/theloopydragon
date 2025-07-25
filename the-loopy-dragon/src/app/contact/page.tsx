@@ -99,14 +99,35 @@ export default function Contact() {
 
       <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h2 style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontSize: isMobile ? '28px' : '40px',
-            fontWeight: 700,
-            color: '#22223B',
-            marginBottom: '1rem',
-            letterSpacing: '0.05em'
-          }}>
+          {/* Responsive font for CONTACT US header */}
+          <style jsx>{`
+            .contact-header {
+              font-family: Montserrat, sans-serif;
+              font-size: 40px;
+              font-weight: 700;
+              color: #22223B;
+              margin-bottom: 1rem;
+              letter-spacing: 0.05em;
+              text-transform: none;
+              line-height: 1.1;
+            }
+            @media (max-width: 767px) {
+              .contact-header {
+                font-size: 32px !important;
+                letter-spacing: 0.12em !important;
+                line-height: 0.95 !important;
+                font-weight: 700 !important;
+                text-transform: none !important;
+              }
+            }
+            @media (max-width: 480px) {
+              .contact-header {
+                font-size: 28px !important;
+                letter-spacing: 0.15em !important;
+              }
+            }
+          `}</style>
+          <h2 className="contact-header">
             CONTACT US
           </h2>
           <p style={{
