@@ -69,7 +69,7 @@ export default function MobileShop() {
   const [dragon2Angle, setDragon2Angle] = useState<number>(0);
   const [dragon2Key, setDragon2Key] = useState<number>(100);
 
-  const DRAGON_SPEED_SECONDS = 0.9;
+  const DRAGON_SPEED_SECONDS = 1;
 
   // Rare dragon state
   const [showRareDragon, setShowRareDragon] = useState<boolean>(false);
@@ -78,10 +78,14 @@ export default function MobileShop() {
   const [rareDragonAngle, setRareDragonAngle] = useState<number>(0);
   const [rareDragonKey, setRareDragonKey] = useState<number>(200);
 
+  // Flying dragons disabled state
+  const [dragonsDisabled, setDragonsDisabled] = useState<boolean>(false);
+  const [showDisableDragonsPopup, setShowDisableDragonsPopup] = useState<boolean>(false);
+
   // Lightning effect state for rare dragon
   const [showLightningEffect, setShowLightningEffect] = useState<boolean>(false);
 
-  const RARE_DRAGON_SPEED_SECONDS = 0.8;
+  const RARE_DRAGON_SPEED_SECONDS = 0.9;
 
   // Handle scroll effect for navbar
   useEffect(() => {
@@ -118,11 +122,11 @@ export default function MobileShop() {
     }
   }, []);
 
-  // Normal dragons timer - every 30 seconds, but not if free offer claimed
+  // Normal dragons timer - every 30 seconds, but not if free offer claimed or dragons disabled
   useEffect(() => {
-    if (freeOfferClaimed) return;
+    if (freeOfferClaimed || dragonsDisabled) return;
     const interval = setInterval(() => {
-      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed) {
+      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed && !dragonsDisabled) {
         setShowDragon(true);
         setDragonCaught(false);
         setDragonFlightCount(0);
@@ -133,7 +137,7 @@ export default function MobileShop() {
     }, 60000); // Every 60 seconds
 
     return () => clearInterval(interval);
-  }, [showDragonPopup, dragonCaught, freeOfferClaimed]);
+  }, [showDragonPopup, dragonCaught, freeOfferClaimed, dragonsDisabled]);
 
   // Pause after 4 flights each, resume after 1 minute
   useEffect(() => {
@@ -226,11 +230,11 @@ export default function MobileShop() {
     // This ensures the dependency array length never changes
   }, [showDragon, showDragonPopup, dragonCaught, dragonKey, dragon2Key, freeOfferClaimed]);
 
-  // Rare dragon timer - appears every 2 minutes with lightning effect
+  // Rare dragon timer - appears every 2 minutes with lightning effect, but not if dragons disabled
   useEffect(() => {
-    if (freeOfferClaimed) return;
+    if (freeOfferClaimed || dragonsDisabled) return;
     const interval = setInterval(() => {
-      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed) {
+      if (!showDragonPopup && !dragonCaught && !freeOfferClaimed && !dragonsDisabled) {
         // Start lightning effect
         setShowLightningEffect(true);
         
@@ -255,7 +259,16 @@ export default function MobileShop() {
     }, 120000); // Every 2 minutes
 
     return () => clearInterval(interval);
-  }, [showDragonPopup, dragonCaught, freeOfferClaimed]);
+  }, [showDragonPopup, dragonCaught, freeOfferClaimed, dragonsDisabled]);
+
+  // Prevent dragons if disabled
+  useEffect(() => {
+    if (dragonsDisabled) {
+      setShowDragon(false);
+      setShowRareDragon(false);
+      setShowLightningEffect(false);
+    }
+  }, [dragonsDisabled]);
 
   // Get random dragon flight path
   function getRandomDragonFlight() {
@@ -439,6 +452,51 @@ export default function MobileShop() {
     fetchProducts();
   }, []);
 
+  // On mount, check localStorage for dragonsDisabled and dragonsPreferenceAsked
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const disabled = localStorage.getItem("dragonsDisabled") === "true";
+      setDragonsDisabled(disabled);
+      const asked = localStorage.getItem("dragonsPreferenceAsked") === "true";
+      if (!asked) {
+        setTimeout(() => setShowDisableDragonsPopup(true), 1200);
+      }
+    }
+  }, []);
+
+  // Handler to disable dragons
+  const handleDisableDragons = () => {
+    setDragonsDisabled(true);
+    setShowDisableDragonsPopup(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dragonsDisabled", "true");
+      localStorage.setItem("dragonsPreferenceAsked", "true");
+    }
+    setShowDragon(false);
+    setShowDragonPopup(false);
+    setShowRareDragon(false);
+    setShowLightningEffect(false);
+  };
+
+  // Handler to keep dragons enabled
+  const handleKeepDragons = () => {
+    setDragonsDisabled(false);
+    setShowDisableDragonsPopup(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dragonsDisabled", "false");
+      localStorage.setItem("dragonsPreferenceAsked", "true");
+    }
+  };
+
+  // Handler for toggle button
+  const handleToggleDragons = () => {
+    if (dragonsDisabled) {
+      handleKeepDragons();
+    } else {
+      handleDisableDragons();
+    }
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#F5F9FF]">
@@ -591,8 +649,119 @@ export default function MobileShop() {
 
   return (
     <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: 'sans-serif', position: 'relative', zIndex: 0 }}>
+      {/* Disable Dragons Popup */}
+      {showDisableDragonsPopup && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.35)",
+            zIndex: 3000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "0", // sharp corners
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+              padding: "2.5rem 2rem 2rem",
+              maxWidth: "340px",
+              textAlign: "center",
+              position: "relative"
+            }}
+          >
+            <div style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontWeight: 700,
+              fontSize: "1.1rem",
+              color: "#6b21a8",
+              marginBottom: "0.5rem"
+            }}>
+              Catch the flying dragons for fire discounts on all products!!
+            </div>
+            <div style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontWeight: 400,
+              fontSize: "1rem",
+              color: "#22223B",
+              marginBottom: "1.5rem"
+            }}>
+              They spawn every few minutes so keep an eye on them!!!<br /><br />
+              Or you can choose to switch them off here.
+            </div>
+            <button
+              onClick={handleDisableDragons}
+              style={{
+                background: "linear-gradient(90deg, #059669 0%, #10b981 100%)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "0", // sharp corners
+                padding: "0.75rem 2rem",
+                fontWeight: 600,
+                fontFamily: "Montserrat, sans-serif",
+                fontSize: "1rem",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                transition: "background 0.2s",
+                marginRight: "0.5rem"
+              }}
+            >
+              Switch Off Dragons
+            </button>
+            <button
+              onClick={handleKeepDragons}
+              style={{
+                background: "transparent",
+                color: "#6b7280",
+                border: "1px solid #d1d5db",
+                borderRadius: "0", // sharp corners
+                padding: "0.75rem 2rem",
+                fontWeight: 600,
+                fontFamily: "Montserrat, sans-serif",
+                fontSize: "1rem",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                marginTop: "0.5rem"
+              }}
+            >
+              Keep Dragons On
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toggle Dragons Button (bottom right corner, always visible) */}
+      <button
+        onClick={handleToggleDragons}
+        style={{
+          position: "fixed",
+          bottom: "32px",
+          right: "16px",
+          zIndex: 100,
+          background: dragonsDisabled
+            ? "linear-gradient(90deg, #a21caf 0%, #f472b6 100%)"
+            : "linear-gradient(90deg, #059669 0%, #10b981 100%)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "0", // sharp corners
+          padding: "0.6rem 1.2rem",
+          fontWeight: 600,
+          fontFamily: "Montserrat, sans-serif",
+          fontSize: "1rem",
+          cursor: "pointer",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          transition: "background 0.2s"
+        }}
+        aria-label={dragonsDisabled ? "Enable Flying Dragons" : "Disable Flying Dragons"}
+      >
+        {dragonsDisabled ? "Enable Flying Dragons" : "Disable Flying Dragons"}
+      </button>
+
       {/* Page Flicker Effect - only background flashes, content stays visible */}
-      {showLightningEffect && (
+      {showLightningEffect && !dragonsDisabled && (
         <div
           style={{
             position: "fixed",
@@ -610,7 +779,7 @@ export default function MobileShop() {
       )}
 
       {/* Flying Dragons - Both regular dragons */}
-      {showDragon && !dragonPause && !freeOfferClaimed && (
+      {showDragon && !dragonPause && !freeOfferClaimed && !dragonsDisabled && (
         <>
           {/* Dragon 1 */}
           <div
@@ -735,7 +904,7 @@ export default function MobileShop() {
       )}
 
       {/* Rare Dragon */}
-      {showRareDragon && !freeOfferClaimed && (
+      {showRareDragon && !freeOfferClaimed && !dragonsDisabled && (
         <div
           id="rare-dragon"
           key={`rare-dragon-${rareDragonKey}`}
@@ -798,7 +967,7 @@ export default function MobileShop() {
       )}
 
       {/* Dragon Popup */}
-      {showDragonPopup && dragonOffer && (
+      {showDragonPopup && dragonOffer && !dragonsDisabled && (
         <div
           style={{
             position: "fixed",

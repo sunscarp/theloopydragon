@@ -252,37 +252,26 @@ export default function CustomOrderPage() {
         sum + (p.Price * p.Quantity), 0
       );
 
-      // Insert into Orders table first with Name field
-      const { error: orderError } = await supabase.from("Orders").insert([{
-        order_id: orderId,
-        Name: orders.find(o => o.id === acceptingOrder?.id)?.["Full Name"], // Add Name field
-        "Shipping Cost": totalShipping,
-        "Total Price": totalProducts,
-        uid: acceptingOrder?.uid
-      }]);
-
-      if (orderError) throw orderError;
-
-      // Then insert into Your Profile
+      // Insert into Your Profile with "Pending Payment" status
       const { error } = await supabase.from("Your Profile").insert([{
         order_id: orderId,
-        Status: "Order successful: Your Order is now being made",
+        Status: "Pending Payment: Please complete payment to confirm your custom order",
         "Order Date": now,
-        Products: formattedProducts, // Use formatted products array
+        Products: formattedProducts,
         uid: acceptingOrder?.uid
       }]);
       
       if (error) throw error;
       
-      // Send mail to customer with order details
+      // Send mail to customer with payment instructions
       const productsText = formattedProducts.map(p => 
         `${p.Product}: ${p.Quantity} x ₹${p.Price} = ₹${p["Total Price"]}`
       ).join('\n');
 
       const ok = await sendMail(
         acceptingOrder!.email,
-        "Your Custom Order is Accepted",
-        `Your order has been accepted!\n\nOrder ID: ${orderId}\n\nProducts:\n${productsText}\n\nShipping Cost: ₹${totalShipping}\nTotal Amount: ₹${totalProducts + totalShipping}`
+        "Your Custom Order is Ready for Payment",
+        `Your custom order has been accepted and is ready for payment!\n\nOrder ID: ${orderId}\n\nProducts:\n${productsText}\n\nShipping Cost: ₹${totalShipping}\nTotal Amount: ₹${totalProducts + totalShipping}\n\nPlease visit your profile to complete the payment: ${window.location.origin}/profile`
       );
       
       // Delete from Custom table
@@ -296,7 +285,7 @@ export default function CustomOrderPage() {
       // Update local state to remove the order
       setOrders(prev => prev.filter(order => order.id !== acceptingOrder?.id));
       
-      setAcceptMsg(ok ? "Order accepted and customer notified!" : "Order accepted, but failed to send mail.");
+      setAcceptMsg(ok ? "Custom order accepted and added to customer's profile for payment!" : "Order accepted, but failed to send mail.");
       setAcceptingOrder(null);
     } catch (e: any) {
       setAcceptMsg("Error: " + (e.message || "Unknown error"));

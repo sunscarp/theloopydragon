@@ -171,7 +171,7 @@ export default function Footer() {
                 </div>
                 <div>
                   <a 
-                    href="#" 
+                    href="/shipping-policy" 
                     className="text-black/80 hover:text-black hover:translate-x-1 transition-all duration-200 block"
                     style={{
                       fontWeight: 400,
@@ -184,20 +184,7 @@ export default function Footer() {
                 </div>
                 <div>
                   <a 
-                    href="#" 
-                    className="text-black/80 hover:text-black hover:translate-x-1 transition-all duration-200 block"
-                    style={{
-                      fontWeight: 400,
-                      fontSize: '14px',
-                      letterSpacing: '0.3px'
-                    }}
-                  >
-                    Replacement Policy
-                  </a>
-                </div>
-                <div>
-                  <a 
-                    href="#" 
+                    href="/terms-and-conditions" 
                     className="text-black/80 hover:text-black hover:translate-x-1 transition-all duration-200 block"
                     style={{
                       fontWeight: 400,
@@ -210,7 +197,7 @@ export default function Footer() {
                 </div>
                 <div>
                   <a 
-                    href="#" 
+                    href="/privacy-policy" 
                     className="text-black/80 hover:text-black hover:translate-x-1 transition-all duration-200 block"
                     style={{
                       fontWeight: 400,

@@ -70,6 +70,15 @@ function OrderSummaryContent() {
 
   // Helper to get product price by product name (or id if available)
   const getBasePrice = (item: any) => {
+    // For custom orders, calculate unit price from total price
+    if (item["Custom Order"] || (profileOrder && profileOrder["Custom Order"])) {
+      const totalPrice = Number(item["Total Price"] || 0);
+      const quantity = Number(item.Quantity || 1);
+      if (totalPrice > 0 && quantity > 0) {
+        return totalPrice / quantity;
+      }
+    }
+    
     // Try to get from item.Price first
     if (typeof item.Price === "number" && !isNaN(item.Price)) return item.Price;
     if (item.Price && !isNaN(Number(item.Price))) return Number(item.Price);
@@ -155,18 +164,25 @@ function OrderSummaryContent() {
             {/* Display Dragon Offer if present */}
             {profileOrder?.["Dragon Offer"] && (
               <div className="sm:col-span-2 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-                <span className="font-semibold text-green-800 dark:text-green-200">🐉 Dragon Offer Applied:</span>
+                <span className="font-semibold text-green-800 dark:text-green-200">Fire Offer Applied:</span>
                 <span className="text-green-700 dark:text-green-300 ml-2">{profileOrder["Dragon Offer"]}</span>
                 {dragonDiscount > 0 && (
                   <span className="text-green-600 dark:text-green-400 ml-2 font-semibold">
-                    (Discount: -₹{dragonDiscount.toFixed(2)})
+                    (Fire Discount: -₹{dragonDiscount.toFixed(2)})
                   </span>
                 )}
                 {orders.some(item => item.isSpecialOffer) && (
                   <div className="text-green-700 dark:text-green-300 text-sm mt-1">
-                    🎁 Includes {orders.filter(item => item.isSpecialOffer).length} free dragon offer item(s)
+                    🎁 Includes {orders.filter(item => item.isSpecialOffer).length} free fire offer item(s)
                   </div>
                 )}
+              </div>
+            )}
+            {/* Display Custom Order notice if applicable */}
+            {profileOrder?.["Custom Order"] && (
+              <div className="sm:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                <span className="font-semibold text-blue-800 dark:text-blue-200">📝 Custom Order</span>
+                <span className="text-blue-700 dark:text-blue-300 ml-2">This was a custom order specially prepared for you</span>
               </div>
             )}
           </div>
@@ -189,13 +205,20 @@ function OrderSummaryContent() {
 
                   const isTrue = (v: any) => v === true || v === "true";
                   const addonDetails: { label: string; price: number; display: string }[] = [];
-                  if (isTrue(item.keyChain)) addonDetails.push({ label: "Keychain", price: 10, display: "+ Keychain (+₹10)" });
-                  if (isTrue(item.giftWrap)) addonDetails.push({ label: "Gift Wrap", price: 10, display: "+ Gift Wrap (+₹10)" });
-                  if (isTrue(item.carMirror)) addonDetails.push({ label: "Car mirror accessory", price: 50, display: "+ Car mirror accessory (+₹50)" });
+                  
+                  // For custom orders, don't add addon prices as they're already included in the total
+                  const isCustomOrder = item["Custom Order"] || (profileOrder && profileOrder["Custom Order"]);
+                  
+                  if (!isCustomOrder) {
+                    if (isTrue(item.keyChain)) addonDetails.push({ label: "Keychain", price: 10, display: "+ Keychain (+₹10)" });
+                    if (isTrue(item.giftWrap)) addonDetails.push({ label: "Gift Wrap", price: 10, display: "+ Gift Wrap (+₹10)" });
+                    if (isTrue(item.carMirror)) addonDetails.push({ label: "Car mirror accessory", price: 50, display: "+ Car mirror accessory (+₹50)" });
+                  }
+                  
                   const addonUnitPrice = addonDetails.reduce((sum, a) => sum + a.price, 0);
 
                   // Calculate unit price and subtotal
-                  let unitPrice = basePrice + addonUnitPrice;
+                  let unitPrice = isCustomOrder ? basePrice : basePrice + addonUnitPrice;
                   let subtotal = unitPrice * Number(item.Quantity);
 
                   // If "Total Price" is present and matches expected, use it
@@ -219,14 +242,20 @@ function OrderSummaryContent() {
                           )}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Product Price: ₹{basePrice.toFixed(2)}
-                          {addonUnitPrice > 0 && (
-                            <span className="ml-1 text-purple-500">
-                              (+ Addons: ₹{addonUnitPrice})
-                            </span>
+                          {isCustomOrder ? (
+                            <span>Custom Order Item</span>
+                          ) : (
+                            <>
+                              Product Price: ₹{basePrice.toFixed(2)}
+                              {addonUnitPrice > 0 && (
+                                <span className="ml-1 text-purple-500">
+                                  (+ Addons: ₹{addonUnitPrice})
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
-                        {(addonDetails.length > 0 || item.customMessage) && (
+                        {(!isCustomOrder && (addonDetails.length > 0 || item.customMessage)) && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             {addonDetails.length > 0 && (
                               <div>
@@ -261,11 +290,11 @@ function OrderSummaryContent() {
                     ₹{subtotal.toFixed(2)}
                   </td>
                 </tr>
-                {/* Dragon Discount Row */}
+                {/* Fire Discount Row (was Dragon Discount Row) */}
                 {dragonDiscount > 0 && (
                   <tr>
                     <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-green-700 dark:text-green-300">
-                      🐉 Dragon Discount
+                      Fire Discount
                       {profileOrder?.["Dragon Offer"]?.includes('Buy 3 Get 1 Free') && (
                         <div className="text-xs text-gray-600 dark:text-gray-400">
                           (Cheapest items made free)
@@ -281,7 +310,7 @@ function OrderSummaryContent() {
                 {dragonDiscount > 0 && (
                   <tr className="border-t border-gray-200 dark:border-gray-600">
                     <td colSpan={3} className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
-                      Subtotal after discount
+                      Subtotal after fire discount
                     </td>
                     <td className="px-4 sm:px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">
                       ₹{finalTotalAfterDiscount.toFixed(2)}

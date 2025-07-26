@@ -1,30 +1,42 @@
-
 "use client";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MobileFooter from "@/components/mobilefooter";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function About() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Handle scroll effect for sticky navbar
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50); // Trigger at 50px for smooth transition
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
+    <div className="min-h-screen bg-[#F5F9FF] flex flex-col font-sans scroll-smooth">
       {/* Sticky Navbar */}
       <div
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
           isScrolled
-            ? 'bg-white/95 dark:bg-gray-900/95 shadow-xl backdrop-blur-md py-2 px-4 sm:px-6'
+            ? 'bg-white/95 shadow-xl backdrop-blur-md py-2 px-4 sm:px-6'
             : 'bg-transparent py-4 px-6 sm:px-8'
         }`}
       >
@@ -34,54 +46,129 @@ export default function About() {
       {/* Spacer to prevent content overlap */}
       <div className="h-16 sm:h-20"></div>
 
-      {/* Hero Section */}
-      <section className="w-full bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-900 dark:to-blue-700 py-16 sm:py-24 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 sm:mb-6 text-center tracking-tight">
-          About The Loopy Dragon
-        </h1>
-        <p className="text-lg sm:text-xl text-blue-100 max-w-3xl text-center leading-relaxed">
-          Crafting beautiful crochet creations with love, dedication, and a touch of magic
-        </p>
+      <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
+        {/* ABOUT header with decorative circles */}
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: '2.5rem' }}>
+          <style jsx>{`
+            .about-header {
+              font-family: Montserrat, sans-serif;
+              font-size: 50px;
+              font-weight: 900;
+              color: #22223B;
+              margin-bottom: 0.5rem;
+              letter-spacing: 0.05em;
+              position: relative;
+              z-index: 2;
+              display: inline-block;
+              text-transform: none;
+              line-height: 1.1;
+            }
+            
+            @media (max-width: 767px) {
+              .about-header {
+                font-size: 48px !important;
+                letter-spacing: 0.12em !important;
+                line-height: 0.9 !important;
+                font-weight: 900 !important;
+                text-transform: none !important;
+              }
+            }
+            
+            @media (max-width: 480px) {
+              .about-header {
+                font-size: 44px !important;
+                letter-spacing: 0.15em !important;
+              }
+            }
+          `}</style>
+          
+          <h1 className="about-header">
+            <span style={{ position: 'relative', display: 'inline-block' }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: isMobile ? '-12px' : '-16px',
+                  top: isMobile ? '2px' : '10px',
+                  width: isMobile ? '36px' : '48px',
+                  height: isMobile ? '36px' : '48px',
+                  background: '#EFDFFF',
+                  borderRadius: '50%',
+                  zIndex: 0,
+                  pointerEvents: 'none'
+                }}
+              />
+              <span style={{ position: 'relative', zIndex: 2 }}>A</span>
+            </span>
+            <span style={{ position: 'relative', zIndex: 2 }}>BOUT&nbsp;US</span>
+          </h1>
+        </div>
+
+        {/* Add about-us.png image with transparent background */}
+        <div className="flex justify-center my-10" style={{ background: "transparent" }}>
+          <Image
+            src="/about-us.png"
+            alt="About Us"
+            width={isMobile ? 380 : 600}
+            height={isMobile ? 260 : 400}
+            style={{
+              borderRadius: 0,
+              objectFit: "contain",
+              background: "transparent"
+            }}
+            priority
+          />
+        </div>
+        {/* Meet The Loopy Dragon Team */}
+        <div className="mt-8 mb-4" style={{
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: 700,
+          fontSize: isMobile ? "22px" : "28px",
+          color: "#22223B",
+          letterSpacing: "0.02em",
+          textAlign: "center"
+        }}>
+          Meet The Loopy Dragon Team
+        </div>
+        {/* Team Description */}
+        <div className="max-w-3xl mx-auto" style={{
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: 400,
+          fontSize: isMobile ? "14px" : "17px",
+          color: "#22223B",
+          letterSpacing: "0.01em",
+          lineHeight: "1.7",
+          marginBottom: "2.5rem",
+          textAlign: "left"
+        }}>
+          We're a small team of makers who crochet every single piece ourselves, and lots of love go into everything we create. From plushies and bookmarks to cute clips and custom pieces, we're all about turning cozy yarn into things that make you (and us!) smile.
+          <br /><br />
+          <span style={{ fontWeight: 600 }}>Why we do this:</span>
+          <br />
+          Because we love making stuff that sparks joy; whether it's a bunny plushie you hug on bad days, a fox bookmark for your current read, or a custom keychain that's so you.
+          <br /><br />
+          <span style={{ fontWeight: 600 }}>What makes us different:</span>
+          <ul style={{
+            marginTop: "0.5em",
+            marginBottom: "0.5em",
+            paddingLeft: "1.5em",
+            listStyleType: "disc"
+          }}>
+            <li style={{ marginBottom: "0.5em" }}>Handmade from scratch by us: no factories, just our hooks, yarn, and creativity.</li>
+            <li style={{ marginBottom: "0.5em" }}>We use quality yarns: acrylic, cotton (baby-safe!), and velvet for that extra plush vibe.</li>
+            <li style={{ marginBottom: "0.5em" }}>Custom orders? Always! Slide into our DMs or use the customize option, your ideas keep us inspired.</li>
+            <li style={{ marginBottom: "0.5em" }}>Every piece is unique, because that's what handmade is all about.</li>
+          </ul>
+          <br />
+          <span>Thanks for being here, cheering us on, and supporting small creators.</span>
+          <br />
+          <span>Stay loopy, stay cozy!</span>
+          <br />
+          {"— Team Loopy Dragon"}
+        </div>
       </section>
 
-      <main className="max-w-5xl mx-auto py-12 sm:py-16 px-4 sm:px-6 lg:px-8 flex-1">
-        <div className="grid gap-8 sm:gap-12 lg:grid-cols-3">
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 transform hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center mb-4">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Our Story</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
-              The Loopy Dragon began as a heartfelt passion project, born from a love for creating handmade crochet items that bring joy, warmth, and a sprinkle of whimsy to every home.
-            </p>
-          </section>
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 transform hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center mb-4">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Our Mission</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
-              We are dedicated to crafting high-quality crochet pieces that blend traditional techniques with modern designs, ensuring each creation is as unique as the hands that make it.
-            </p>
-          </section>
-          <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 transform hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center mb-4">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.5 3.5 0 005.33 0l8.135 8.136a3.5 3.5 0 000 4.95l-4.95 4.95a3.5 3.5 0 01-4.95 0l-8.136-8.135a3.5 3.5 0 010-5.33l4.95-4.95z" />
-              </svg>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Quality & Care</h2>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
-              Every piece is meticulously handcrafted with premium materials and an eye for detail, ensuring exceptional quality that you can feel in every stitch.
-            </p>
-          </section>
-        </div>
-      </main>
-      <Footer />
+      {/* Conditional Footer rendering */}
+      {isMobile ? <MobileFooter /> : <Footer />}
     </div>
   );
 }

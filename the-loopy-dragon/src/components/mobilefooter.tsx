@@ -159,7 +159,7 @@ export default function Footer() {
                     </div>
                     <div>
                       <a 
-                        href="#" 
+                        href="/shipping-policy" 
                         className="text-black/80 hover:text-black transition-all duration-200 block text-xs"
                         style={{
                           fontWeight: 400,
@@ -171,19 +171,7 @@ export default function Footer() {
                     </div>
                     <div>
                       <a 
-                        href="#" 
-                        className="text-black/80 hover:text-black transition-all duration-200 block text-xs"
-                        style={{
-                          fontWeight: 400,
-                          letterSpacing: '0.2px'
-                        }}
-                      >
-                        Replacement Policy
-                      </a>
-                    </div>
-                    <div>
-                      <a 
-                        href="#" 
+                        href="/privacy-policy" 
                         className="text-black/80 hover:text-black transition-all duration-200 block text-xs"
                         style={{
                           fontWeight: 400,
@@ -191,6 +179,18 @@ export default function Footer() {
                         }}
                       >
                         Privacy Policy
+                      </a>
+                    </div>
+                    <div>
+                      <a 
+                        href="/terms-and-conditions" 
+                        className="text-black/80 hover:text-black transition-all duration-200 block text-xs"
+                        style={{
+                          fontWeight: 400,
+                          letterSpacing: '0.2px'
+                        }}
+                      >
+                        Terms and Conditions
                       </a>
                     </div>
                   </nav>

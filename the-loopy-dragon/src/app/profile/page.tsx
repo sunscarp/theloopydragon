@@ -170,7 +170,24 @@ export default function ProfilePage() {
                     )}
                     
                     <div className="text-gray-700 dark:text-gray-200 text-xs sm:text-sm mb-2">
-                      <b>Status:</b> {order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
+                      <b>Status:</b> 
+                      <span className={`ml-1 ${
+                        order.Status?.includes("Pending Payment") 
+                          ? "text-orange-600 dark:text-orange-400 font-semibold" 
+                          : ""
+                      }`}>
+                        {order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
+                      </span>
+                      {order.Status?.includes("Pending Payment") && (
+                        <div className="mt-2">
+                          <Link
+                            href={`/checkout?custom_order=${order.order_id}`}
+                            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition duration-200"
+                          >
+                            Complete Payment
+                          </Link>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Order Summary Table */}
