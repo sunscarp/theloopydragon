@@ -2,3 +2,8 @@
 **/.next/
 .env
 .env.local
+node_modules/
+owner-loopy/node_modules/
+seller-loopy/node_modules/
+the-loopy-dragon/node_modules/
+the-loopydragon/node_modules/
