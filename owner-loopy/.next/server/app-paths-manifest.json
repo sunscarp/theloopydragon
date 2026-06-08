@@ -1,8 +1,0 @@
-{
-  "/api/sellers/remove/route": "app/api/sellers/remove/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/payouts/page": "app/payouts/page.js",
-  "/products/page": "app/products/page.js",
-  "/sellers/[id]/page": "app/sellers/[id]/page.js",
-  "/sellers/page": "app/sellers/page.js"
-}
