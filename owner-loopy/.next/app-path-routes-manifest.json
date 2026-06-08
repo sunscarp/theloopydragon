@@ -1,0 +1,20 @@
+{
+  "/api/add-product/route": "/api/add-product",
+  "/api/payouts/create/route": "/api/payouts/create",
+  "/api/sellers/update/route": "/api/sellers/update",
+  "/api/sellers/create/route": "/api/sellers/create",
+  "/api/sellers/remove/route": "/api/sellers/remove",
+  "/api/send-mail/route": "/api/send-mail",
+  "/favicon.ico/route": "/favicon.ico",
+  "/_not-found/page": "/_not-found",
+  "/dashboard/page": "/dashboard",
+  "/page": "/",
+  "/orders/page": "/orders",
+  "/auth/callback/page": "/auth/callback",
+  "/payouts/page": "/payouts",
+  "/sellers/[id]/page": "/sellers/[id]",
+  "/products/page": "/products",
+  "/sellers/page": "/sellers",
+  "/custom-orders/page": "/custom-orders",
+  "/dragon-game/page": "/dragon-game"
+}

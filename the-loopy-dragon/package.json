@@ -1,0 +1,40 @@
+{
+  "name": "the-loopy-dragon",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-react": "^0.5.0",
+    "@supabase/supabase-js": "^2.49.9",
+    "@types/uuid": "^10.0.0",
+    "firebase": "^11.9.1",
+    "firebase-admin": "^13.10.0",
+    "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.1",
+    "lucide-react": "^0.523.0",
+    "next": "15.3.8",
+    "nodemailer": "^7.0.3",
+    "razorpay": "^2.9.6",
+    "react": "^19.0.0",
+    "react-device-detect": "^2.2.3",
+    "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.6.0",
+    "swiper": "^11.2.10",
+    "twilio": "^5.7.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/jspdf": "^1.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
