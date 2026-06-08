@@ -1,5 +1,8 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/api/sellers/remove/route": "app/api/sellers/remove/route.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/payouts/page": "app/payouts/page.js",
+  "/products/page": "app/products/page.js",
+  "/sellers/[id]/page": "app/sellers/[id]/page.js",
+  "/sellers/page": "app/sellers/page.js"
 }
