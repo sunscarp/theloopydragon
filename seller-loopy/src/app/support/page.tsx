@@ -46,12 +46,12 @@ export default function SupportPage() {
       answer: "Simply reach out to us via email, WhatsApp, or Instagram with your shop name and a few photos of your work. We'll review and get back to you within 24–36 hours."
     },
     {
-      question: "Is there any commission fee?",
-      answer: "No! We charge 0% commission. The only deduction is a 2% Razorpay processing fee on each transaction. You keep the rest."
+      question: "What fees apply to my sales?",
+      answer: "A 2% Razorpay payment processing fee is deducted from each transaction. Platform fees are at our discretion and will be communicated in advance."
     },
     {
       question: "How and when do I get paid?",
-      answer: "Payouts are sent via UPI directly to your registered UPI ID. The owner processes payouts manually — once transferred, your orders will show as 'Paid' in your transaction history. A 2% Razorpay processing fee is deducted from each sale."
+      answer: "Payouts are sent via UPI directly to your registered UPI ID. The platform processes payouts manually — once transferred, your orders will show as 'Paid' in your transaction history. A 2% Razorpay processing fee is deducted from each sale."
     },
     {
       question: "Can I list custom or made-to-order items?",

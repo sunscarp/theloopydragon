@@ -178,7 +178,7 @@ export default function SupportPage() {
             </div>
             <h4 className="text-base font-semibold text-[#22223B] mb-3">Payout Sent</h4>
             <p className="text-sm text-[#47464d] leading-relaxed">
-              The owner reviews and processes your withdrawal via UPI within 2 days. A UPI transaction ID is provided for tracking.
+              The platform reviews and processes your withdrawal via UPI within 2 days. A UPI transaction ID is provided for tracking.
             </p>
             <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
               <div className="h-full bg-[#10B981] w-full"></div>
