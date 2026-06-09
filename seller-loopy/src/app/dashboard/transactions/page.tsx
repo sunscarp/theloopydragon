@@ -4,7 +4,7 @@ import Link from "next/link";
 import { supabase } from "@/utils/supabase";
 import { Wallet, Loader2, Clock, CheckCircle,
   ChevronDown, ChevronUp, Landmark, Send, Copy, Check,
-  Info, Receipt, History, HelpCircle, TrendingUp,
+  Info, Receipt, History, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -21,6 +21,7 @@ interface Transaction {
   payout_status: string | null;
   Status?: string;
   Name: string;
+  seller_action?: string | null;
 }
 
 interface WithdrawalRequest {
@@ -31,6 +32,15 @@ interface WithdrawalRequest {
   upi_transaction_id: string | null;
   created_at: string;
   paid_at: string | null;
+}
+
+interface PenaltyEntry {
+  id: number;
+  seller_id: string;
+  order_id: string;
+  amount: number;
+  reason: string;
+  created_at: string;
 }
 
 function isBusinessDay(date: Date): boolean {
@@ -60,6 +70,7 @@ export default function TransactionsPage() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [penalties, setPenalties] = useState<PenaltyEntry[]>([]);
   const [requestAmount, setRequestAmount] = useState("");
   const [requesting, setRequesting] = useState(false);
   const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
@@ -72,6 +83,7 @@ export default function TransactionsPage() {
     setSeller(s);
     fetchTransactions(s.id);
     fetchWithdrawals(s.id);
+    fetchPenalties(s.id);
   }, []);
 
   const fetchTransactions = async (sellerId: number) => {
@@ -83,7 +95,17 @@ export default function TransactionsPage() {
       .order("id", { ascending: false });
 
     if (!error && data) {
-      setTransactions(data as Transaction[]);
+      const orderIds = [...new Set(data.map(o => o.order_id))];
+      const { data: profileData } = await supabase
+        .from("Your Profile")
+        .select("order_id, seller_action")
+        .in("order_id", orderIds);
+      const profileMap = new Map<string, string | null>();
+      profileData?.forEach(p => profileMap.set(p.order_id, p.seller_action));
+      setTransactions(data.map(o => ({
+        ...o,
+        seller_action: profileMap.get(o.order_id) ?? null,
+      })) as Transaction[]);
     }
     setLoading(false);
   };
@@ -100,6 +122,15 @@ export default function TransactionsPage() {
       // ignore
     }
     setLoadingWithdrawals(false);
+  };
+
+  const fetchPenalties = async (sellerId: number) => {
+    const { data } = await supabase
+      .from("penalty_ledger")
+      .select("*")
+      .eq("seller_id", sellerId)
+      .order("created_at", { ascending: false });
+    setPenalties(data || []);
   };
 
   const handleRequestWithdrawal = async () => {
@@ -149,29 +180,37 @@ export default function TransactionsPage() {
   const pendingWithdrawalSum = useMemo(() =>
     withdrawals.filter(w => w.status === "pending").reduce((sum, w) => sum + w.amount, 0), [withdrawals]);
 
+  const acceptedTransactions = useMemo(() =>
+    transactions.filter(t => t.seller_action === "accepted"), [transactions]);
+
   const totalPayoutsSum = useMemo(() =>
-    transactions.reduce((sum, t) => sum + getPayout(t), 0), [transactions]);
+    acceptedTransactions.reduce((sum, t) => sum + getPayout(t), 0), [acceptedTransactions]);
+
+  const totalPenalties = useMemo(() =>
+    penalties.reduce((sum, p) => sum + Math.abs(p.amount), 0), [penalties]);
 
   const totalBalance = useMemo(() =>
-    Math.max(0, totalPayoutsSum - paidWithdrawalSum), [totalPayoutsSum, paidWithdrawalSum]);
+    Math.max(0, totalPayoutsSum - paidWithdrawalSum - totalPenalties), [totalPayoutsSum, paidWithdrawalSum, totalPenalties]);
 
   const stats = useMemo(() => {
-    const totalItemAmount = transactions.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0), 0);
+    const accepted = acceptedTransactions;
+    const totalItemAmount = accepted.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0), 0);
     const totalRazorpayFees = totalItemAmount * 0.02;
-    const totalRevenue = transactions.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0) + (parseFloat(t["Shipping Cost"]) || 0), 0);
-    const totalCommission = transactions.reduce((sum, t) => sum + (parseFloat(t.commission_earned) || 0), 0);
+    const totalRevenue = accepted.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0) + (parseFloat(t["Shipping Cost"]) || 0), 0);
+    const totalCommission = accepted.reduce((sum, t) => sum + (parseFloat(t.commission_earned) || 0), 0);
     return {
       totalItemAmount, totalRazorpayFees, totalRevenue, totalCommission,
       paidOut: paidWithdrawalSum,
       pending: totalBalance,
-      orderCount: transactions.length,
+      orderCount: accepted.length,
       totalBalance,
+      totalPenalties,
     };
-  }, [transactions, paidWithdrawalSum, totalBalance]);
+  }, [acceptedTransactions, paidWithdrawalSum, totalBalance, totalPenalties]);
 
   const balanceData = useMemo(() => {
     let rawClearing = 0;
-    transactions.forEach(t => {
+    acceptedTransactions.forEach(t => {
       const orderDate = new Date(t["Order Date"]);
       if (getBusinessDaysSince(orderDate) < 2) {
         rawClearing += getPayout(t);
@@ -183,7 +222,7 @@ export default function TransactionsPage() {
       available: Math.round(available * 100) / 100,
       clearing: Math.round(inClearing * 100) / 100,
     };
-  }, [transactions, totalBalance, pendingWithdrawalSum]);
+  }, [acceptedTransactions, totalBalance, pendingWithdrawalSum]);
 
   const sorted = useMemo(() => {
     let list = [...transactions];
@@ -196,6 +235,14 @@ export default function TransactionsPage() {
     });
     return list;
   }, [transactions, sortField, sortOrder]);
+
+  const ledgerEntries = useMemo(() => {
+    const entries: { date: string; type: "withdrawal" | "penalty"; record: WithdrawalRequest | PenaltyEntry }[] = [];
+    withdrawals.forEach(w => entries.push({ date: w.created_at, type: "withdrawal" as const, record: w }));
+    penalties.forEach(p => entries.push({ date: p.created_at, type: "penalty" as const, record: p }));
+    entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return entries;
+  }, [withdrawals, penalties]);
 
   const toggleSort = (field: "date" | "amount" | "status") => {
     if (sortField === field) setSortOrder(o => o === "desc" ? "asc" : "desc");
@@ -328,6 +375,12 @@ export default function TransactionsPage() {
                 <span className="text-sm text-white/70">Commission</span>
                 <span className="text-sm font-mono text-red-400">-₹{stats.totalCommission.toFixed(2)}</span>
               </div>
+              {stats.totalPenalties > 0 && (
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm text-white/70">Penalties</span>
+                  <span className="text-sm font-mono text-red-400">-₹{stats.totalPenalties.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm font-semibold">Paid Out</span>
                 <span className="text-base font-bold text-emerald-400 font-mono">₹{stats.paidOut.toFixed(2)}</span>
@@ -343,12 +396,12 @@ export default function TransactionsPage() {
           <div className="lg:hidden bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <History className="w-4 h-4 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-900">Withdrawal Requests</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Withdrawals & Penalties</h3>
               {pendingWithdrawalSum > 0 && (
-                <span className="ml-auto text-xs text-amber-600">{pendingWithdrawalSum.toFixed(2)} pending</span>
+                <span className="ml-auto text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
               )}
             </div>
-            {renderWithdrawalHistory()}
+            {renderLedger()}
           </div>
         </div>
 
@@ -417,13 +470,23 @@ export default function TransactionsPage() {
                             </div>
                           </td>
                           <td className="px-5 py-4">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                              getBusinessDaysSince(new Date(txn["Order Date"])) >= 2
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}>
-                              {getBusinessDaysSince(new Date(txn["Order Date"])) >= 2 ? "Cleared" : "In Clearing"}
-                            </span>
+                            {!txn.seller_action ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700">
+                                Pending Approval
+                              </span>
+                            ) : txn.seller_action === "rejected" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-red-700">
+                                Rejected
+                              </span>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                                getBusinessDaysSince(new Date(txn["Order Date"])) >= 2
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-amber-50 text-amber-700"
+                              }`}>
+                                {getBusinessDaysSince(new Date(txn["Order Date"])) >= 2 ? "Cleared" : "In Clearing"}
+                              </span>
+                            )}
                           </td>
                           <td className="px-5 py-4 text-right">
                             <button onClick={() => setExpanded(isExpanded ? null : txn.id)}
@@ -471,20 +534,20 @@ export default function TransactionsPage() {
             <div className="p-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-900">Withdrawal Requests</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Withdrawals & Penalties</h3>
                 {pendingWithdrawalSum > 0 && (
                   <span className="ml-auto text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
                 )}
               </div>
             </div>
-            {renderWithdrawalHistory()}
+            {renderLedger()}
           </div>
         </div>
       </div>
     </div>
   );
 
-  function renderWithdrawalHistory() {
+  function renderLedger() {
     if (loadingWithdrawals) {
       return (
         <div className="flex justify-center py-6">
@@ -493,50 +556,76 @@ export default function TransactionsPage() {
       );
     }
 
-    if (withdrawals.length === 0) {
+    if (ledgerEntries.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
             <History className="w-5 h-5 text-gray-300" />
           </div>
-          <p className="text-sm text-gray-500">No withdrawal requests yet</p>
-          <p className="text-xs text-gray-400 mt-0.5">Your withdrawal request history will appear here.</p>
+          <p className="text-sm text-gray-500">No entries yet</p>
+          <p className="text-xs text-gray-400 mt-0.5">Withdrawals and penalties will appear here.</p>
         </div>
       );
     }
 
     return (
       <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
-        {withdrawals.map(w => (
-          <div key={w.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
-            <div>
-              <p className="text-sm font-semibold text-gray-900 font-mono">₹{w.amount.toFixed(2)}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {new Date(w.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}
-              </p>
-              {w.upi_transaction_id && (
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-[10px] text-gray-400 font-mono">UPI: {w.upi_transaction_id}</span>
-                  <button onClick={() => copyUpiTransactionId(w.upi_transaction_id)}
-                    className="text-gray-300 hover:text-gray-500 transition-colors">
-                    {copiedId === w.upi_transaction_id
-                      ? <Check className="w-3 h-3 text-emerald-500" />
-                      : <Copy className="w-3 h-3" />}
-                  </button>
+        {ledgerEntries.map((entry, idx) => {
+          if (entry.type === "withdrawal") {
+            const w = entry.record as WithdrawalRequest;
+            return (
+              <div key={`w-${w.id}`} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 font-mono">₹{w.amount.toFixed(2)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {new Date(w.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}
+                  </p>
+                  <p className="text-[10px] text-gray-400">Withdrawal request</p>
+                  {w.upi_transaction_id && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-[10px] text-gray-400 font-mono">UPI: {w.upi_transaction_id}</span>
+                      <button onClick={() => copyUpiTransactionId(w.upi_transaction_id)}
+                        className="text-gray-300 hover:text-gray-500 transition-colors">
+                        {copiedId === w.upi_transaction_id
+                          ? <Check className="w-3 h-3 text-emerald-500" />
+                          : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-              w.status === "paid"
-                ? "bg-emerald-50 text-emerald-700"
-                : w.status === "rejected"
-                ? "bg-red-50 text-red-700"
-                : "bg-amber-50 text-amber-700"
-            }`}>
-              {w.status === "paid" ? "Paid" : w.status === "rejected" ? "Rejected" : "Pending"}
-            </span>
-          </div>
-        ))}
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                  w.status === "paid"
+                    ? "bg-emerald-50 text-emerald-700"
+                    : w.status === "rejected"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-amber-50 text-amber-700"
+                }`}>
+                  {w.status === "paid" ? "Paid" : w.status === "rejected" ? "Rejected" : "Pending"}
+                </span>
+              </div>
+            );
+          } else {
+            const p = entry.record as PenaltyEntry;
+            const absAmount = Math.abs(p.amount);
+            return (
+              <div key={`p-${p.id}`} className="px-5 py-3.5 flex items-center justify-between hover:bg-red-50/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-600 font-mono">-₹{absAmount.toFixed(2)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(p.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}
+                    </p>
+                    <p className="text-[10px] text-red-500">{p.reason}</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-50 text-red-700">
+                  Penalty
+                </span>
+              </div>
+            );
+          }
+        })}
       </div>
     );
   }

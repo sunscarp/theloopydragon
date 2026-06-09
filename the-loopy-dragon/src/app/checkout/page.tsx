@@ -76,6 +76,7 @@ function CheckoutContent() {
   const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [orderMessage, setOrderMessage] = useState(""); // Common message for all products
+  const [processingOrder, setProcessingOrder] = useState(false);
 
   // Address form data
   const [addressFormData, setAddressFormData] = useState({
@@ -392,7 +393,9 @@ function CheckoutContent() {
         description: customOrder ? "Custom Order Payment" : "Purchase from The Loopy Dragon",
         order_id: order.id,
         handler: async function (response: any) {
-          let allSuccess = true;
+          setProcessingOrder(true);
+          try {
+            let allSuccess = true;
           let supabaseErrorMsg = "";
           const orderDate = new Date().toISOString();
 
@@ -490,13 +493,17 @@ function CheckoutContent() {
               return p?.seller_id || null;
             }).filter(Boolean))];
             const commissionRates: Record<string, number> = {};
+            const sellerNotifications: { email: string; shop_name: string; seller_id: string }[] = [];
             if (sellerIds.length > 0) {
               const { data: sellers } = await supabase
                 .from("sellers")
-                .select("id, commission_rate")
+                .select("id, commission_rate, email, shop_name")
                 .in("id", sellerIds);
               if (sellers) {
-                sellers.forEach((s: any) => { commissionRates[s.id] = s.commission_rate || 0; });
+                sellers.forEach((s: any) => {
+                  commissionRates[s.id] = s.commission_rate || 0;
+                  sellerNotifications.push({ email: s.email, shop_name: s.shop_name, seller_id: s.id });
+                });
               }
             }
 
@@ -723,17 +730,53 @@ function CheckoutContent() {
                 }
               }
             }
+
+            // Send new-order notification to each seller
+            if (!customOrder) {
+              try {
+                for (const sInfo of sellerNotifications) {
+                  const subOrderId = groupSellerMap[sInfo.seller_id] || generatedOrderId;
+                  const sellerItems = productDetails.filter((item: any) => String(item.seller_id) === sInfo.seller_id);
+                  const itemList = sellerItems.map((item: any) =>
+                    `${item.Product} x${item.Quantity}`
+                  ).join(", ");
+                  await fetch("/api/send-mail", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      to: sInfo.email,
+                      subject: `New Order Received #${subOrderId} - The Loopy Dragon`,
+                      html: `
+                        <h2>New Order Received</h2>
+                        <p>Dear ${sInfo.shop_name},</p>
+                        <p>You have received a new order <b>#${subOrderId}</b>.</p>
+                        <p><b>Customer:</b> ${showAddressForm ? `${addressFormData.firstName} ${addressFormData.lastName}`.trim() : name}</p>
+                        <p><b>Items:</b> ${itemList}</p>
+                        <p><b>Shipping Address:</b> ${address}, ${city}, ${stateName}, ${pincode}</p>
+                        <p><b>Contact:</b> ${phone} | ${email}</p>
+                        <p>Please review and accept or reject this order in your seller dashboard.</p>
+                        <p style="margin-top:20px;text-align:center;color:#666;">— The Loopy Dragon Team 🐲</p>
+                      `,
+                    }),
+                  });
+                }
+              } catch (sellerEmailError) {
+                console.error("Seller notification error:", sellerEmailError);
+              }
+
+              clearCart();
+            }
           }
-          
-          if (!customOrder) {
-            clearCart();
-          }
-          
           if (allSuccess) {
             router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
             console.error("Order partially failed. Supabase error:", supabaseErrorMsg);
             router.push(`/order-summary?order_id=${generatedOrderId}&warning=partial_save`);
+          }
+          } catch (handlerError) {
+            console.error("Order handler error:", handlerError);
+            setProcessingOrder(false);
+            router.push("/order-failed");
           }
         },
         prefill: {
@@ -818,6 +861,16 @@ function CheckoutContent() {
 
   return (
     <>
+      {processingOrder && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}>
+          <div className="flex flex-col items-center gap-5 animate-in fade-in duration-300">
+            <div className="w-16 h-16 border-4 border-violet-400/30 border-t-violet-600 rounded-full animate-spin" />
+            <p className="text-2xl font-bold text-gray-800">Thank you for your order!</p>
+            <p className="text-sm text-gray-500">We are processing your order. Please do not close or refresh this page.</p>
+          </div>
+        </div>
+      )}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: "sans-serif", overflowX: "hidden" }}>
         {/* Fixed Navbar + Marquee (handled inside Navbar) */}

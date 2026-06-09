@@ -16,6 +16,7 @@ import {
   X,
   ChevronDown,
   Store,
+  ThumbsDown,
 } from "lucide-react";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { href: "/sellers", label: "Sellers", icon: Users },
   { href: "/payouts", label: "Payouts", icon: DollarSign },
   { href: "/custom-orders", label: "Custom Orders", icon: ClipboardList },
+  { href: "/rejected-orders", label: "Rejected Orders", icon: ThumbsDown },
   { href: "/dragon-game", label: "Dragon Game", icon: Gamepad2 },
 ];
 

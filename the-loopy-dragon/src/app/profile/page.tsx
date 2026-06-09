@@ -859,7 +859,9 @@ export default function ProfilePage() {
                             fontWeight: 400,
                           }}
                         >
-                          {order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
+                          {order.Status?.toLowerCase() === "rejected"
+                            ? "Rejected: This order has been cancelled. A refund will be processed within 2 business days."
+                            : order.Status || "Order Placed: Will be dispatched within 2 days of order date"}
                         </span>
                       </div>
 

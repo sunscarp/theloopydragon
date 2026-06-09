@@ -4,6 +4,7 @@ import { supabase } from "@/utils/supabase";
 import {
   ShoppingBag, Loader2, Search, RefreshCw, Check,
   X, Truck, Package, Info, Clock, AlertTriangle, ArrowUpDown,
+  Ban, ThumbsUp,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -31,11 +32,18 @@ interface OrderRow {
 
 const STATUS_META: Record<string, { label: string; message: string; icon: any; color: string; badgeBg: string }> = {
   pending: {
-    label: "Order Placed",
-    message: "Will be dispatched within 2 days of order date.",
-    icon: Info,
-    color: "text-on-surface-variant",
-    badgeBg: "bg-status-success/10 text-status-success border-status-success/20",
+    label: "Approval Needed",
+    message: "Awaiting your acceptance.",
+    icon: Clock,
+    color: "text-amber-600",
+    badgeBg: "bg-amber-100 text-amber-700 border-amber-200",
+  },
+  accepted: {
+    label: "Accepted",
+    message: "Order has been accepted.",
+    icon: Check,
+    color: "text-emerald-600",
+    badgeBg: "bg-emerald-100 text-emerald-700 border-emerald-200",
   },
   processing: {
     label: "Processing",
@@ -65,6 +73,13 @@ const STATUS_META: Record<string, { label: string; message: string; icon: any; c
     color: "text-status-error",
     badgeBg: "bg-red-100 text-red-700 border-red-200",
   },
+  rejected: {
+    label: "Rejected",
+    message: "This order was rejected.",
+    icon: Ban,
+    color: "text-red-600",
+    badgeBg: "bg-red-100 text-red-700 border-red-200",
+  },
 };
 
 export default function SellerOrdersPage() {
@@ -82,6 +97,9 @@ export default function SellerOrdersPage() {
   const [customTracking, setCustomTracking] = useState("");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [profileOrders, setProfileOrders] = useState<Record<string, any>>({});
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ orderId: string; penalty: number } | null>(null);
+  const [rejecting, setRejecting] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
@@ -105,7 +123,7 @@ export default function SellerOrdersPage() {
     if (orderIds.length > 0) {
       const { data: profiles } = await supabase
         .from("Your Profile")
-        .select("order_id, Status, Tracking_ID")
+        .select("order_id, Status, Tracking_ID, seller_action, payment_approval_status")
         .in("order_id", orderIds);
 
       const profileMap: Record<string, any> = {};
@@ -115,6 +133,69 @@ export default function SellerOrdersPage() {
       setProfileOrders(profileMap);
     }
     setLoading(false);
+  };
+
+  const handleAcceptOrder = async (orderId: string) => {
+    if (!seller) return;
+    setActionLoading(orderId);
+    try {
+      const res = await fetch("/api/sellers/orders/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: orderId,
+          action: "accept",
+          seller_id: seller.id,
+          seller_email: seller.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Order accepted");
+        fetchOrders(seller.id);
+      } else {
+        toast.error(data.error || "Failed to accept");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+    setActionLoading(null);
+  };
+
+  const handleRejectClick = async (orderId: string) => {
+    const total = orders
+      .filter(o => o.order_id === orderId)
+      .reduce((sum, o) => sum + (parseFloat(o["Total Price"]) || 0), 0);
+    const penalty = Math.round(total * 0.05 * 100) / 100;
+    setRejectModal({ orderId, penalty });
+  };
+
+  const confirmReject = async () => {
+    if (!rejectModal || !seller) return;
+    setRejecting(true);
+    try {
+      const res = await fetch("/api/sellers/orders/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: rejectModal.orderId,
+          action: "reject",
+          seller_id: seller.id,
+          seller_email: seller.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Order rejected and customer notified");
+        fetchOrders(seller.id);
+      } else {
+        toast.error(data.error || "Failed to reject");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    }
+    setRejecting(false);
+    setRejectModal(null);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -162,11 +243,13 @@ export default function SellerOrdersPage() {
     });
     return Array.from(map.entries()).map(([orderId, items]) => {
       const first = items[0];
-      const status = profileOrders[orderId]?.Status || "pending";
-      const trackingId = profileOrders[orderId]?.Tracking_ID || "";
+      const profile = profileOrders[orderId] || {};
+      const status = profile.Status || "pending";
+      const trackingId = profile.Tracking_ID || "";
+      const sellerAction = profile.seller_action || null;
       const orderTotal = items.reduce((sum, i) => sum + (parseFloat(i["Total Price"]) || 0), 0);
       const shipping = parseFloat(first["Shipping Cost"] || "0");
-      return { orderId, items, status, trackingId, orderTotal, shipping, first };
+      return { orderId, items, status, trackingId, orderTotal, shipping, first, sellerAction };
     });
   }, [orders, profileOrders]);
 
@@ -220,7 +303,11 @@ export default function SellerOrdersPage() {
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const statusKey = (s: string) => STATUS_META[s.toLowerCase()] ? s.toLowerCase() : "pending";
+  const statusKey = (s: string) => {
+    const lower = s.toLowerCase();
+    if (STATUS_META[lower]) return lower;
+    return "pending";
+  };
   const getStatusMeta = (s: string) => STATUS_META[statusKey(s)] || STATUS_META.pending;
 
   if (loading) {
@@ -317,26 +404,27 @@ export default function SellerOrdersPage() {
             const isEditingTrk = editingTracking === group.orderId;
             const isUpdatingTrk = updatingTracking === group.orderId;
             const meta = getStatusMeta(group.status);
+            const needsApproval = !group.sellerAction && group.status !== "Rejected" && group.status !== "rejected";
 
             return (
               <div key={group.orderId}
-                className="bg-white/80 backdrop-blur-sm border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[0_4px_20px_rgba(34,34,59,0.06)]">
+                className={`bg-white/80 backdrop-blur-sm border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[0_4px_20px_rgba(34,34,59,0.06)] ${needsApproval ? 'border-amber-300 bg-amber-50/30' : ''}`}>
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
                       <span className="font-data-mono text-title-lg text-deep-navy cursor-pointer hover:text-purple-600 transition-colors" title={group.orderId} onClick={() => { navigator.clipboard.writeText(group.orderId); toast.success("Order ID copied!"); }}>#{group.orderId.slice(0, 10)}</span>
                       <span title={`Status: ${group.status}`}
                         className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${meta.badgeBg}`}>
-                        {group.status}
+                        {needsApproval ? "Approval Needed" : group.status}
                       </span>
                       <span className="text-sm text-on-surface-variant">{formatDate(group.first["Order Date"])}</span>
                     </div>
 
                     <div className="space-y-2">
-                      {STATUS_META[group.status.toLowerCase()] ? (
+                      {STATUS_META[group.status.toLowerCase()] || needsApproval ? (
                         <p className={`text-sm flex items-center gap-1.5 ${meta.color}`}>
                           <meta.icon className="w-[18px] h-[18px]" />
-                          {meta.message}
+                          {needsApproval ? "Awaiting your decision to accept or reject." : meta.message}
                         </p>
                       ) : (
                         <p className="text-sm text-on-surface-variant">{group.status}</p>
@@ -368,16 +456,38 @@ export default function SellerOrdersPage() {
 
                   <div className="flex flex-col items-end gap-2 lg:border-l border-outline-variant/20 lg:pl-6">
                     <div className="flex flex-wrap items-center gap-2">
+                      {needsApproval && (
+                        <>
+                          <button
+                            onClick={() => handleAcceptOrder(group.orderId)}
+                            disabled={actionLoading === group.orderId}
+                            className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-1.5">
+                            {actionLoading === group.orderId ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <ThumbsUp className="w-3.5 h-3.5" />
+                            )}
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(group.orderId)}
+                            disabled={actionLoading === group.orderId}
+                            className="px-4 py-2.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all disabled:opacity-50 flex items-center gap-1.5">
+                            <Ban className="w-3.5 h-3.5" />
+                            Reject
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
                         className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
                         {isExpanded ? "Hide" : "Details"}
                       </button>
-                      {!isEditingStatus ? (
+                      {!needsApproval && !isEditingStatus ? (
                         <button onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
                           className="px-4 py-2.5 bg-deep-navy text-white rounded-lg text-xs font-bold hover:opacity-90 transition-all">
                           Change Status
                         </button>
-                      ) : (
+                      ) : !needsApproval && (
                         <div className="flex items-center gap-1.5">
                           <input type="text" value={customStatus}
                             onChange={e => setCustomStatus(e.target.value)}
@@ -497,6 +607,48 @@ export default function SellerOrdersPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Reject Confirmation Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => !rejecting && setRejectModal(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <Ban className="w-7 h-7 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-deep-navy mb-2">Reject Order?</h3>
+              <p className="text-sm text-gray-500">
+                A <span className="font-bold text-red-600">5% penalty</span> of <span className="font-bold">₹{rejectModal.penalty.toFixed(2)}</span> will be deducted from your account.
+              </p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+              <p className="text-xs text-amber-800">
+                <strong>Note:</strong> The penalty will be deducted immediately from your available balance. If your balance is insufficient, it will result in a negative balance that must be covered by future earnings.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRejectModal(null)}
+                disabled={rejecting}
+                className="flex-1 px-4 py-3 border border-outline-variant/30 text-on-surface-variant rounded-xl text-sm font-bold hover:bg-surface-container-high transition-all disabled:opacity-50">
+                Cancel
+              </button>
+              <button
+                onClick={confirmReject}
+                disabled={rejecting}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {rejecting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Rejecting...</>
+                ) : (
+                  <>Confirm Reject</>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

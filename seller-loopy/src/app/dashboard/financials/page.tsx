@@ -35,6 +35,13 @@ export default function FinancialsPage() {
       const withdrawalData = await res.json();
       const withdrawals = withdrawalData.success ? (withdrawalData.requests || []) : [];
 
+      const { data: penaltyData } = await supabase
+        .from("penalty_ledger")
+        .select("*")
+        .eq("seller_id", seller.id)
+        .order("created_at", { ascending: false });
+      const penalties = penaltyData || [];
+
       // Get order statuses
       const orderIds = [...new Set((orders || []).map((o: any) => o.order_id))];
       let profileMap: Record<string, any> = {};
@@ -120,14 +127,33 @@ export default function FinancialsPage() {
       const pendingWithdrawalsTotal = (withdrawals || []).filter((w: any) => w.status === "pending").reduce((s: number, w: any) => s + w.amount, 0);
       const totalBalance = totalPayoutsSum - paidViaWithdrawals;
 
+      const totalPenalties = (penalties || []).reduce((s: number, p: any) => s + Math.abs(p.amount), 0);
+      const adjustedBalance = totalBalance - totalPenalties;
+
       rows.push(`"Total Paid Out (via Withdrawals)",${paidViaWithdrawals.toFixed(2)}`);
       rows.push(`"Pending Withdrawals",${pendingWithdrawalsTotal.toFixed(2)}`);
-      rows.push(`"Total Account Balance",${totalBalance.toFixed(2)}`);
+      rows.push(`"Total Account Balance (before penalties)",${totalBalance.toFixed(2)}`);
+      rows.push(`"Total Penalties",${totalPenalties.toFixed(2)}`);
+      rows.push(`"Total Account Balance (after penalties)",${Math.max(0, adjustedBalance).toFixed(2)}`);
       rows.push(`"Total Lifetime Earnings",${totalPayoutsSum.toFixed(2)}`);
 
       rows.push("");
 
-      // ============ SHEET 4: Withdrawal Requests ============
+      // ============ SHEET 4: Penalty Ledger ============
+      rows.push("PENALTY LEDGER");
+      rows.push([
+        "ID", "Order ID", "Amount", "Reason", "Date",
+      ].join(","));
+
+      (penalties || []).forEach((p: any) => {
+        rows.push([
+          p.id, p.order_id, p.amount.toFixed(2), p.reason, p.created_at,
+        ].map(escape).join(","));
+      });
+
+      rows.push("");
+
+      // ============ SHEET 5: Withdrawal Requests ============
       rows.push("WITHDRAWAL REQUESTS");
       rows.push([
         "Request ID", "Amount", "Status", "UPI Transaction ID", "Requested At", "Paid At",
@@ -142,7 +168,7 @@ export default function FinancialsPage() {
 
       rows.push("");
 
-      // ============ SHEET 5: Products ============
+      // ============ SHEET 6: Products ============
       rows.push("PRODUCTS LISTED");
       rows.push([
         "Product ID", "Product Name", "Price", "Quantity in Stock", "Category", "Status",
@@ -156,7 +182,7 @@ export default function FinancialsPage() {
 
       rows.push("");
 
-      // ============ SHEET 6: Monthly Summary ============
+      // ============ SHEET 7: Monthly Summary ============
       rows.push("MONTHLY EARNINGS BREAKDOWN");
       rows.push([
         "Year-Month", "Total Sales", "Shipping", "Commission", "Fees", "Net Revenue",
