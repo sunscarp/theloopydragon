@@ -7,6 +7,8 @@ type Product = {
   Product: string;
   Price: number;
   ImageUrl1: string;
+  status: string;
+  id?: number;
 };
 
 export default function HomeMobile() {
@@ -64,7 +66,7 @@ export default function HomeMobile() {
         .range(4, 15);
 
       if (!error && data) {
-        setNewArrivalsProducts(data.filter(p => p.status !== "deactivated").slice(0, 4));
+        setNewArrivalsProducts(data.filter((p: Product) => p.status !== "deactivated").slice(0, 4));
       }
     }
 
