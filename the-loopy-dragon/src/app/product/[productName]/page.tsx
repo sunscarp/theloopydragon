@@ -91,7 +91,7 @@ export default function ProductPage() {
             .select("shop_name, slug, allow_refunds, allow_returns")
             .eq("id", data.seller_id)
             .single();
-          if (seller) setSellerInfo({ ...seller, allow_refunds: !!seller.allow_refunds, allow_returns: !!seller.allow_returns });
+          if (seller) setSellerInfo({ ...seller, allow_refunds: seller.allow_refunds === true || seller.allow_refunds === "true", allow_returns: seller.allow_returns === true || seller.allow_returns === "true" });
         }
       }
       setLoading(false);
