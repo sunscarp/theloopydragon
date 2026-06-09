@@ -177,10 +177,13 @@ export default function SellerSettingsPage() {
                   className="w-full bg-white border border-outline-variant/50 rounded-lg p-3 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none transition-all font-data-mono text-data-mono" />
               </div>
               <div className="space-y-2">
-                <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">Free Delivery Threshold (₹)</label>
-                <input type="number" value={freeDeliveryThreshold}
-                  onChange={e => setFreeDeliveryThreshold(e.target.value)}
-                  className="w-full bg-white border border-outline-variant/50 rounded-lg p-3 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none transition-all font-data-mono text-data-mono" />
+                <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">Free Delivery Threshold</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-data-mono text-data-mono pointer-events-none">₹</span>
+                  <input type="number" value={freeDeliveryThreshold}
+                    onChange={e => setFreeDeliveryThreshold(e.target.value)}
+                    className="w-full bg-white border border-outline-variant/50 rounded-lg p-3 pl-7 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none transition-all font-data-mono text-data-mono" />
+                </div>
               </div>
             </div>
             <div className="pt-6 border-t border-surface-container">
