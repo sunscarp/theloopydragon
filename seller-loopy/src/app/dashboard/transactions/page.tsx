@@ -136,45 +136,54 @@ export default function TransactionsPage() {
     return { itemAmount, shipping, razorpayFee, commission, payout };
   };
 
+  function getPayout(t: Transaction) {
+    const total = parseFloat(t["Total Price"]) || 0;
+    const shipping = parseFloat(t["Shipping Cost"]) || 0;
+    const commission = parseFloat(t.commission_earned) || 0;
+    return total - total * 0.02 - commission + shipping;
+  }
+
+  const paidWithdrawalSum = useMemo(() =>
+    withdrawals.filter(w => w.status === "paid").reduce((sum, w) => sum + w.amount, 0), [withdrawals]);
+
+  const pendingWithdrawalSum = useMemo(() =>
+    withdrawals.filter(w => w.status === "pending").reduce((sum, w) => sum + w.amount, 0), [withdrawals]);
+
+  const totalPayoutsSum = useMemo(() =>
+    transactions.reduce((sum, t) => sum + getPayout(t), 0), [transactions]);
+
+  const totalBalance = useMemo(() =>
+    Math.max(0, totalPayoutsSum - paidWithdrawalSum), [totalPayoutsSum, paidWithdrawalSum]);
+
   const stats = useMemo(() => {
     const totalItemAmount = transactions.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0), 0);
     const totalRazorpayFees = totalItemAmount * 0.02;
     const totalRevenue = transactions.reduce((sum, t) => sum + (parseFloat(t["Total Price"]) || 0) + (parseFloat(t["Shipping Cost"]) || 0), 0);
     const totalCommission = transactions.reduce((sum, t) => sum + (parseFloat(t.commission_earned) || 0), 0);
-    let paidOut = 0;
-    let pending = 0;
-    transactions.forEach(t => {
-      const total = parseFloat(t["Total Price"]) || 0;
-      const shipping = parseFloat(t["Shipping Cost"]) || 0;
-      const commission = parseFloat(t.commission_earned) || 0;
-      const calculatedPayout = total - total * 0.02 - commission + shipping;
-      if (t.payout_status === "paid") {
-        paidOut += calculatedPayout;
-      } else {
-        pending += calculatedPayout;
-      }
-    });
-    return { totalItemAmount, totalRazorpayFees, totalRevenue, totalCommission, paidOut, pending, orderCount: transactions.length };
-  }, [transactions]);
+    return {
+      totalItemAmount, totalRazorpayFees, totalRevenue, totalCommission,
+      paidOut: paidWithdrawalSum,
+      pending: totalBalance,
+      orderCount: transactions.length,
+      totalBalance,
+    };
+  }, [transactions, paidWithdrawalSum, totalBalance]);
 
   const balanceData = useMemo(() => {
-    let available = 0;
-    let clearing = 0;
+    let rawClearing = 0;
     transactions.forEach(t => {
-      if (t.payout_status === "paid") return;
-      const total = parseFloat(t["Total Price"]) || 0;
-      const shipping = parseFloat(t["Shipping Cost"]) || 0;
-      const commission = parseFloat(t.commission_earned) || 0;
-      const calculatedPayout = total - total * 0.02 - commission + shipping;
       const orderDate = new Date(t["Order Date"]);
-      if (getBusinessDaysSince(orderDate) >= 2) {
-        available += calculatedPayout;
-      } else {
-        clearing += calculatedPayout;
+      if (getBusinessDaysSince(orderDate) < 2) {
+        rawClearing += getPayout(t);
       }
     });
-    return { available: Math.round(available * 100) / 100, clearing: Math.round(clearing * 100) / 100 };
-  }, [transactions]);
+    const inClearing = Math.min(rawClearing, totalBalance);
+    const available = Math.max(0, totalBalance - inClearing - pendingWithdrawalSum);
+    return {
+      available: Math.round(available * 100) / 100,
+      clearing: Math.round(inClearing * 100) / 100,
+    };
+  }, [transactions, totalBalance, pendingWithdrawalSum]);
 
   const sorted = useMemo(() => {
     let list = [...transactions];
@@ -204,10 +213,6 @@ export default function TransactionsPage() {
       toast.error("Failed to copy");
     }
   };
-
-  const totalPendingWithdrawals = withdrawals
-    .filter(w => w.status === "pending")
-    .reduce((sum, w) => sum + w.amount, 0);
 
   const formatDate = (d: string) => {
     if (!d) return "—";
@@ -242,7 +247,7 @@ export default function TransactionsPage() {
             <p className="text-xs text-gray-500 uppercase tracking-wider">Total Balance</p>
             <Landmark className="w-5 h-5 text-gray-300 group-hover:text-violet-400 transition-colors" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 font-mono">₹{(balanceData.available + balanceData.clearing).toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
           <p className="text-xs text-gray-400 mt-1.5">Cumulative account total</p>
         </div>
 
@@ -278,10 +283,17 @@ export default function TransactionsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5" htmlFor="amount">Amount (₹)</label>
-                <input id="amount" type="number" value={requestAmount}
-                  onChange={e => setRequestAmount(e.target.value)}
-                  placeholder="0.00" max={balanceData.available}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all font-mono" />
+                <div className="flex gap-2">
+                  <input id="amount" type="number" value={requestAmount}
+                    onChange={e => setRequestAmount(e.target.value)}
+                    placeholder="0.00" max={balanceData.available}
+                    className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all font-mono" />
+                  <button type="button" onClick={() => setRequestAmount(String(balanceData.available))}
+                    disabled={balanceData.available <= 0}
+                    className="px-3 py-2.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
+                    Max
+                  </button>
+                </div>
               </div>
               <button onClick={handleRequestWithdrawal}
                 disabled={requesting || balanceData.available <= 0 || !requestAmount}
@@ -332,8 +344,8 @@ export default function TransactionsPage() {
             <div className="flex items-center gap-2 mb-4">
               <History className="w-4 h-4 text-gray-400" />
               <h3 className="text-sm font-semibold text-gray-900">Withdrawal Requests</h3>
-              {totalPendingWithdrawals > 0 && (
-                <span className="ml-auto text-xs text-amber-600">{totalPendingWithdrawals.toFixed(2)} pending</span>
+              {pendingWithdrawalSum > 0 && (
+                <span className="ml-auto text-xs text-amber-600">{pendingWithdrawalSum.toFixed(2)} pending</span>
               )}
             </div>
             {renderWithdrawalHistory()}
@@ -369,15 +381,15 @@ export default function TransactionsPage() {
                 <p className="text-xs text-gray-400 mt-1">Orders will appear here once customers purchase your products</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left divide-y divide-gray-100">
-                  <thead className="bg-gray-50/50">
+              <div className="overflow-x-auto max-h-[340px] overflow-y-auto [&_table]:relative">
+                <table className="w-full text-left divide-y divide-gray-100 border-separate border-spacing-0">
+                  <thead className="sticky top-0 z-20">
                     <tr>
-                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium">Date</th>
-                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium">Item / Order</th>
-                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium">Amount</th>
-                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium">Status</th>
-                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium"></th>
+                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium bg-gray-50">Date</th>
+                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium bg-gray-50">Item / Order</th>
+                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium bg-gray-50">Amount</th>
+                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium bg-gray-50">Status</th>
+                      <th className="px-5 py-3.5 text-[11px] text-gray-500 uppercase tracking-wider font-medium bg-gray-50"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -406,11 +418,11 @@ export default function TransactionsPage() {
                           </td>
                           <td className="px-5 py-4">
                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${
-                              txn.payout_status === "paid"
+                              getBusinessDaysSince(new Date(txn["Order Date"])) >= 2
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "bg-amber-50 text-amber-700"
                             }`}>
-                              {txn.payout_status === "paid" ? "Paid" : "Pending"}
+                              {getBusinessDaysSince(new Date(txn["Order Date"])) >= 2 ? "Cleared" : "In Clearing"}
                             </span>
                           </td>
                           <td className="px-5 py-4 text-right">
@@ -440,9 +452,8 @@ export default function TransactionsPage() {
                                 <div>
                                   <p className="text-[10px] text-gray-400 uppercase tracking-wider">Your Payout</p>
                                   <p className="text-sm font-bold text-emerald-600 font-mono mt-0.5">₹{breakdown.payout.toFixed(2)}</p>
-      </div>
-
-    </div>
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         )}
@@ -461,8 +472,8 @@ export default function TransactionsPage() {
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-gray-400" />
                 <h3 className="text-sm font-semibold text-gray-900">Withdrawal Requests</h3>
-                {totalPendingWithdrawals > 0 && (
-                  <span className="ml-auto text-xs text-amber-600">₹{totalPendingWithdrawals.toFixed(2)} pending</span>
+                {pendingWithdrawalSum > 0 && (
+                  <span className="ml-auto text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
                 )}
               </div>
             </div>
@@ -495,7 +506,7 @@ export default function TransactionsPage() {
     }
 
     return (
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
         {withdrawals.map(w => (
           <div key={w.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
             <div>

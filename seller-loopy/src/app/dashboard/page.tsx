@@ -54,19 +54,23 @@ export default function SellerDashboard() {
     const revenue = ordersArray.reduce((sum: number, o: any) =>
       sum + (parseFloat(o["Total Price"]) || 0) + (parseFloat(o["Shipping Cost"]) || 0), 0);
 
-    let totalDue = 0;
-    let totalPaid = 0;
-    ordersArray.forEach((o: any) => {
+    const totalPayoutsSum = ordersArray.reduce((sum: number, o: any) => {
       const total = parseFloat(o["Total Price"]) || 0;
       const shipping = parseFloat(o["Shipping Cost"]) || 0;
       const commission = parseFloat(o.commission_earned) || 0;
-      const calculatedPayout = total - total * 0.02 - commission + shipping;
-      if (o.payout_status === "paid") {
-        totalPaid += calculatedPayout;
-      }
-      totalDue += calculatedPayout;
-    });
-    const pendingPayout = totalDue - totalPaid;
+      return sum + total - total * 0.02 - commission + shipping;
+    }, 0);
+
+    // Fetch paid withdrawal requests
+    const { data: withdrawalData } = await supabase
+      .from("withdrawal_requests")
+      .select("amount, status")
+      .eq("seller_id", sellerId);
+    const paidWithdrawals = (withdrawalData || [])
+      .filter((w: any) => w.status === "paid")
+      .reduce((sum: number, w: any) => sum + w.amount, 0);
+
+    const pendingPayout = totalPayoutsSum - paidWithdrawals;
 
     // Revenue change: compare this month vs last month
     const now = new Date();

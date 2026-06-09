@@ -7,9 +7,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data: requests, error } = await supabase
       .from("withdrawal_requests")
-      .select("*, sellers(shop_name, email, upi_id)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -17,7 +17,25 @@ export async function GET() {
       return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, requests: data || [] });
+    const sellerIds = [...new Set((requests || []).map((r: any) => r.seller_id))];
+
+    let sellerMap: Record<number, any> = {};
+    if (sellerIds.length > 0) {
+      const { data: sellers } = await supabase
+        .from("sellers")
+        .select("id, shop_name, email, upi_id")
+        .in("id", sellerIds);
+      if (sellers) {
+        sellers.forEach((s: any) => { sellerMap[s.id] = s; });
+      }
+    }
+
+    const enriched = (requests || []).map((r: any) => ({
+      ...r,
+      sellers: sellerMap[r.seller_id] || null,
+    }));
+
+    return NextResponse.json({ success: true, requests: enriched });
   } catch (err) {
     console.error("Withdrawal fetch error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

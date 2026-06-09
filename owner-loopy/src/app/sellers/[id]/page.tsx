@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import {
   ArrowLeft, Package, ShoppingBag, DollarSign, Mail, Phone,
-  MapPin, BadgeInfo, ExternalLink, Loader2, Percent, Edit3, Check, X, KeyRound, Save, Ban, RefreshCw, Smartphone,
+  MapPin, BadgeInfo, ExternalLink, Loader2, Percent, Edit3, Check, X, KeyRound, Save, Ban, RefreshCw, Smartphone, CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -23,6 +23,7 @@ export default function SellerDetailPage() {
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [deactivatingProduct, setDeactivatingProduct] = useState<number | null>(null);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   const handleSaveCommission = async () => {
     const rate = parseFloat(commissionRate);
@@ -111,6 +112,12 @@ export default function SellerDetailPage() {
         .from("Orders").select("*").eq("seller_id", params.id).order("Order Date", { ascending: false }).limit(20);
       setOrders(orderData || []);
 
+      const { data: withdrawalData } = await supabase
+        .from("withdrawal_requests")
+        .select("amount, status")
+        .eq("seller_id", params.id);
+      setWithdrawals(withdrawalData || []);
+
       setLoading(false);
     };
     fetchData();
@@ -133,6 +140,20 @@ export default function SellerDetailPage() {
   }
 
   const totalRevenue = orders.reduce((sum: number, o: any) => sum + (parseFloat(o["Total Price"]) || 0), 0);
+
+  const totalPayoutsSum = orders.reduce((sum: number, o: any) => {
+    const total = parseFloat(o["Total Price"]) || 0;
+    const shipping = parseFloat(o["Shipping Cost"]) || 0;
+    const commission = parseFloat(o.commission_earned) || 0;
+    return sum + total - total * 0.02 - commission + shipping;
+  }, 0);
+
+  const paidViaWithdrawals = (withdrawals || [])
+    .filter((w: any) => w.status === "paid")
+    .reduce((sum: number, w: any) => sum + w.amount, 0);
+
+  const paidOut = paidViaWithdrawals;
+  const pendingPayout = totalPayoutsSum - paidViaWithdrawals;
 
   const statusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -171,11 +192,12 @@ export default function SellerDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {[
             { label: "Products", value: products.length, icon: Package, color: "from-purple-500 to-indigo-500" },
             { label: "Orders", value: orders.length, icon: ShoppingBag, color: "from-blue-500 to-cyan-500" },
             { label: "Revenue", value: `₹${totalRevenue.toFixed(2)}`, icon: DollarSign, color: "from-emerald-500 to-teal-500" },
+            { label: "Paid Out", value: `₹${paidOut.toFixed(2)}`, icon: CheckCircle, color: "from-emerald-500 to-teal-500" },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="bg-slate-50 rounded-xl p-4 text-center">
               <div className={`w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
@@ -186,6 +208,9 @@ export default function SellerDetailPage() {
             </div>
           ))}
         </div>
+        {pendingPayout > 0 && (
+          <p className="text-xs text-amber-600 text-center mt-3">₹{pendingPayout.toFixed(2)} pending payout</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -74,7 +74,7 @@ export default function FinancialsPage() {
           o.Quantity, o["Total Price"], o["Shipping Cost"],
           ((parseFloat(o["Total Price"]) || 0) + (parseFloat(o["Shipping Cost"]) || 0)).toFixed(2),
           o.commission_earned || "0", o.seller_payout || "0",
-          o.payout_status || "pending", status, tracking,
+          "in balance", status, tracking,
         ].map(escape).join(","));
       });
 
@@ -109,23 +109,21 @@ export default function FinancialsPage() {
         "Category", "Amount",
       ].join(","));
 
-      let paidOut = 0;
-      let pendingPayoutTotal = 0;
-      (orders || []).forEach((o: any) => {
+      const totalPayoutsSum = (orders || []).reduce((s: number, o: any) => {
         const total = parseFloat(o["Total Price"]) || 0;
         const shipping = parseFloat(o["Shipping Cost"]) || 0;
         const commission = parseFloat(o.commission_earned) || 0;
-        const calculatedPayout = total - total * 0.02 - commission + shipping;
-        if (o.payout_status === "paid") {
-          paidOut += calculatedPayout;
-        } else {
-          pendingPayoutTotal += calculatedPayout;
-        }
-      });
+        return s + total - total * 0.02 - commission + shipping;
+      }, 0);
 
-      rows.push(`"Total Paid Out",${paidOut.toFixed(2)}`);
-      rows.push(`"Total Pending Payout",${pendingPayoutTotal.toFixed(2)}`);
-      rows.push(`"Total Account Balance",${(paidOut + pendingPayoutTotal).toFixed(2)}`);
+      const paidViaWithdrawals = (withdrawals || []).filter((w: any) => w.status === "paid").reduce((s: number, w: any) => s + w.amount, 0);
+      const pendingWithdrawalsTotal = (withdrawals || []).filter((w: any) => w.status === "pending").reduce((s: number, w: any) => s + w.amount, 0);
+      const totalBalance = totalPayoutsSum - paidViaWithdrawals;
+
+      rows.push(`"Total Paid Out (via Withdrawals)",${paidViaWithdrawals.toFixed(2)}`);
+      rows.push(`"Pending Withdrawals",${pendingWithdrawalsTotal.toFixed(2)}`);
+      rows.push(`"Total Account Balance",${totalBalance.toFixed(2)}`);
+      rows.push(`"Total Lifetime Earnings",${totalPayoutsSum.toFixed(2)}`);
 
       rows.push("");
 
