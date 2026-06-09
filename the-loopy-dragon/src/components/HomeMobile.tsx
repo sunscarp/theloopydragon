@@ -56,15 +56,15 @@ export default function HomeMobile() {
     const supabase = require('@supabase/supabase-js').createClient(supabaseUrl, supabaseKey);
 
     async function fetchNewArrivals() {
-      // Fetch newest 4 products, excluding the bottom 4 (free offers)
+      // Fetch more products than needed, then take the first 4 active ones
       const { data, error } = await supabase
         .from('Inventory')
-        .select('Product, Price, ImageUrl1, id')
+        .select('Product, Price, ImageUrl1, id, status')
         .order('id', { ascending: false })
-        .range(4, 7); // Skip first 4 (indices 0-3), get next 4 (indices 4-7)
+        .range(4, 15);
 
       if (!error && data) {
-        setNewArrivalsProducts(data);
+        setNewArrivalsProducts(data.filter(p => p.status !== "deactivated").slice(0, 4));
       }
     }
 

@@ -162,6 +162,8 @@ export default function ProductPage() {
     }
   };
 
+  const isLoopyDragon = !sellerInfo || sellerInfo.shop_name === "The Loopy Dragon";
+
   const renderProductCard = (product: ProductDetails) => {
     const images = [
       product.ImageUrl1,
@@ -471,15 +473,6 @@ export default function ProductPage() {
                       </Link>
                     ) : "Sold by The Loopy Dragon"}
                   </div>
-                  {sellerInfo && (sellerInfo.allow_refunds || sellerInfo.allow_returns) && (
-                    <div className="mt-2 text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif', color: '#059669' }}>
-                      {sellerInfo.allow_refunds && sellerInfo.allow_returns
-                        ? 'Returns & Exchanges available'
-                        : sellerInfo.allow_returns && !sellerInfo.allow_refunds
-                        ? 'Exchanges available'
-                        : 'Refunds available'}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -649,8 +642,17 @@ export default function ProductPage() {
                       Secure payment processing through Razorpay
                     </span>
                   </div>
+                  {sellerInfo && (sellerInfo.allow_refunds || sellerInfo.allow_returns) && (
+                    <div className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif', color: '#059669' }}>
+                      {sellerInfo.allow_refunds && sellerInfo.allow_returns
+                        ? 'Returns & Exchanges available'
+                        : sellerInfo.allow_returns && !sellerInfo.allow_refunds
+                        ? 'Exchanges available'
+                        : 'Refunds available'}
+                    </div>
+                  )}
                   <div className="mt-4"></div>
-                  <div className="flex items-start space-x-3">
+                  <div className={`flex items-start space-x-3 pt-2${isLoopyDragon ? '' : ' invisible'}`}>
                     <span 
                       className="text-gray-900"
                       style={{

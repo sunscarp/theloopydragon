@@ -65,6 +65,7 @@ export default function Collections() {
           ImageUrl3,
           ImageUrl4,
           ImageUrl5,
+          status,
           Collections (
             id,
             Collection
@@ -78,18 +79,20 @@ export default function Collections() {
       }
 
       if (data) {
-        const formattedProducts = data.map((item: any) => ({
-          id: item.id,
-          Product: item.Product,
-          Price: item.Price,
-          Quantity: item.Quantity,
-          ImageUrl1: item.ImageUrl1,
-          ImageUrl2: item.ImageUrl2,
-          ImageUrl3: item.ImageUrl3,
-          ImageUrl4: item.ImageUrl4,
-          ImageUrl5: item.ImageUrl5,
-          Collection: item.Collections?.Collection || 'Other'
-        }));
+        const formattedProducts = data
+          .filter((item: any) => item.status !== "deactivated")
+          .map((item: any) => ({
+            id: item.id,
+            Product: item.Product,
+            Price: item.Price,
+            Quantity: item.Quantity,
+            ImageUrl1: item.ImageUrl1,
+            ImageUrl2: item.ImageUrl2,
+            ImageUrl3: item.ImageUrl3,
+            ImageUrl4: item.ImageUrl4,
+            ImageUrl5: item.ImageUrl5,
+            Collection: item.Collections?.Collection || 'Other'
+          }));
         setProducts(formattedProducts);
       }
       setLoading(false);
