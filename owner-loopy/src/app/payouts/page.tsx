@@ -37,8 +37,22 @@ export default function PayoutsPage() {
 
     const { data: orders } = await supabase
       .from("Orders")
-      .select("seller_id, \"Total Price\", \"Shipping Cost\", commission_earned, seller_payout")
+      .select("order_id, seller_id, \"Total Price\", \"Shipping Cost\", commission_earned, seller_payout")
       .not("seller_id", "is", null);
+
+    // Exclude rejected orders from payout calculations
+    const allOrderIds = [...new Set((orders || []).map((o: any) => o.order_id))];
+    const rejectedOrderIds = new Set<string>();
+    if (allOrderIds.length > 0) {
+      const { data: profileData } = await supabase
+        .from("Your Profile")
+        .select("order_id, seller_action")
+        .in("order_id", allOrderIds);
+      (profileData || []).forEach((p: any) => {
+        if (p.seller_action === "rejected") rejectedOrderIds.add(p.order_id);
+      });
+    }
+    const activeOrders = (orders || []).filter((o: any) => !rejectedOrderIds.has(o.order_id));
 
     const { data: withdrawalData } = await supabase
       .from("withdrawal_requests")
@@ -75,7 +89,7 @@ export default function PayoutsPage() {
     });
 
     const payoutMap: Record<string, any> = {};
-    (orders || []).forEach((o: any) => {
+    activeOrders.forEach((o: any) => {
       if (!o.seller_id) return;
       if (!payoutMap[o.seller_id]) {
         payoutMap[o.seller_id] = { totalRevenue: 0, razorpayFees: 0, commission: 0, totalPayouts: 0 };
@@ -90,11 +104,21 @@ export default function PayoutsPage() {
       payoutMap[o.seller_id].totalPayouts += calculatedPayout;
     });
 
+    // Fetch penalties per seller
+    const { data: allPenalties } = await supabase
+      .from("penalty_ledger")
+      .select("seller_id, amount");
+    const penaltyPerSeller: Record<number, number> = {};
+    (allPenalties || []).forEach((p: any) => {
+      penaltyPerSeller[p.seller_id] = (penaltyPerSeller[p.seller_id] || 0) + Math.abs(p.amount);
+    });
+
     const summaries = sellers.map((s: any) => {
       const p = payoutMap[s.id] || { totalRevenue: 0, razorpayFees: 0, commission: 0, totalPayouts: 0 };
       const paid = paidWithdrawalPerSeller[s.id] || 0;
       const pending = pendingWithdrawalPerSeller[s.id] || 0;
-      const balance = p.totalPayouts - paid;
+      const penalties = penaltyPerSeller[s.id] || 0;
+      const balance = p.totalPayouts - paid - penalties;
       return {
         id: s.id,
         shop_name: s.shop_name,

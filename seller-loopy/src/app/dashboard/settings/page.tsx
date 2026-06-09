@@ -313,7 +313,7 @@ export default function SellerSettingsPage() {
               <div className="space-y-2">
                 <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">URL Slug</label>
                 <div className="flex items-center">
-                  <span className="bg-surface-blue border-y border-l border-outline-variant/50 rounded-l-lg px-3 py-3 text-on-surface-variant text-sm font-data-mono">loopydragon.com/</span>
+                  <span className="bg-surface-blue border-y border-l border-outline-variant/50 rounded-l-lg px-3 py-3 text-on-surface-variant text-sm font-data-mono">theloopydragon.in/sellers/</span>
                   <input type="text" value={slug}
                     onChange={e => setSlug(e.target.value)}
                     className="w-full bg-white border border-outline-variant/50 rounded-r-lg p-3 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none font-data-mono text-sm" />

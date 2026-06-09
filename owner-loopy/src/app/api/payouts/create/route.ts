@@ -28,11 +28,25 @@ export async function POST(req: Request) {
 
     const { data: orders } = await supabase
       .from("Orders")
-      .select("id, seller_payout")
+      .select("id, order_id, seller_payout")
       .eq("seller_id", seller_id)
       .is("payout_status", null);
 
-    const totalPayout = (orders || []).reduce((sum: number, o: any) => {
+    // Exclude rejected orders from payout calculation
+    const allOrderIds = [...new Set((orders || []).map((o: any) => o.order_id))];
+    const rejectedOrderIds = new Set<string>();
+    if (allOrderIds.length > 0) {
+      const { data: profileData } = await supabase
+        .from("Your Profile")
+        .select("order_id, seller_action")
+        .in("order_id", allOrderIds);
+      (profileData || []).forEach((p: any) => {
+        if (p.seller_action === "rejected") rejectedOrderIds.add(p.order_id);
+      });
+    }
+    const activeOrders = (orders || []).filter((o: any) => !rejectedOrderIds.has(o.order_id));
+
+    const totalPayout = activeOrders.reduce((sum: number, o: any) => {
       return sum + (parseFloat(o.seller_payout) || 0);
     }, 0);
 
@@ -40,7 +54,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No pending payout amount" }, { status: 400 });
     }
 
-    const orderIds = (orders || []).map((o: any) => o.id);
+    const orderIds = activeOrders.map((o: any) => o.id);
     const ref = reference || `manual_${Date.now()}`;
 
     const { error: updateError } = await supabase

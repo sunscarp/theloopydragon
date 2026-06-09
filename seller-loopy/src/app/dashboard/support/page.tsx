@@ -1,15 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Mail, Phone, ExternalLink, Loader2, Send, Clock, Info,
-  ShoppingCart, Wallet, ArrowRight,
+  ShoppingCart, Wallet, ArrowRight, LayoutDashboard, Package,
+  ShoppingBag, Receipt, Settings, Store,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function SupportPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sellerSlug, setSellerSlug] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("seller-loopy-auth");
+    if (stored) {
+      try {
+        const seller = JSON.parse(stored);
+        setSellerSlug(seller.slug || "");
+      } catch {}
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +46,103 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-8">
+      {/* Onboarding Guide */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-[#22223B] font-[Montserrat]">Getting Started Guide</h2>
+          <p className="text-sm text-[#47464d] mt-1">Everything you need to know about your seller dashboard</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <LayoutDashboard className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Dashboard</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              Your command center. View real-time stats on products, orders, revenue, and pending payouts. Metrics auto-refresh every 10 seconds.
+            </p>
+            <Link href="/dashboard"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              Go to Dashboard <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <Package className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Products</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              List and manage your inventory. Add products with images, descriptions, pricing, and tags. Edit or delist items anytime to keep your catalogue fresh.
+            </p>
+            <Link href="/dashboard/products"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              Manage Products <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Orders</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              Process and fulfill customer orders. Accept or reject new orders, update shipping status, and track delivery from placement to completion.
+            </p>
+            <Link href="/dashboard/orders"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              View Orders <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Transactions</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              Request withdrawals of your available balance, track payout history, and monitor clearing periods. Payouts are processed via UPI every Tuesday. <a href="#transaction-processing" className="text-[#705091] font-semibold hover:underline">Learn more about payouts below</a>.
+            </p>
+            <Link href="/dashboard/transactions"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              View Transactions <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Financials</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              Download your complete financial ledger for tax and accounting. Get a detailed breakdown of earnings, fees, and net payouts.
+            </p>
+            <Link href="/dashboard/financials"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              View Financials <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+            <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
+              <Settings className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-semibold text-[#22223B] mb-3">Settings</h4>
+            <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
+              Configure your store profile, UPI payout details, delivery preferences, and policies. Manage your store slug, logo, banner, and account security.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-auto">
+              <Link href="/dashboard/settings"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors">
+                Open Settings <ArrowRight className="w-3 h-3" />
+              </Link>
+              {sellerSlug && (
+                <a href={`https://theloopydragon.in/sellers/${sellerSlug}`} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#22223B] bg-[#e6eeff] px-4 py-2.5 rounded-lg hover:bg-[#d9e3f6] transition-colors">
+                  <Store className="w-3 h-3" />
+                  View Store
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#22223B] font-[Montserrat]">Financial Support</h1>
@@ -139,7 +249,7 @@ export default function SupportPage() {
       </div>
 
       {/* Transaction Processing */}
-      <div>
+      <div id="transaction-processing">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-[#22223B] font-[Montserrat]">Transaction Processing</h2>
           <p className="text-sm text-[#47464d] mt-1">Understanding your payout lifecycle</p>

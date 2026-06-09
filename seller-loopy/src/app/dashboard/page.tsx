@@ -37,9 +37,23 @@ export default function SellerDashboard() {
 
     const ordersArray = allOrders || [];
 
+    // Only include accepted orders (matching transactions page)
+    const allOrderIds = [...new Set(ordersArray.map((o: any) => o.order_id))];
+    const acceptedOrderIds = new Set<string>();
+    if (allOrderIds.length > 0) {
+      const { data: profileData } = await supabase
+        .from("Your Profile")
+        .select("order_id, seller_action")
+        .in("order_id", allOrderIds);
+      (profileData || []).forEach((p: any) => {
+        if (p.seller_action === "accepted") acceptedOrderIds.add(p.order_id);
+      });
+    }
+    const acceptedOrders = ordersArray.filter((o: any) => acceptedOrderIds.has(o.order_id));
+
     // Group by order_id to get unique orders
     const orderMap = new Map<string, any[]>();
-    ordersArray.forEach((o: any) => {
+    acceptedOrders.forEach((o: any) => {
       const existing = orderMap.get(o.order_id) || [];
       existing.push(o);
       orderMap.set(o.order_id, existing);
@@ -51,17 +65,17 @@ export default function SellerDashboard() {
     }));
     const uniqueCount = groupedOrders.length;
 
-    const revenue = ordersArray.reduce((sum: number, o: any) =>
+    const revenue = acceptedOrders.reduce((sum: number, o: any) =>
       sum + (parseFloat(o["Total Price"]) || 0) + (parseFloat(o["Shipping Cost"]) || 0), 0);
 
-    const totalPayoutsSum = ordersArray.reduce((sum: number, o: any) => {
+    const totalPayoutsSum = acceptedOrders.reduce((sum: number, o: any) => {
       const total = parseFloat(o["Total Price"]) || 0;
       const shipping = parseFloat(o["Shipping Cost"]) || 0;
       const commission = parseFloat(o.commission_earned) || 0;
       return sum + total - total * 0.02 - commission + shipping;
     }, 0);
 
-    // Fetch paid withdrawal requests
+    // Fetch withdrawal requests and penalties
     const { data: withdrawalData } = await supabase
       .from("withdrawal_requests")
       .select("amount, status")
@@ -70,7 +84,14 @@ export default function SellerDashboard() {
       .filter((w: any) => w.status === "paid")
       .reduce((sum: number, w: any) => sum + w.amount, 0);
 
-    const pendingPayout = totalPayoutsSum - paidWithdrawals;
+    const { data: penaltyData } = await supabase
+      .from("penalty_ledger")
+      .select("amount")
+      .eq("seller_id", sellerId);
+    const totalPenalties = (penaltyData || [])
+      .reduce((sum: number, p: any) => sum + Math.abs(p.amount), 0);
+
+    const pendingPayout = totalPayoutsSum - paidWithdrawals - totalPenalties;
 
     // Revenue change: compare this month vs last month
     const now = new Date();
@@ -80,7 +101,7 @@ export default function SellerDashboard() {
 
     let thisMonthRevenue = 0;
     let lastMonthRevenue = 0;
-    ordersArray.forEach((o: any) => {
+    acceptedOrders.forEach((o: any) => {
       const d = new Date(o["Order Date"]);
       const total = (parseFloat(o["Total Price"]) || 0) + (parseFloat(o["Shipping Cost"]) || 0);
       if (d >= thisMonthStart) {
