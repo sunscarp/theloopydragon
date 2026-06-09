@@ -38,6 +38,7 @@ export default function Home() {
     Product: string;
     Price: number;
     ImageUrl1: string;
+    status?: string;
   };
 
   const [topPicksProducts, setTopPicksProducts] = useState<Product[]>([]);
