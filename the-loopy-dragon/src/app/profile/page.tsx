@@ -149,6 +149,9 @@ export default function ProfilePage() {
     router.push('/cart');
   };
 
+  const pendingOrders = orders.filter(order => order.Status?.includes("Pending Payment"));
+  const showCustomOrders = loading || pendingOrders.length > 0;
+
   if (!user) return null;
 
   return (
@@ -254,7 +257,7 @@ export default function ProfilePage() {
         }}
       >
         <div>
-          {/* Custom Orders Section */}
+          <div style={{ display: showCustomOrders ? "" : "none" }}>
           <h2
             style={{
               fontFamily: "Montserrat, sans-serif",
@@ -714,6 +717,7 @@ export default function ProfilePage() {
               )}
             </div>
           )}
+          </div>
 
           {/* Previous Orders Section */}
           <h2

@@ -25,19 +25,27 @@ function OrderSummaryContent() {
   useEffect(() => {
     async function fetchOrder() {
       if (!orderId) return;
+      // Fetch all sub-orders matching the base order_id (grouped by seller)
       const { data: ordersData } = await supabase
         .from("Orders")
         .select("*")
-        .eq("order_id", orderId);
+        .or(`order_id.eq.${orderId},order_id.like.${orderId}%`);
 
       const { data: profileData } = await supabase
         .from("Your Profile")
         .select("*")
-        .eq("order_id", orderId)
-        .single();
+        .or(`order_id.eq.${orderId},order_id.like.${orderId}%`)
+        .order("Order Date", { ascending: true });
 
       setOrders(ordersData || []);
-      setProfileOrder(profileData);
+      // Combine multiple profile entries into one for display
+      if (profileData && profileData.length > 0) {
+        const combined = { ...profileData[0] };
+        combined.Products = profileData.flatMap((p: any) => p.Products || []);
+        setProfileOrder(combined);
+      } else {
+        setProfileOrder(null);
+      }
       setLoading(false);
     }
     fetchOrder();
@@ -131,7 +139,10 @@ function OrderSummaryContent() {
     (sum, item) => sum + (Number(item["Total Price"]) || 0),
     0
   );
-  const shippingCost = Number(orders[0]["Shipping Cost"] || 0);
+  const shippingCost = orders.reduce(
+    (sum, item) => sum + (Number(item["Shipping Cost"]) || 0),
+    0
+  );
 
   const finalTotalAfterDiscount = subtotal - dragonDiscount;
   const totalPaid = finalTotalAfterDiscount + shippingCost;

@@ -28,7 +28,8 @@ type ShippingInfo = {
   pincode: string;
   shippingCost: number;
   isCalculating: boolean;
-  isOutOfRange?: boolean; // Add this field
+  isOutOfRange?: boolean;
+  sellerShipping: { [sellerId: string]: number }; // per-seller shipping cost
 };
 
 // Create a type for add-ons to be passed to addToCart
@@ -149,13 +150,14 @@ const loadShippingInfoFromStorage = (): ShippingInfo => {
         shippingCost: parsed.shippingCost || 0,
         isCalculating: false,
         isOutOfRange: parsed.isOutOfRange || false,
+        sellerShipping: parsed.sellerShipping || {},
       };
     } catch (e) {
       console.error("Failed to load shipping info from localStorage:", e);
-      return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false };
+      return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false, sellerShipping: {} };
     }
   }
-  return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false };
+  return { pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false, sellerShipping: {} };
 };
 
 const saveShippingInfoToStorage = (shippingInfo: ShippingInfo) => {
@@ -177,6 +179,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     shippingCost: 0,
     isCalculating: false,
     isOutOfRange: false,
+    sellerShipping: {},
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeDragonOffer, setActiveDragonOffer] = useState<DragonOffer | null>(null);
@@ -276,15 +279,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const calculateShipping = async (pincode: string, cartItems: any[]) => {
     if (!pincode || pincode.length !== 6) {
-      updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false });
+      updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false, sellerShipping: {} });
       return;
     }
 
-    // Calculate subtotal
-    const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    updateShippingInfo({ isCalculating: true, isOutOfRange: false });
 
-    // Check if all seller products offer free delivery
-    const sellerIds = [...new Set(cartItems.map((i: any) => i.seller_id).filter(Boolean))] as string[];
+    // Group items by seller
+    const sellerGroups: { [sellerId: string]: any[] } = {};
+    for (const item of cartItems) {
+      const sId = item.seller_id || 'own';
+      if (!sellerGroups[sId]) sellerGroups[sId] = [];
+      sellerGroups[sId].push(item);
+    }
+    const sellerIds = Object.keys(sellerGroups).filter(id => id !== 'own');
+
+    // Fetch seller settings
+    let sellerSettings: Record<string, { free_delivery: boolean; origin_pincode: string; free_delivery_threshold: number }> = {};
     if (sellerIds.length > 0) {
       try {
         const res = await fetch("/api/seller-settings", {
@@ -293,67 +304,80 @@ export function CartProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ seller_ids: sellerIds }),
         });
         const data = await res.json();
-        const allFree = sellerIds.every((id: string) => data.settings?.[id]?.free_delivery === true);
-        if (allFree) {
-          updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false });
-          return;
-        }
+        sellerSettings = data.settings || {};
       } catch (e) {
-        console.error("Failed to check seller free_delivery:", e);
+        console.error("Failed to check seller settings:", e);
       }
     }
 
-    // Fallback: free shipping on orders above ₹1000
-    if (subtotal >= 1000) {
-      updateShippingInfo({ shippingCost: 0, isCalculating: false, isOutOfRange: false });
-      return;
-    }
-    
-    updateShippingInfo({ isCalculating: true, isOutOfRange: false });
-    
-    try {
-      const { weightInGrams, dimensions } = calculateWeights(cartItems);
-      
-      const response = await fetch(`/api/shipping?d_pin=${pincode}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
-      const data = await response.json();
-      
-      if (data.error) {
-        console.error('Shipping API Error:', data.error);
-        // Mark as out of range when API fails
-        updateShippingInfo({ shippingCost: 80, isCalculating: false, isOutOfRange: true });
-        return;
+    const getSellerSubtotal = (sId: string): number => {
+      return (sellerGroups[sId] || []).reduce((sum, item) => sum + item.totalPrice, 0);
+    };
+
+    const isFree = (sId: string): boolean => {
+      if (sId === 'own') {
+        // Own store: free if subtotal >= 1000
+        return getSellerSubtotal(sId) >= 1000;
+      }
+      const settings = sellerSettings[sId];
+      if (!settings) return false;
+      // Explicit free_delivery boolean overrides threshold
+      if (settings.free_delivery === true) return true;
+      // Free if subtotal meets the seller's threshold
+      const threshold = Number(settings.free_delivery_threshold) || 0;
+      return threshold > 0 && getSellerSubtotal(sId) >= threshold;
+    };
+
+    // Calculate per-seller shipping independently
+    const sellerShipping: { [sellerId: string]: number } = {};
+    let anyOutOfRange = false;
+    let totalShippingCost = 0;
+
+    // Helper to map API cost to tiered pricing
+    const tieredCost = (apiCost: number): number => {
+      if (apiCost < 60) return 60;
+      if (apiCost <= 90) return 90;
+      return 120;
+    };
+
+    for (const sId of Object.keys(sellerGroups)) {
+      if (isFree(sId)) {
+        sellerShipping[sId] = 0;
+        continue;
       }
 
-      // --- Custom shipping cost logic ---
-      let apiCost = Number(data.total || 80);
-      let shippingCost = 80;
-      let isOutOfRange = false;
-      
-      // If API returned a valid cost, apply tiered pricing
-      if (data.total && !data.error) {
-        if (apiCost < 60) {
-          shippingCost = 60;
-        } else if (apiCost >= 60 && apiCost <= 90) {
-          shippingCost = 90;
-        } else if (apiCost > 90) {
-          shippingCost = 120;
+      const sellerItems = sellerGroups[sId];
+      const { weightInGrams, dimensions } = calculateWeights(sellerItems);
+      const o_pin = sId === 'own' ? '411033' : (sellerSettings[sId]?.origin_pincode || '411033');
+
+      try {
+        const response = await fetch(`/api/shipping?d_pin=${pincode}&o_pin=${o_pin}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
+        const data = await response.json();
+
+        if (data.error || !data.total) {
+          console.error(`Shipping API Error for seller ${sId}:`, data.error);
+          sellerShipping[sId] = 80;
+          anyOutOfRange = true;
+          totalShippingCost += 80;
+        } else {
+          const cost = tieredCost(Number(data.total));
+          sellerShipping[sId] = cost;
+          totalShippingCost += cost;
         }
-      } else {
-        // If we're using fallback cost, mark as out of range
-        isOutOfRange = true;
+      } catch (error) {
+        console.error(`Shipping calculation error for seller ${sId}:`, error);
+        sellerShipping[sId] = 80;
+        anyOutOfRange = true;
+        totalShippingCost += 80;
       }
-      // ----------------------------------
-
-      updateShippingInfo({ 
-        shippingCost,
-        isCalculating: false,
-        isOutOfRange
-      });
-    } catch (error) {
-      console.error('Shipping calculation error:', error);
-      // Mark as out of range when there's an error
-      updateShippingInfo({ shippingCost: 80, isCalculating: false, isOutOfRange: true });
     }
+
+    updateShippingInfo({
+      shippingCost: totalShippingCost,
+      isCalculating: false,
+      isOutOfRange: anyOutOfRange,
+      sellerShipping,
+    });
   };
 
   const updateShippingInfo = (info: Partial<ShippingInfo>) => {
@@ -520,7 +544,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart({});
     saveCartToStorage({});
     setCartAddons({});
-    setShippingInfo({ pincode: "", shippingCost: 0, isCalculating: false });
+    setShippingInfo({ pincode: "", shippingCost: 0, isCalculating: false, isOutOfRange: false, sellerShipping: {} });
     clearActiveDragonOffer();
     setActiveDragonOffer(null);
     if (typeof window !== "undefined") {

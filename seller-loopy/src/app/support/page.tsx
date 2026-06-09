@@ -51,7 +51,7 @@ export default function SupportPage() {
     },
     {
       question: "How and when do I get paid?",
-      answer: "Payouts are processed via UPI directly to your account. You can request a payout from your seller dashboard, and it will be transferred after the 2% Razorpay fee is deducted."
+      answer: "Payouts are sent via UPI directly to your registered UPI ID. The owner processes payouts manually — once transferred, your orders will show as 'Paid' in your transaction history. A 2% Razorpay processing fee is deducted from each sale."
     },
     {
       question: "Can I list custom or made-to-order items?",
@@ -66,7 +66,33 @@ export default function SupportPage() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+        .contact-header {
+          font-family: Montserrat, sans-serif;
+          font-size: 40px;
+          font-weight: 700;
+          color: #22223B;
+          margin-bottom: 1rem;
+          letter-spacing: 0.05em;
+          text-transform: none;
+          line-height: 1.1;
+        }
+        @media (max-width: 767px) {
+          .contact-header {
+            font-size: 32px !important;
+            letter-spacing: 0.12em !important;
+            line-height: 0.95 !important;
+            font-weight: 700 !important;
+            text-transform: none !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .contact-header {
+            font-size: 28px !important;
+            letter-spacing: 0.15em !important;
+          }
+        }
       `}</style>
 
       <div className="min-h-screen bg-[#F5F9FF] flex flex-col font-sans scroll-smooth">
@@ -93,16 +119,7 @@ export default function SupportPage() {
         {/* Header */}
         <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: isMobile ? '28px' : '40px',
-              fontWeight: 700,
-              color: '#22223B',
-              marginBottom: '1rem',
-              letterSpacing: isMobile ? '0.15em' : '0.05em',
-              lineHeight: isMobile ? '0.95' : '1.1',
-              textTransform: 'none'
-            }}>SELLER SUPPORT</h2>
+            <h2 className="contact-header">SELLER SUPPORT</h2>
             <p style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: isMobile ? '16px' : '20px',
@@ -202,7 +219,7 @@ export default function SupportPage() {
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                        Your email ID
+                        Your email ID (to contact if needed)
                       </label>
                       <input
                         id="email"

@@ -153,6 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>Owner Dashboard - The Loopy Dragon</title>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-slate-50">
         <Toaster

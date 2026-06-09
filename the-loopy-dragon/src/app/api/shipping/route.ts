@@ -11,11 +11,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
+    const o_pin = searchParams.get('o_pin') || '411033';
     const apiUrl = 'https://track.delhivery.com/api/kinko/v1/invoice/charges/.json';
     const params = new URLSearchParams({
       md: 'E',  // Express delivery
       cgm: cgm, // Weight in grams
-      o_pin: '411033', // Origin pincode
+      o_pin: o_pin, // Origin pincode (per-seller or default)
       d_pin: d_pin,
       ss: 'Delivered'
     });

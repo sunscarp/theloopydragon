@@ -224,18 +224,21 @@ export default function SellerProductsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-                  <a href={`https://the-loopydragon.vercel.app/product/${encodeURIComponent(product.Product)}`}
+                  <a href={`https://theloopydragon.in/${seller?.slug || ""}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all">
-                    <Eye className="w-3.5 h-3.5" /> View
+                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all"
+                    title="View Store">
+                    <Eye className="w-3.5 h-3.5" />
                   </a>
                   <button onClick={() => openEdit(product)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600/60 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all">
-                    <Pencil className="w-3.5 h-3.5" /> Edit
+                    className="w-8 h-8 flex items-center justify-center text-purple-400 hover:text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all"
+                    title="Edit Product">
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => handleDelete(product.id, product.Product)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-500/60 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all">
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                    className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                    title="Delete Product">
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -247,7 +250,7 @@ export default function SellerProductsPage() {
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           onClick={() => setEditingProduct(null)}>
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-2xl"
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
               <div>

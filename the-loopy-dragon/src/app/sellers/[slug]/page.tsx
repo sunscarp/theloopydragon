@@ -179,7 +179,7 @@ export default function SellerPage() {
       <div style={{ height: '80px' }}></div>
 
       {/* Banner */}
-      <div className="relative w-full h-24 sm:h-32 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 overflow-hidden">
+      <div className="relative w-full h-48 sm:h-64 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 overflow-hidden">
         {seller.banner_url ? (
           <img
             src={seller.banner_url}
@@ -194,8 +194,8 @@ export default function SellerPage() {
       </div>
 
       {/* Logo + Name */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-6">
-        <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-6 flex justify-center">
+        <div className="flex flex-col items-center gap-3">
           {seller.logo_url ? (
             <img
               src={seller.logo_url}
@@ -207,7 +207,7 @@ export default function SellerPage() {
               <Store className="w-10 h-10 text-white" />
             </div>
           )}
-          <div className="text-center sm:text-left">
+          <div className="text-center">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {seller.shop_name}
             </h1>

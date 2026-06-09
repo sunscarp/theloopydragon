@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Script from "next/script";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import Navbar from "@/components/Navbar";
@@ -547,7 +548,8 @@ export default function CartPage() {
                         }}
                       >
                         <div style={{ display: "flex", gap: "1rem" }}>
-                          <div
+                          <Link
+                            href={`/product/${encodeURIComponent(item.Product)}`}
                             style={{
                               width: "90px",
                               height: "90px",
@@ -606,15 +608,17 @@ export default function CartPage() {
                                 </span>
                               );
                             })()}
-                          </div>
+                          </Link>
                           <div style={{ flex: 1 }}>
-                            <div
+                            <Link
+                              href={`/product/${encodeURIComponent(item.Product)}`}
                               style={{
                                 fontFamily: "Montserrat, sans-serif",
                                 fontSize: "15px",
                                 fontWeight: 600,
                                 color: "#22223B",
                                 marginBottom: "0.25rem",
+                                textDecoration: "none",
                               }}
                             >
                               {item.Product}
@@ -633,7 +637,7 @@ export default function CartPage() {
                                   Fire Offer
                                 </span>
                               )}
-                            </div>
+                            </Link>
                             {(item.addons?.keyChain ||
                               item.addons?.giftWrap ||
                               item.addons?.carMirror ||
@@ -845,19 +849,22 @@ export default function CartPage() {
                       >
                         {/* Product */}
                         <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-                          <div style={{
-                            width: "130px",
-                            height: "130px",
-                            backgroundColor: "#F3F4F6",
-                            borderRadius: "0",
-                            overflow: "hidden",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            position: "relative",
-                            flexShrink: 0, // Prevent shrinking
-                            flexGrow: 0,   // Prevent growing
-                          }}>
+                          <Link
+                            href={`/product/${encodeURIComponent(item.Product)}`}
+                            style={{
+                              width: "130px",
+                              height: "130px",
+                              backgroundColor: "#F3F4F6",
+                              borderRadius: "0",
+                              overflow: "hidden",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              position: "relative",
+                              flexShrink: 0, // Prevent shrinking
+                              flexGrow: 0,   // Prevent growing
+                            }}
+                          >
                             {/* Special offer badge */}
                             {item.isSpecialOffer && (
                               <div style={{
@@ -898,15 +905,19 @@ export default function CartPage() {
                                 </span>
                               );
                             })()}
-                          </div>
+                          </Link>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontFamily: "Montserrat, sans-serif",
-                              fontSize: "16px",
-                              fontWeight: 600,
-                              color: "#22223B",
-                              marginBottom: "0.25rem"
-                            }}>
+                            <Link
+                              href={`/product/${encodeURIComponent(item.Product)}`}
+                              style={{
+                                fontFamily: "Montserrat, sans-serif",
+                                fontSize: "16px",
+                                fontWeight: 600,
+                                color: "#22223B",
+                                marginBottom: "0.25rem",
+                                textDecoration: "none",
+                              }}
+                            >
                               {item.Product}
                               {item.isSpecialOffer && (
                                 <span style={{
@@ -921,7 +932,7 @@ export default function CartPage() {
                                   Fire Offer
                                 </span>
                               )}
-                            </div>
+                            </Link>
                             {(item.addons?.keyChain || item.addons?.giftWrap || item.addons?.carMirror || item.addons?.customMessage) && (
                               <div style={{
                                 fontSize: "13px",

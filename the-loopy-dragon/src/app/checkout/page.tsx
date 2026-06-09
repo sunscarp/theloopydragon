@@ -285,7 +285,7 @@ function CheckoutContent() {
         dragonDiscount,
         christmasDiscount,
         finalTotal,
-        total: finalTotal + (finalTotal >= 1000 ? 0 : shippingInfo.shippingCost)
+        total: finalTotal + shippingInfo.shippingCost
       };
     }
   };
@@ -476,7 +476,10 @@ function CheckoutContent() {
             }
           } else {
             // Handle regular cart payment
-            const finalShippingCost = finalTotal >= 1000 ? 0 : shippingInfo.shippingCost;
+            const getSellerShippingCost = (sId: string | null): number => {
+              const key = sId || 'own';
+              return shippingInfo.sellerShipping?.[key] ?? shippingInfo.shippingCost;
+            };
 
             // Collect seller commission rates for commission tracking
             const sellerIds = [...new Set(Object.entries(cart).map(([cartKey]) => {
@@ -517,11 +520,12 @@ function CheckoutContent() {
                 (addons.carMirror ? 50 : 0);
               const lineTotal = (product.Price + addonUnitPrice) * qty;
               const sId = (product as any).seller_id || null;
+              const itemShippingCost = getSellerShippingCost(sId);
               const rate = sId ? (commissionRates[sId] || 0) : 0;
               const razorpayFee = sId ? (lineTotal * 0.02) : 0;
               const commissionBase = lineTotal - razorpayFee;
               const commissionEarned = sId ? (commissionBase * rate / 100) : 0;
-              const sellerPayout = sId ? (commissionBase - commissionEarned + finalShippingCost) : 0;
+              const sellerPayout = sId ? (commissionBase - commissionEarned + itemShippingCost) : 0;
               return {
                 Product: product.Product,
                 Quantity: qty,
@@ -531,7 +535,7 @@ function CheckoutContent() {
                 carMirror: !!addons.carMirror,
                 customMessage: orderMessage || "",
                 'Total Price': lineTotal.toFixed(2),
-                'Shipping Cost': finalShippingCost.toFixed(2),
+                'Shipping Cost': itemShippingCost.toFixed(2),
                 'Fire Offer': activeDragonOffer ? activeDragonOffer.title : "",
                 'Fire Discount': dragonDiscount.toFixed(2),
                 'Christmas Discount': christmasDiscount.toFixed(2),
@@ -541,6 +545,14 @@ function CheckoutContent() {
                 seller_payout: sellerPayout.toFixed(2),
               };
             }).filter(Boolean);
+
+            // Group cart items by seller_id for separate orders
+            const groupedBySeller: { [sellerId: string]: any[] } = {};
+            for (const item of productDetails) {
+              const sId = item?.seller_id || 'own';
+              if (!groupedBySeller[sId]) groupedBySeller[sId] = [];
+              groupedBySeller[sId].push(item);
+            }
 
             const retryOperation = async (operation: () => Promise<any>, maxRetries = 3) => {
               for (let i = 0; i < maxRetries; i++) {
@@ -554,28 +566,37 @@ function CheckoutContent() {
               }
             };
 
-            try {
-              await retryOperation(async () => {
-                const { error: profileError } = await supabase
-                  .from("Your Profile")
-                  .insert([{
-                    order_id: generatedOrderId,
-                    "Order Date": orderDate,
-                    Products: productDetails,
-                    uid: user.id,
-                    "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
-                    "Total Discount": (dragonDiscount + christmasDiscount).toFixed(2),
-                    "Christmas Discount": christmasDiscount.toFixed(2),
-                    Country: country,
-                    City: city,
-                    State: stateName
-                  }]);
-                if (profileError) throw profileError;
-              });
-            } catch (profileError: any) {
-              allSuccess = false;
-              supabaseErrorMsg = profileError.message || JSON.stringify(profileError);
-              console.error("Supabase Your Profile Insert Error:", profileError);
+            // Create separate orders per seller group
+            const subOrderIds: string[] = [];
+            let groupIdx = 0;
+            for (const [sellerId, groupItems] of Object.entries(groupedBySeller)) {
+              const subOrderId = groupIdx === 0 ? generatedOrderId : `${generatedOrderId}${String.fromCharCode(65 + groupIdx)}`;
+              subOrderIds.push(subOrderId);
+              groupIdx++;
+
+              try {
+                await retryOperation(async () => {
+                  const { error: profileError } = await supabase
+                    .from("Your Profile")
+                    .insert([{
+                      order_id: subOrderId,
+                      "Order Date": orderDate,
+                      Products: groupItems,
+                      uid: user.id,
+                      "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
+                      "Total Discount": (dragonDiscount + christmasDiscount).toFixed(2),
+                      "Christmas Discount": christmasDiscount.toFixed(2),
+                      Country: country,
+                      City: city,
+                      State: stateName
+                    }]);
+                  if (profileError) throw profileError;
+                });
+              } catch (profileError: any) {
+                allSuccess = false;
+                supabaseErrorMsg = profileError.message || JSON.stringify(profileError);
+                console.error("Supabase Your Profile Insert Error:", profileError);
+              }
             }
 
             try {
@@ -607,6 +628,14 @@ function CheckoutContent() {
               // Don't fail the whole process if email fails
             }
 
+            // Rebuild group index to sellerId mapping for order_id lookup
+            const groupSellerMap: { [sellerId: string]: string } = {};
+            let gIdx = 0;
+            for (const sId of Object.keys(groupedBySeller)) {
+              groupSellerMap[sId] = gIdx === 0 ? generatedOrderId : `${generatedOrderId}${String.fromCharCode(65 + gIdx)}`;
+              gIdx++;
+            }
+
             for (const [cartKey, qty] of Object.entries(cart)) {
               const productId = getProductIdFromCartKey(cartKey);
               const specialOffer = SPECIAL_OFFER_PRODUCTS[productId as keyof typeof SPECIAL_OFFER_PRODUCTS];
@@ -628,18 +657,20 @@ function CheckoutContent() {
               const lineTotal = (product.Price + addonUnitPrice) * qty;
               const totalPrice = lineTotal.toFixed(2);
               const sId = (product as any).seller_id || null;
+              const itemShippingCost = getSellerShippingCost(sId);
               const rate = sId ? (commissionRates[sId] || 0) : 0;
               const razorpayFee = sId ? (lineTotal * 0.02) : 0;
               const commissionBase = lineTotal - razorpayFee;
               const commissionEarned = sId ? (commissionBase * rate / 100) : 0;
-              const sellerPayout = sId ? (commissionBase - commissionEarned + shippingInfo.shippingCost) : 0;
+              const sellerPayout = sId ? (commissionBase - commissionEarned + itemShippingCost) : 0;
+              const subOrderId = groupSellerMap[sId || 'own'] || generatedOrderId;
               
               try {
                 await retryOperation(async () => {
                   const { error: orderError } = await supabase
                     .from("Orders")
                     .insert([{
-                      order_id: generatedOrderId,
+                      order_id: subOrderId,
                       Name: showAddressForm
                         ? `${addressFormData.firstName} ${addressFormData.lastName}`.trim()
                         : name,
@@ -658,7 +689,7 @@ function CheckoutContent() {
                       carMirror: !!addons.carMirror,
                       customMessage: orderMessage || "",
                       "Total Price": totalPrice,
-                      "Shipping Cost": shippingInfo.shippingCost.toFixed(2),
+                      "Shipping Cost": itemShippingCost.toFixed(2),
                       uid: user.id,
                       payment_id: response.razorpay_payment_id,
                       "Order Date": orderDate,
@@ -1684,7 +1715,7 @@ function CheckoutContent() {
                   <span style={{ fontWeight: 600, color: "#22223B" }}>
                     {customOrder ? 
                       `₹${(total - subtotal).toFixed(2)}` : 
-                      (subtotal >= 1000 ? "FREE" : `₹${shippingInfo.shippingCost.toFixed(2)}`)
+                      (shippingInfo.shippingCost === 0 ? "FREE" : `₹${shippingInfo.shippingCost.toFixed(2)}`)
                     }
                   </span>
                 </div>

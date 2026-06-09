@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function POST(req: Request) {
   try {
-    const { id, allows_cod, free_delivery, bank_account_name, bank_account_number, bank_ifsc, upi_id, terms_accepted, slug, logo_url, banner_url } = await req.json();
+    const { id, allows_cod, free_delivery, bank_account_name, bank_account_number, bank_ifsc, upi_id, terms_accepted, slug, logo_url, banner_url, allow_refunds, allow_returns, origin_pincode, free_delivery_threshold } = await req.json();
 
     if (!id) {
       return NextResponse.json({ error: "Seller ID is required" }, { status: 400 });
@@ -24,6 +24,10 @@ export async function POST(req: Request) {
     if (slug !== undefined) updates.slug = slug;
     if (logo_url !== undefined) updates.logo_url = logo_url;
     if (banner_url !== undefined) updates.banner_url = banner_url;
+    if (allow_refunds !== undefined) updates.allow_refunds = allow_refunds;
+    if (allow_returns !== undefined) updates.allow_returns = allow_returns;
+    if (origin_pincode !== undefined) updates.origin_pincode = origin_pincode;
+    if (free_delivery_threshold !== undefined) updates.free_delivery_threshold = free_delivery_threshold;
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });

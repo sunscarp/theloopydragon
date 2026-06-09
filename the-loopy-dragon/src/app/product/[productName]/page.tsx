@@ -43,7 +43,7 @@ export default function ProductPage() {
   const router = useRouter();
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductDetails[]>([]);
-  const [sellerInfo, setSellerInfo] = useState<{ shop_name: string; slug: string } | null>(null);
+  const [sellerInfo, setSellerInfo] = useState<{ shop_name: string; slug: string; allow_refunds: boolean; allow_returns: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -88,10 +88,10 @@ export default function ProductPage() {
         if (data.seller_id) {
           const { data: seller } = await supabase
             .from("sellers")
-            .select("shop_name, slug")
+            .select("shop_name, slug, allow_refunds, allow_returns")
             .eq("id", data.seller_id)
             .single();
-          if (seller) setSellerInfo(seller);
+          if (seller) setSellerInfo({ ...seller, allow_refunds: !!seller.allow_refunds, allow_returns: !!seller.allow_returns });
         }
       }
       setLoading(false);
@@ -471,6 +471,15 @@ export default function ProductPage() {
                       </Link>
                     ) : "Sold by The Loopy Dragon"}
                   </div>
+                  {sellerInfo && (sellerInfo.allow_refunds || sellerInfo.allow_returns) && (
+                    <div className="mt-2 text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif', color: '#059669' }}>
+                      {sellerInfo.allow_refunds && sellerInfo.allow_returns
+                        ? 'Returns & Exchanges available'
+                        : sellerInfo.allow_returns && !sellerInfo.allow_refunds
+                        ? 'Exchanges available'
+                        : 'Refunds available'}
+                    </div>
+                  )}
                 </div>
               </div>
 
