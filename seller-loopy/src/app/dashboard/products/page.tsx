@@ -20,6 +20,8 @@ export default function SellerProductsPage() {
   const [editForm, setEditForm] = useState({ Product: "", Price: 0, Quantity: 0, Description: "", Material: "", Tag: "", ImageUrl1: "", ImageUrl2: "", ImageUrl3: "", ImageUrl4: "", ImageUrl5: "" });
   const [savingEdit, setSavingEdit] = useState(false);
   const [uploadingEditImage, setUploadingEditImage] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
   const fetchProducts = async (sellerId: number) => {
@@ -41,15 +43,18 @@ export default function SellerProductsPage() {
     fetchProducts(s.id);
   }, []);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    const { error } = await supabase.from("Inventory").delete().eq("id", id).eq("seller_id", seller.id);
+  const handleDelete = async () => {
+    if (!deleteModal) return;
+    setDeleting(true);
+    const { error } = await supabase.from("Inventory").delete().eq("id", deleteModal.id).eq("seller_id", seller.id);
     if (error) {
       toast.error("Failed to delete product");
     } else {
       toast.success("Product deleted");
-      setProducts(prev => prev.filter(p => p.id !== id));
+      setProducts(prev => prev.filter(p => p.id !== deleteModal.id));
     }
+    setDeleting(false);
+    setDeleteModal(null);
   };
 
   const openEdit = (product: any) => {
@@ -229,7 +234,8 @@ export default function SellerProductsPage() {
                 {searchTerm ? `Search results (${filtered.length})` : `All Products (${products.length})`}
               </h3>
               <button onClick={() => router.push("/dashboard/products/add")}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl transition-all shadow-lg shadow-violet-500/20">
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#22223B] bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-lg transition-all shadow-sm"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 <Plus className="w-4 h-4" /> Add Product
               </button>
             </div>
@@ -274,17 +280,6 @@ export default function SellerProductsPage() {
                             <Package className="w-10 h-10 text-gray-200" />
                           </div>
                         )}
-                        {/* Status badge */}
-                        <div className="absolute top-3 right-3">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
-                            product.status === "active"
-                              ? "bg-green-100 text-green-700 border-green-200"
-                              : "bg-gray-100 text-gray-500 border-gray-200"
-                          }`}>
-                            {product.status === "active" && <Sparkles className="w-2.5 h-2.5" />}
-                            {product.status || "active"}
-                          </span>
-                        </div>
                       </div>
 
                       {/* Details */}
@@ -312,7 +307,7 @@ export default function SellerProductsPage() {
                             title="Edit Product">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDelete(product.id, product.Product)}
+                          <button onClick={() => setDeleteModal({ id: product.id, name: product.Product })}
                             className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
                             title="Delete Product">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -327,6 +322,33 @@ export default function SellerProductsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => !deleting && setDeleteModal(null)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-center px-6 pt-8 pb-4">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Delete Product</h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Are you sure you want to delete <span className="font-semibold text-gray-700">&ldquo;{deleteModal.name}&rdquo;</span>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3 px-6 pb-6 pt-2">
+              <button onClick={() => setDeleteModal(null)} disabled={deleting}
+                className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all disabled:opacity-50">
+                {deleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</> : <>Delete</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingProduct && (

@@ -154,6 +154,42 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#F5F9FF",
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "Montserrat, sans-serif",
+          overflowX: "hidden",
+        }}
+      >
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <Navbar />
+        </div>
+        <div style={{ height: 'calc(2.5rem + 4.5rem)' }}></div>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              width: 48,
+              height: 48,
+              margin: "0 auto 1.5rem",
+              border: "4px solid #EFDFFF",
+              borderTopColor: "#22223B",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <p style={{ fontSize: 16, color: "#6B7280", fontWeight: 500 }}>Loading your orders...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -269,21 +305,7 @@ export default function ProfilePage() {
           >
             Custom Orders (Payment pending)
           </h2>
-          {loading ? (
-            <div
-              style={{
-                fontFamily: "Montserrat, sans-serif",
-                fontSize: "16px",
-                color: "#6B7280",
-                textAlign: "center",
-                padding: "2rem 0",
-              }}
-            >
-              Loading orders...
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {orders.filter(order => order.Status?.includes("Pending Payment")).length === 0 ? (
+          {orders.filter(order => order.Status?.includes("Pending Payment")).length === 0 ? (
                 <div
                   style={{
                     fontFamily: "Montserrat, sans-serif",
@@ -715,8 +737,6 @@ export default function ProfilePage() {
                   </div>
                 ))
               )}
-            </div>
-          )}
           </div>
 
           {/* Previous Orders Section */}
@@ -731,21 +751,7 @@ export default function ProfilePage() {
           >
             Previous Orders
           </h2>
-          {loading ? (
-            <div
-              style={{
-                fontFamily: "Montserrat, sans-serif",
-                fontSize: "16px",
-                color: "#6B7280",
-                textAlign: "center",
-                padding: "2rem 0",
-              }}
-            >
-              Loading orders...
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {orders.filter(order => !order.Status?.includes("Pending Payment")).length === 0 ? (
+          {orders.filter(order => !order.Status?.includes("Pending Payment")).length === 0 ? (
                 <div
                   style={{
                     fontFamily: "Montserrat, sans-serif",
@@ -1304,8 +1310,6 @@ export default function ProfilePage() {
                   );
                 })
               )}
-            </div>
-          )}
         </div>
       </main>
       <Footer />

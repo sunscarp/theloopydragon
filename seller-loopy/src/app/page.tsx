@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Arapey, Montserrat } from "next/font/google";
-import { Store, LogIn, Percent, Zap, Shield, Heart, Users, DollarSign, ChevronDown, BadgeDollarSign, TrendingUp, BadgeCheck, CheckCircle, Wallet } from "lucide-react";
+import {
+  Store, LogIn, Percent, Zap, Shield, Heart, Users, DollarSign,
+  ChevronDown, BadgeDollarSign, TrendingUp, BadgeCheck, CheckCircle,
+  Wallet, BarChart3, ShoppingBag, Image, Search, Globe,
+  Mail, Phone, MessageCircle, Gift,
+  Package, CreditCard, Smartphone
+} from "lucide-react";
 
 const arapey = Arapey({ subsets: ["latin"], weight: "400" });
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -37,24 +43,88 @@ export default function SellerLandingPage() {
   const faqs = [
     {
       question: "How do I start selling my items?",
-      answer: "Simply reach out to us through our contact channels. Once we review your portfolio and approve your application, we'll set up your seller account and you can start listing immediately."
+      answer: "Simply sign up through our seller portal and reach out to us. Once we review your portfolio and approve your application, we'll set up your seller account and you can start listing immediately. The entire process typically takes 24–36 hours from application to approval."
     },
     {
       question: "What are the fees involved?",
-      answer: "We charge low commission on sales. The only fee involved is a flat 2% Razorpay transaction fee which goes directly to the payment processor. Platform fees are at our discretion and will be communicated in advance."
+      answer: "We charge low commission on sales. The only fee that's always deducted is a flat 2% Razorpay transaction fee which goes directly to the payment processor. Platform commission rates are communicated clearly when you're onboarded. There are no hidden fees, no monthly subscription charges, and no listing fees."
     },
     {
       question: "When and how do I get paid?",
-      answer: "Payouts are processed via UPI once an order is marked as completed. You can track your pending and cleared balances in your seller dashboard and request withdrawals."
+      answer: "Payouts are processed via UPI once an order is marked as completed. You can track your pending and cleared balances in your seller dashboard. Withdrawals can be requested anytime, and payouts are typically processed within 5–7 business days. All payments are handled securely through Razorpay."
     },
     {
-      question: "Can I sell custom/made-to-order items?",
-      answer: "Yes! You can list items as 'Made to Order' and specify the production time in the product description. This is a great way to manage your workload."
+      question: "What kind of dashboard do I get access to?",
+      answer: "You get a full-featured seller dashboard with sections for: Inventory Management (add/edit products, track stock), Order Management (view/fulfill orders, print labels), Financials (track earnings, view transaction history, request payouts), Store Settings (customize your storefront, set policies), and Support (contact us directly)."
     },
     {
       question: "How will customers find my products?",
-      answer: "Your products appear in our main marketplace and category searches. Each seller gets a dedicated storefront page at /sellers/[your-shop-name]."
+      answer: "Your products appear in our main marketplace at theloopydragon.in/shop with category-based browsing and search. Each seller gets a dedicated storefront page at /sellers/[your-shop-name] that you can customize with your logo, banner, and store policies. We also feature top sellers on our social media channels."
+    },
+    {
+      question: "Can I customize my storefront?",
+      answer: "Absolutely! You can upload your store logo and banner image, set your URL slug (e.g., theloopydragon.in/sellers/your-shop-name), configure return/exchange policies, enable free delivery, and manage your product listings — all from your seller dashboard settings."
+    },
+    {
+      question: "What if an order gets returned or refunded?",
+      answer: "You control your return and exchange policies. When a customer requests a return or exchange, it comes to you for manual approval. The platform facilitates communication, but you have the final say. We recommend setting clear policies upfront to manage expectations."
+    },
+    {
+      question: "Is there marketing support for sellers?",
+      answer: "Yes! We actively promote top-selling and high-quality products through our social media channels (Instagram, etc.). Sellers with great products, clear photos, and consistent fulfillment get featured. We also run periodic promotions and discounts to drive traffic to the marketplace."
+    },
+    {
+      question: "What kind of products can I sell?",
+      answer: "The Loopy Dragon specializes in handmade crochet creations and related crafts. This includes but isn't limited to: plushies, keychains, hair accessories (scrunchies, claw clips, hair ties, etc.), flowers, jewellery, home decor, and character items. All items must be handmade or curated by you."
     }
+  ];
+
+  const dashboardFeatures = [
+    { icon: Package, title: "Inventory Management", desc: "Add, edit, and manage your product listings with bulk upload support. Track stock levels, set prices, and update product photos anytime." },
+    { icon: ShoppingBag, title: "Order Management", desc: "View incoming orders, update fulfillment status, and manage shipping. See order history and customer details all in one place." },
+    { icon: Wallet, title: "Financial Tracking", desc: "Monitor your earnings, view transaction history, track payouts, and request withdrawals. Complete transparency on every rupee earned." },
+    { icon: BarChart3, title: "Sales Analytics", desc: "Track your store's performance with insights on top-selling products, revenue trends, and customer engagement metrics." },
+    { icon: Image, title: "Store Customization", desc: "Personalize your storefront with your logo, banner, and slug. Set your policies, delivery options, and store description." },
+    { icon: CreditCard, title: "Secure Payouts", desc: "Get paid directly to your UPI account via Razorpay. All transactions are encrypted and secure. No minimum payout threshold." },
+  ];
+
+  const platformBenefits = [
+    {
+      icon: Store,
+      title: "Your Own Storefront",
+      desc: "Every seller gets a dedicated, customizable page at theloopydragon.in/sellers/your-shop-name with your logo, banner, and all your products beautifully displayed.",
+      highlight: "Free dedicated page"
+    },
+    {
+      icon: Search,
+      title: "Marketplace Visibility",
+      desc: "Your products appear in our main shop alongside category filters, search, and browse features — putting your creations in front of thousands of monthly visitors.",
+      highlight: "Thousands of visitors"
+    },
+    {
+      icon: Zap,
+      title: "Quick & Easy Setup",
+      desc: "From application to your first listing in under 48 hours. Our streamlined onboarding process means you spend less time setting up and more time creating.",
+      highlight: "Under 48 hours"
+    },
+    {
+      icon: Globe,
+      title: "All-India Shipping",
+      desc: "Sell to customers across India. We integrate with major courier services and you control your shipping zones, rates, and delivery timelines.",
+      highlight: "Pan-India reach"
+    },
+    {
+      icon: Smartphone,
+      title: "Mobile-Optimized",
+      desc: "Both your storefront and the main shop are fully responsive and mobile-optimized. Customers can browse and buy from their phones seamlessly.",
+      highlight: "Mobile-friendly"
+    },
+    {
+      icon: Gift,
+      title: "Promotional Features",
+      desc: "Get featured in our social media campaigns, seasonal promotions, and special collections. Top-performing sellers get extra visibility.",
+      highlight: "Marketing support"
+    },
   ];
 
   if (loading) {
@@ -98,10 +168,9 @@ export default function SellerLandingPage() {
         </div>
       </div>
 
-      {/* Spacer */}
       <div className="h-16"></div>
 
-      {/* Original Hero Section */}
+      {/* Hero Section */}
       <section className="relative w-full overflow-hidden">
         <div
           className="w-full bg-cover bg-center bg-no-repeat"
@@ -113,6 +182,7 @@ export default function SellerLandingPage() {
             marginLeft: 'calc(-50vw + 50%)',
           }}
         >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent" />
           <div className="relative h-full flex items-center">
             <div
               className="flex flex-col justify-center px-4 sm:px-0"
@@ -149,7 +219,7 @@ export default function SellerLandingPage() {
               </p>
 
               <Link
-                href="/login"
+                href="/support"
                 className="inline-flex items-center justify-center bg-white text-black hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                 style={{
                   width: 'clamp(200px, 14.9vw, 286px)',
@@ -168,7 +238,7 @@ export default function SellerLandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Bar */}
       <section className="w-full py-3.5 bg-white">
         <div className="relative w-full">
           <div className="hidden sm:flex items-center justify-between w-full px-4">
@@ -180,9 +250,7 @@ export default function SellerLandingPage() {
                 Low Commission
               </p>
             </div>
-
             <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 sm:w-[60px] sm:h-[60px] flex items-center justify-center mb-4">
                 <Zap className="w-full h-full text-purple-600" style={{ width: 'clamp(30px, 3.125vw, 60px)', height: 'clamp(30px, 3.125vw, 60px)' }} />
@@ -191,9 +259,7 @@ export default function SellerLandingPage() {
                 Quick Setup
               </p>
             </div>
-
             <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 sm:w-[48px] sm:h-[48px] flex items-center justify-center mb-4">
                 <Shield className="w-full h-full text-purple-600" style={{ width: 'clamp(24px, 2.5vw, 48px)', height: 'clamp(24px, 2.5vw, 48px)' }} />
@@ -202,9 +268,7 @@ export default function SellerLandingPage() {
                 Secure Payouts
               </p>
             </div>
-
             <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-
             <div className="flex flex-col items-center" style={{ marginRight: 'clamp(20px, 12.8vw, 246px)' }}>
               <div className="w-12 h-12 sm:w-[56px] sm:h-[56px] flex items-center justify-center mb-4">
                 <Heart className="w-full h-full text-purple-600" style={{ width: 'clamp(28px, 2.92vw, 56px)', height: 'clamp(28px, 2.92vw, 56px)' }} />
@@ -215,39 +279,63 @@ export default function SellerLandingPage() {
             </div>
           </div>
         </div>
-
-        {/* Mobile Features */}
         <div className="block sm:hidden px-6">
           <div className="grid grid-cols-2 gap-6 max-w-sm mx-auto">
             <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-pink-50 py-4 px-4 rounded-2xl shadow-sm">
               <Percent className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                Low Commission
-              </p>
+              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Low Commission</p>
             </div>
             <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 py-4 px-4 rounded-2xl shadow-sm">
               <Zap className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                Quick Setup
-              </p>
+              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Quick Setup</p>
             </div>
             <div className="flex flex-col items-center bg-gradient-to-br from-green-50 to-blue-50 py-4 px-4 rounded-2xl shadow-sm">
               <Shield className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                Secure Payouts
-              </p>
+              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Secure Payouts</p>
             </div>
             <div className="flex flex-col items-center bg-gradient-to-br from-orange-50 to-pink-50 py-4 px-4 rounded-2xl shadow-sm">
               <Heart className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                Dedicated Support
-              </p>
+              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Dedicated Support</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
+
+
+      {/* Platform Benefits Deep Dive */}
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
+              Everything You Get as a Seller
+            </h2>
+            <p className="text-on-surface-variant max-w-2xl mx-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
+              A complete toolkit to start, manage, and grow your handmade business — all from one dashboard.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {platformBenefits.map((benefit, i) => (
+              <div key={i} className="bg-surface-blue/60 border border-purple-100/50 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-purple-200/50 transition-all duration-300 group">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                  <benefit.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-deep-navy font-bold mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(16px, 1.2vw, 19px)' }}>
+                  {benefit.title}
+                </h3>
+                <p className="text-on-surface-variant text-sm leading-relaxed mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {benefit.desc}
+                </p>
+                <span className="inline-block text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                  {benefit.highlight}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
       <section className="py-16 md:py-20 bg-white" id="how-it-works">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -260,10 +348,10 @@ export default function SellerLandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: Heart, step: "1", title: "Reach Out", desc: "Contact us via email, WhatsApp, or Instagram with your portfolio." },
-              { icon: Users, step: "2", title: "Get Approved", desc: "Our team will review your work within 24–36 hours for quality check." },
-              { icon: Store, step: "3", title: "List Products", desc: "Get full dashboard access to upload items and manage inventory." },
-              { icon: DollarSign, step: "4", title: "Get Paid", desc: "Receive UPI payouts directly after a small 2% Razorpay fee." },
+              { icon: Heart, step: "1", title: "Reach Out", desc: "Contact us via email, WhatsApp, or Instagram with your portfolio of work and tell us about your craft." },
+              { icon: Users, step: "2", title: "Get Approved", desc: "Our team will review your work within 24–36 hours. We look for quality, originality, and craftsmanship." },
+              { icon: Store, step: "3", title: "List Products", desc: "Get full dashboard access to upload items with photos, descriptions, and pricing. Manage inventory in real-time." },
+              { icon: DollarSign, step: "4", title: "Start Earning", desc: "Receive orders, fulfill them, and get paid directly to your UPI account. Track everything from your dashboard." },
             ].map((item, i) => (
               <div key={i} className="flex flex-col items-center text-center group">
                 <div className="w-20 h-20 rounded-full bg-white border-4 border-lavender-accent flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
@@ -295,18 +383,47 @@ export default function SellerLandingPage() {
         </div>
       </section>
 
-      {/* Why Sell With Us Section */}
-      <section className="py-16 md:py-20 bg-surface-blue" id="why-sell">
+      {/* Seller Dashboard Features */}
+      <section className="py-16 md:py-20 bg-surface-blue" id="dashboard-features">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
+              Your Seller Dashboard
+            </h2>
+            <p className="text-on-surface-variant max-w-2xl mx-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
+              A powerful yet easy-to-use dashboard gives you everything you need to run your store.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {dashboardFeatures.map((feature, i) => (
+              <div key={i} className="bg-white/80 backdrop-blur-md border border-white/30 p-6 rounded-2xl hover:shadow-md transition-all duration-300">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-4">
+                  <feature.icon className="w-5.5 h-5.5 text-deep-navy" />
+                </div>
+                <h4 className="font-semibold text-deep-navy mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(15px, 1.2vw, 18px)' }}>
+                  {feature.title}
+                </h4>
+                <p className="text-sm text-on-surface-variant leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {feature.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Sell With Us */}
+      <section className="py-16 md:py-20 bg-white" id="why-sell">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {[
-                { icon: BadgeDollarSign, title: "Low Commission", desc: "We believe in fair pricing with transparent fees." },
-                { icon: Store, title: "Dedicated Storefront", desc: "Get a professional page to showcase all your crochet creations in one place." },
-                { icon: TrendingUp, title: "Easy Dashboard", desc: "Track orders, manage stock, and view earnings with our intuitive seller portal." },
-                { icon: BadgeCheck, title: "Fast Approval", desc: "No long waiting lists. Start selling your first piece in under 48 hours." },
+                { icon: BadgeDollarSign, title: "Low Commission", desc: "We believe in fair pricing with transparent fees. No hidden charges, no surprise deductions." },
+                { icon: Store, title: "Dedicated Storefront", desc: "Get a professional page at your own URL to showcase all your crochet creations in one place." },
+                { icon: TrendingUp, title: "Easy Dashboard", desc: "Track orders, manage stock, and view earnings with our intuitive seller portal. Real-time updates." },
+                { icon: BadgeCheck, title: "Fast Approval", desc: "No long waiting lists or complicated processes. Start selling your first piece in under 48 hours." },
               ].map((item, i) => (
-                <div key={i} className={`bg-white/70 backdrop-blur-md border border-white/30 p-6 rounded-2xl ${i % 2 === 1 ? 'sm:translate-y-8' : ''}`}>
+                <div key={i} className={`bg-surface-blue/60 backdrop-blur-md border border-purple-100/30 p-6 rounded-2xl ${i % 2 === 1 ? 'sm:translate-y-8' : ''}`}>
                   <item.icon className="w-7 h-7 text-deep-navy mb-3" />
                   <h4 className="font-semibold text-deep-navy mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(15px, 1.2vw, 18px)' }}>
                     {item.title}
@@ -327,9 +444,11 @@ export default function SellerLandingPage() {
               </p>
               <ul className="space-y-3">
                 {[
-                  "No Hidden Listing Fees",
-                  "Secure Gateway Integration",
-                  "Marketing Support for Top Sellers",
+                  "No Hidden Listing Fees — list as many products as you want",
+                  "Secure Payment Gateway Integration via Razorpay",
+                  "Marketing Support & Social Media Features for Top Sellers",
+                  "Real-Time Dashboard Analytics for Informed Decisions",
+                  "Dedicated Seller Support Team Available via Chat & Email",
                 ].map((text, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-status-success flex-shrink-0" />
@@ -340,6 +459,60 @@ export default function SellerLandingPage() {
                 ))}
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-16 md:py-20 bg-surface-blue" id="pricing">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-on-surface-variant max-w-xl mx-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
+              No subscriptions. No monthly fees. You only pay when you make a sale.
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-2xl p-8 border border-purple-100 shadow-sm">
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="font-bold text-deep-navy text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>No Listing Fees</h3>
+                <p className="text-sm text-on-surface-variant mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  List unlimited products. No upfront cost. No monthly subscription.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-8 border-2 border-purple-300 shadow-lg relative">
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                  <Percent className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="font-bold text-deep-navy text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>2% Transaction Fee</h3>
+                <p className="text-sm text-on-surface-variant mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Only the Razorpay payment gateway fee. Goes directly to the processor.
+                </p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-8 border border-purple-100 shadow-sm">
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                  <CreditCard className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-deep-navy text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>UPI Payouts</h3>
+                <p className="text-sm text-on-surface-variant mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Get paid directly to your UPI account. No payout thresholds.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="text-center mt-10">
+            <p className="text-on-surface-variant text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Platform commission rates are communicated during onboarding and are subject to change with prior notice.
+            </p>
           </div>
         </div>
       </section>
@@ -385,27 +558,61 @@ export default function SellerLandingPage() {
             <div className="absolute top-0 right-0 w-96 h-96 bg-lavender-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
             <div className="relative z-10">
               <h2 className="text-white font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(20px, 2.5vw, 32px)' }}>
-                Connect With Us
+                Ready to Start Your Journey?
               </h2>
               <p className="text-primary-fixed-dim mb-8 max-w-2xl mx-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
-                Have questions or ready to join? Reach out to us and we'll help you get started.
+                Have questions or ready to join? Reach out to us through any of these channels and we'll help you get started.
               </p>
-              <Link
-                href="/support"
-                className="inline-flex items-center justify-center bg-white text-deep-navy font-semibold hover:bg-lavender-accent transition-all transform hover:-translate-y-1 shadow-lg"
-                style={{
-                  padding: 'clamp(14px, 1.5vw, 20px) clamp(32px, 4vw, 60px)',
-                  fontFamily: 'Montserrat, sans-serif',
-                  fontSize: 'clamp(14px, 1.1vw, 18px)',
-                  borderRadius: '1rem',
-                }}
-              >
-                Contact Us
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                <Link
+                  href="/support"
+                  className="inline-flex items-center justify-center bg-white text-deep-navy font-semibold hover:bg-lavender-accent transition-all transform hover:-translate-y-1 shadow-lg"
+                  style={{
+                    padding: 'clamp(14px, 1.5vw, 20px) clamp(32px, 4vw, 60px)',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: 'clamp(14px, 1.1vw, 18px)',
+                    borderRadius: '1rem',
+                  }}
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Contact Us
+                </Link>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-6 text-white/70 text-sm">
+                <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <Mail className="w-4 h-4" />
+                  theloopydragon123@gmail.com
+                </a>
+                <a href="https://instagram.com/the.loopy.dragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <MessageCircle className="w-4 h-4" />
+                  @the.loopy.dragon
+                </a>
+                <span className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Available via WhatsApp
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-deep-navy text-white/60 py-8 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Store className="w-4 h-4" />
+              <span className={`${arapey.className} text-sm`} style={{ letterSpacing: '0.2em' }}>
+                THE LOOPY DRAGON
+              </span>
+            </div>
+            <p className="text-xs text-center sm:text-left">
+              &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-3 h-3 inline text-red-400" /> for makers
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

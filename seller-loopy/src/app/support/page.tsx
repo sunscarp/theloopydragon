@@ -142,10 +142,18 @@ export default function SupportPage() {
             <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'}`}>
               {/* Contact Information */}
               <div className={`bg-[#EFDFFF] p-8 sm:p-12 ${isMobile ? 'w-full' : 'w-full sm:w-[400px]'} max-w-full flex flex-col`}>
-                <h2 className="text-2xl font-semibold text-black mb-8" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
-                  Contact Information
+                <h2 className="text-2xl font-semibold text-black mb-6" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                  How to Apply
                 </h2>
-                <div className={`space-y-8 w-full ${isMobile ? 'max-w-full' : 'max-w-sm'}`}>
+                <div className="bg-white/50 rounded-xl p-5 mb-6">
+                  <p className="text-sm text-black leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <strong>Prefer the form?</strong> Just fill out the form on this page with your name, email, and a link to your Instagram or portfolio — we'll review your work and get back to you.
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-black mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  You can also reach out directly:
+                </p>
+                <div className={`space-y-6 w-full ${isMobile ? 'max-w-full' : 'max-w-sm'}`}>
                   <div className="flex items-start space-x-4">
                     <div className="w-full">
                       <h3 className="text-base font-medium text-black mb-1" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
@@ -197,7 +205,7 @@ export default function SupportPage() {
 
               {/* Contact Form */}
               <div className={`bg-white p-8 sm:p-12 ${isMobile ? 'pb-8' : 'pb-0'} flex flex-col justify-start ${isMobile ? 'w-full' : 'flex-1'}`}>
-                <h2 className="text-2xl font-semibold text-black mb-8 text-left" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                <h2 className="text-2xl font-semibold text-black mb-8" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
                   Drop us a Message
                 </h2>
                 <form onSubmit={handleSubmit} className={`space-y-6 ${isMobile ? 'pb-8' : 'pb-0'}`}>

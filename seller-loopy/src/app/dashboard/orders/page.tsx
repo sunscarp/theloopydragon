@@ -40,7 +40,7 @@ const STATUS_META: Record<string, { label: string; message: string; icon: any; c
   },
   accepted: {
     label: "Accepted",
-    message: "Order has been accepted.",
+    message: "Order Placed: Will be dispatched within 2 days of order date.",
     icon: Check,
     color: "text-emerald-600",
     badgeBg: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -415,7 +415,7 @@ export default function SellerOrdersPage() {
                       <span className="font-data-mono text-title-lg text-deep-navy cursor-pointer hover:text-purple-600 transition-colors" title={group.orderId} onClick={() => { navigator.clipboard.writeText(group.orderId); toast.success("Order ID copied!"); }}>#{group.orderId.slice(0, 10)}</span>
                       <span title={`Status: ${group.status}`}
                         className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${meta.badgeBg}`}>
-                        {needsApproval ? "Approval Needed" : group.status}
+                        {needsApproval ? "Approval Needed" : STATUS_META[group.status.toLowerCase()] ? meta.label : group.status}
                       </span>
                       <span className="text-sm text-on-surface-variant">{formatDate(group.first["Order Date"])}</span>
                     </div>
