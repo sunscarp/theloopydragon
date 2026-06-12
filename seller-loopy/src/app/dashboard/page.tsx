@@ -4,9 +4,10 @@ import { supabase } from "@/utils/supabase";
 import {
   Package, ShoppingBag, DollarSign, Wallet,
   Store, RefreshCw, TrendingUp,
-  ChevronRight, ShoppingBasket, Copy,
+  ChevronRight, ShoppingBasket, Copy, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 interface RecentOrder {
   id: number;
@@ -18,6 +19,7 @@ interface RecentOrder {
 }
 
 export default function SellerDashboard() {
+  const tutorial = useTutorial();
   const [stats, setStats] = useState({ products: 0, orders: 0, revenue: 0, pendingPayout: 0, revenueChange: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,14 +209,14 @@ export default function SellerDashboard() {
           )}
         </div>
         <button onClick={() => fetchStats(seller.id)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#22223B] text-white rounded-lg font-bold hover:shadow-lg transition-all active:scale-95 text-sm">
-          <RefreshCw className="w-[20px] h-[20px]" />
-          Refresh
-        </button>
+            className="flex items-center gap-2 px-4 py-2 bg-[#22223B] text-white rounded-lg font-bold hover:shadow-lg transition-all active:scale-95 text-sm">
+            <RefreshCw className="w-[20px] h-[20px]" />
+            Refresh
+          </button>
       </div>
 
       {/* Recent Orders Table - full width on top */}
-      <div className="bg-white rounded-xl border border-[#22223B]/5 shadow-sm overflow-hidden">
+      <div data-tut="dash-recent-orders" className="bg-white rounded-xl border border-[#22223B]/5 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-[#22223B]/10 flex items-center justify-between">
           <h4 className="text-[20px] leading-[28px] font-[600] text-[#22223B]">Recent Orders</h4>
           {recentOrders.length > 0 && (
@@ -251,7 +253,7 @@ export default function SellerDashboard() {
     <button onClick={() => copyOrderId(order.order_id)} className="text-gray-400 hover:text-gray-600 transition-colors">
       <Copy className="w-3.5 h-3.5" />
     </button>
-    {copiedOrderId === order.order_id && <span className="text-[10px] text-emerald-600 font-medium">Copied!</span>}
+    {/* "Copied!" indicator removed - caused table layout shift */}
   </span>
 </td>
                     <td className="px-6 py-4 text-sm font-medium text-[#22223B]">{order.Name}</td>
@@ -271,9 +273,9 @@ export default function SellerDashboard() {
       </div>
 
       {/* Stats Cards - below Recent Orders */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tut="dash-stats-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Products Listed */}
-        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
+        <div data-tut="dash-stat-products" className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
           <div>
             <div className="flex justify-between items-start mb-3">
               <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Products Listed</span>
@@ -291,7 +293,7 @@ export default function SellerDashboard() {
         </div>
 
         {/* Items Sold */}
-        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
+        <div data-tut="dash-stat-sold" className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
           <div>
             <div className="flex justify-between items-start mb-3">
               <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Items Sold</span>
@@ -309,7 +311,7 @@ export default function SellerDashboard() {
         </div>
 
         {/* Total Revenue */}
-        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full relative overflow-hidden">
+        <div data-tut="dash-stat-revenue" className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full relative overflow-hidden">
           <div className="absolute top-0 right-0 w-20 h-20 bg-[#10B981]/5 rounded-bl-full" />
           <div className="flex justify-between items-start mb-3 relative">
             <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Total Revenue</span>
@@ -334,7 +336,7 @@ export default function SellerDashboard() {
         </div>
 
         {/* Pending Payout */}
-        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full">
+        <div data-tut="dash-stat-payout" className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full">
           <div className="flex justify-between items-start mb-3">
             <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Pending Payout</span>
             <div className="w-9 h-9 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center text-[#F59E0B]">
@@ -344,6 +346,7 @@ export default function SellerDashboard() {
           <h3 className="text-[36px] leading-[44px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">₹{stats.pendingPayout.toFixed(2)}</h3>
         </div>
       </div>
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("dashboard")} />}
     </div>
   );
 }

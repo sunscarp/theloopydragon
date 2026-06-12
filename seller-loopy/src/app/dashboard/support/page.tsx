@@ -6,6 +6,7 @@ import {
   ShoppingBag, Receipt, Settings, Store, Heart,
 } from "lucide-react";
 import Link from "next/link";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 function InstagramIcon({ className = "w-3 h-3" }: { className?: string }) {
   return (
@@ -18,6 +19,7 @@ function InstagramIcon({ className = "w-3 h-3" }: { className?: string }) {
 }
 
 export default function SupportPage() {
+  const tutorial = useTutorial();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -63,7 +65,7 @@ export default function SupportPage() {
           <p className="text-sm text-[#47464d] mt-1">Everything you need to know about your seller dashboard</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <LayoutDashboard className="w-5 h-5" />
             </div>
@@ -72,11 +74,11 @@ export default function SupportPage() {
               Your command center. View real-time stats on products, orders, revenue, and pending payouts. Metrics auto-refresh every 10 seconds.
             </p>
             <Link href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg w-fit">
               Go to Dashboard <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Package className="w-5 h-5" />
             </div>
@@ -85,11 +87,11 @@ export default function SupportPage() {
               List and manage your inventory. Add products with images, descriptions, pricing, and tags. Edit or delist items anytime to keep your catalogue fresh.
             </p>
             <Link href="/dashboard/products"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg  w-fit">
               Manage Products <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <ShoppingBag className="w-5 h-5" />
             </div>
@@ -98,24 +100,24 @@ export default function SupportPage() {
               Process and fulfill customer orders. Accept or reject new orders, update shipping status, and track delivery from placement to completion.
             </p>
             <Link href="/dashboard/orders"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg  w-fit">
               View Orders <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Wallet className="w-5 h-5" />
             </div>
             <h4 className="text-base font-semibold text-[#22223B] mb-3">Transactions</h4>
             <p className="text-sm text-[#47464d] leading-relaxed mb-4 flex-1">
-              Request withdrawals of your available balance, track payout history, and monitor clearing periods. Payouts are processed via UPI every Tuesday. <a href="#transaction-processing" className="text-[#705091] font-semibold hover:underline">Learn more about payouts below</a>.
+              Request withdrawals of your available balance, track payout history, and monitor clearing periods. Payouts are processed via UPI every Tuesday. <a href="#transaction-processing" className="text-[#705091] font-semibold">Learn more about payouts below</a>.
             </p>
             <Link href="/dashboard/transactions"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg  w-fit">
               View Transactions <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Receipt className="w-5 h-5" />
             </div>
@@ -124,11 +126,11 @@ export default function SupportPage() {
               Download your complete financial ledger for tax and accounting. Get a detailed breakdown of earnings, fees, and net payouts.
             </p>
             <Link href="/dashboard/financials"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors w-fit">
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg  w-fit">
               View Financials <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden flex flex-col">
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Settings className="w-5 h-5" />
             </div>
@@ -138,12 +140,12 @@ export default function SupportPage() {
             </p>
             <div className="flex flex-wrap gap-2 mt-auto">
               <Link href="/dashboard/settings"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg hover:bg-[#dcb8ff] transition-colors">
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#290848] bg-[#efdbff] px-4 py-2.5 rounded-lg ">
                 Open Settings <ArrowRight className="w-3 h-3" />
               </Link>
               {sellerSlug && (
                 <a href={`https://theloopydragon.in/${sellerSlug}`} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#22223B] bg-[#e6eeff] px-4 py-2.5 rounded-lg hover:bg-[#d9e3f6] transition-colors">
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#22223B] bg-[#e6eeff] px-4 py-2.5 rounded-lg ">
                   <Store className="w-3 h-3" />
                   View Store
                 </a>
@@ -154,9 +156,11 @@ export default function SupportPage() {
       </div>
 
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#22223B] font-[Montserrat]">Financial Support</h1>
-        <p className="text-base text-[#47464d] mt-1">Get help with settlements, payouts, and billing</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#22223B] font-[Montserrat]">Financial Support</h1>
+          <p className="text-base text-[#47464d] mt-1">Get help with settlements, payouts, and billing</p>
+        </div>
       </div>
 
       {/* Two-column layout */}
@@ -194,7 +198,7 @@ export default function SupportPage() {
               </div>
               <div className="flex items-center gap-4 pt-2">
                 <button type="submit" disabled={status === "sending"}
-                  className="bg-[#22223B] text-white text-xs font-semibold px-8 py-3 rounded-lg hover:scale-[1.01] active:opacity-80 transition-all shadow-md flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                  className="bg-[#22223B] text-white text-xs font-semibold px-8 py-3 rounded-lg shadow-md flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                   {status === "sending" ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : <><Send className="w-4 h-4" /> Submit Message</>}
                 </button>
                 {status === "sent" && (
@@ -214,18 +218,18 @@ export default function SupportPage() {
             <h3 className="text-xl font-bold text-[#22223B] font-[Montserrat] mb-6">Other ways to reach us</h3>
             <div className="space-y-6">
               <a href="mailto:theloopydragon123@gmail.com"
-                className="flex items-center gap-4 group cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-[#D7B3FB]/20 flex items-center justify-center text-[#22223B] group-hover:bg-[#D7B3FB] transition-colors">
+                className="flex items-center gap-4 cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[#D7B3FB]/20 flex items-center justify-center text-[#22223B]">
                   <Mail className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold text-[#47464d]">Email</p>
-                  <p className="text-sm font-semibold text-[#22223B]">theloopydragon123@gmail.com</p>
+                  <p className="text-sm font-semibold text-[#22223B] break-all">theloopydragon123@gmail.com</p>
                 </div>
               </a>
               <a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-4 group cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-[#10B981]/10 flex items-center justify-center text-[#10B981] group-hover:bg-[#10B981] group-hover:text-white transition-colors">
+                className="flex items-center gap-4 cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[#10B981]/10 flex items-center justify-center text-[#10B981]">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div>
@@ -234,8 +238,8 @@ export default function SupportPage() {
                 </div>
               </a>
               <a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-4 group cursor-pointer">
-                <div className="w-12 h-12 rounded-full bg-[#d9b5fd]/30 flex items-center justify-center text-[#705091] group-hover:bg-[#705091] group-hover:text-white transition-colors">
+                className="flex items-center gap-4 cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[#d9b5fd]/30 flex items-center justify-center text-[#705091]">
                   <ExternalLink className="w-5 h-5" />
                 </div>
                 <div>
@@ -275,7 +279,7 @@ export default function SupportPage() {
               When a customer purchases your product, the amount is recorded and enters a 2 business day clearing period.
             </p>
             <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#D7B3FB] w-1/3"></div>
+              <div className="h-full bg-[#10B981] w-1/3"></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
@@ -288,7 +292,7 @@ export default function SupportPage() {
               After 2 business days, the amount moves from &apos;In Clearing&apos; to &apos;Available&apos; balance for withdrawal.
             </p>
             <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#D7B3FB] w-2/3"></div>
+              <div className="h-full bg-[#10B981] w-2/3"></div>
             </div>
           </div>
           <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
@@ -324,46 +328,14 @@ export default function SupportPage() {
           <p className="text-sm text-white/80">You can download your complete financial ledger from the Financials tab for tax purposes.</p>
         </div>
         <div className="ml-auto relative z-10 hidden md:block">
-          <button className="bg-white text-[#22223B] px-6 py-3 rounded-lg text-xs font-semibold hover:bg-[#D7B3FB] transition-colors shadow-xl">
+          <button className="bg-white text-[#22223B] px-6 py-3 rounded-lg text-xs font-semibold shadow-xl">
             Visit Financials
           </button>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-deep-navy text-white/60 rounded-2xl mt-8">
-        <div className="px-6 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Store className="w-4 h-4 text-white/80" />
-                <span className="text-white/80 text-sm font-semibold tracking-widest">THE LOOPY DRAGON</span>
-              </div>
-              <p className="text-xs leading-relaxed max-w-xs">
-                India's marketplace for handmade crochet creations. Empowering individual artists to scale their craft.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white/80 font-semibold mb-3 text-xs uppercase tracking-wider">Quick Links</h4>
-              <ul className="space-y-1.5 text-xs">
-                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="/login" className="hover:text-white transition-colors">Seller Login</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white/80 font-semibold mb-3 text-xs uppercase tracking-wider">Connect</h4>
-              <ul className="space-y-1.5 text-xs">
-                <li><a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-1.5 hover:text-white transition-colors"><Mail className="w-3 h-3" /> Email</a></li>
-                <li><a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors"><InstagramIcon /> Instagram</a></li>
-                <li><a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors"><Phone className="w-3 h-3" /> WhatsApp</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-white/10 text-center text-[10px]">
-            &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-2.5 h-2.5 inline text-red-400" /> for makers
-          </div>
-        </div>
-      </footer>
+
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("support")} />}
     </div>
   );
 }

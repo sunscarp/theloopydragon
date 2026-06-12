@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { FileText, Download, Loader2, Receipt, DollarSign, FileCheck } from "lucide-react";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 export default function FinancialsPage() {
+  const tutorial = useTutorial();
   const [seller, setSeller] = useState<any>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -197,11 +199,13 @@ export default function FinancialsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-[32px] font-[600] text-[#22223B] leading-[40px]">Financials</h1>
-        <p className="text-[#47464d] text-[16px] leading-[24px] font-[400]">
-          Download your complete financial ledger for tax purposes.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-[32px] font-[600] text-[#22223B] leading-[40px]">Financials</h1>
+          <p className="text-[#47464d] text-[16px] leading-[24px] font-[400]">
+            Download your complete financial ledger for tax purposes.
+          </p>
+        </div>
       </div>
 
       {/* Download Card */}
@@ -219,7 +223,7 @@ export default function FinancialsPage() {
               CSV format • Includes all historical data • Ready for your accountant
             </p>
           </div>
-          <button onClick={downloadLedger} disabled={downloading}
+          <button data-tut="financials-download-btn" onClick={downloadLedger} disabled={downloading}
             className="flex items-center gap-2 px-6 py-3 bg-[#22223B] text-white font-bold rounded-lg hover:shadow-lg transition-all active:scale-95 text-sm shrink-0 disabled:opacity-60">
             {downloading ? (
               <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</>
@@ -254,6 +258,7 @@ export default function FinancialsPage() {
           </p>
         </div>
       </div>
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("financials")} />}
     </div>
   );
 }

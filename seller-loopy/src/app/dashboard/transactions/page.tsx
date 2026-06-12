@@ -6,6 +6,8 @@ import { Wallet, Loader2, Clock, CheckCircle,
   Info, Receipt, History, XCircle, Banknote,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
+import { DEMO_ORDER_ID } from "@/lib/tutorials";
 
 interface Transaction {
   id: number;
@@ -61,6 +63,7 @@ function getBusinessDaysSince(date: Date): number {
 }
 
 export default function TransactionsPage() {
+  const tutorial = useTutorial();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
@@ -74,6 +77,13 @@ export default function TransactionsPage() {
   const [requesting, setRequesting] = useState(false);
   const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [demoTxCleared, setDemoTxCleared] = useState(false);
+
+  useEffect(() => {
+    if (tutorial.isOnboarding && tutorial.currentStep?.id === "transactions-cleared") {
+      setDemoTxCleared(true);
+    }
+  }, [tutorial.isOnboarding, tutorial.currentStep?.id]);
 
   useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
@@ -135,7 +145,16 @@ export default function TransactionsPage() {
   const handleRequestWithdrawal = async () => {
     const amount = parseFloat(requestAmount);
     if (!amount || amount <= 0) { toast.error("Enter a valid amount"); return; }
-    if (amount > balanceData.available) { toast.error("Amount exceeds available balance"); return; }
+    if (amount > balanceData.available && !tutorial.isOnboarding) { toast.error("Amount exceeds available balance"); return; }
+    if (tutorial.isOnboarding) {
+      setRequesting(true);
+      await new Promise(r => setTimeout(r, 600));
+      toast.success("Tutorial withdrawal submitted (simulated)");
+      setRequestAmount("");
+      setRequesting(false);
+      tutorial.triggerAdvance("transactions-withdraw-form");
+      return;
+    }
     setRequesting(true);
     try {
       const res = await fetch("/api/sellers/request-withdrawal", {
@@ -179,8 +198,23 @@ export default function TransactionsPage() {
   const pendingWithdrawalSum = useMemo(() =>
     withdrawals.filter(w => w.status === "pending").reduce((sum, w) => sum + w.amount, 0), [withdrawals]);
 
-  const acceptedTransactions = useMemo(() =>
-    transactions.filter(t => t.seller_action === "accepted"), [transactions]);
+  const acceptedTransactions = useMemo(() => {
+    const list = [...transactions];
+    if (tutorial.isOnboarding && tutorial.demoTransaction) {
+      const demoTx = { ...tutorial.demoTransaction as Transaction };
+      if (!demoTxCleared) {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        demoTx["Order Date"] = d.toISOString();
+      } else {
+        const d = new Date();
+        d.setDate(d.getDate() - 5);
+        demoTx["Order Date"] = d.toISOString();
+      }
+      list.push(demoTx);
+    }
+    return list.filter(t => t.seller_action === "accepted");
+  }, [transactions, tutorial.isOnboarding, tutorial.demoTransaction, demoTxCleared]);
 
   const totalPayoutsSum = useMemo(() =>
     acceptedTransactions.reduce((sum, t) => sum + getPayout(t), 0), [acceptedTransactions]);
@@ -225,6 +259,21 @@ export default function TransactionsPage() {
 
   const sorted = useMemo(() => {
     let list = [...transactions];
+    if (tutorial.isOnboarding && tutorial.demoTransaction) {
+      const demoTx = { ...tutorial.demoTransaction as Transaction };
+      if (!demoTxCleared) {
+        // Show as "In Clearing" - 1 day ago
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        demoTx["Order Date"] = d.toISOString();
+      } else {
+        // Show as "Cleared" - 5 days ago
+        const d = new Date();
+        d.setDate(d.getDate() - 5);
+        demoTx["Order Date"] = d.toISOString();
+      }
+      list = [demoTx, ...list];
+    }
     list.sort((a, b) => {
       let cmp = 0;
       if (sortField === "date") cmp = new Date(a["Order Date"]).getTime() - new Date(b["Order Date"]).getTime();
@@ -239,9 +288,10 @@ export default function TransactionsPage() {
     const entries: { date: string; type: "withdrawal" | "penalty"; record: WithdrawalRequest | PenaltyEntry }[] = [];
     withdrawals.forEach(w => entries.push({ date: w.created_at, type: "withdrawal" as const, record: w }));
     penalties.forEach(p => entries.push({ date: p.created_at, type: "penalty" as const, record: p }));
+
     entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return entries;
-  }, [withdrawals, penalties]);
+  }, [withdrawals, penalties, tutorial.isOnboarding, tutorial.currentStep?.id]);
 
   const toggleSort = (field: "date" | "amount" | "status") => {
     if (sortField === field) setSortOrder(o => o === "desc" ? "asc" : "desc");
@@ -281,9 +331,11 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Transaction History</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Your earnings and withdrawal requests</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Transaction History</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Your earnings and withdrawal requests</p>
+        </div>
       </div>
 
       {/* Two-column layout */}
@@ -291,7 +343,7 @@ export default function TransactionsPage() {
         {/* Left column - Request Withdrawal + Recent Transactions + Withdrawals */}
         <div className="lg:col-span-7 space-y-6">
           {/* Request Withdrawal */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div data-tut="transactions-withdraw-form" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="mb-5">
               <h3 className="text-sm font-semibold text-gray-900">Request Withdrawal</h3>
               <p className="text-xs text-gray-400 mt-0.5">Request payout for your cleared balance</p>
@@ -370,7 +422,7 @@ export default function TransactionsPage() {
                       const breakdown = calcBreakdown(txn);
                       const isExpanded = expanded === txn.id;
                       return (
-                        <Fragment key={txn.id}><tr
+                        <Fragment key={txn.id}><tr data-tut={txn.order_id === DEMO_ORDER_ID ? "transactions-demo-row" : undefined}
                           className="hover:bg-violet-50/30 transition-colors group">
                           <td className="px-5 py-4 text-sm text-gray-500 whitespace-nowrap">
                             {formatDate(txn["Order Date"])}
@@ -450,7 +502,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Withdrawals & Penalties */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div data-tut="transactions-withdrawals-section" className="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="p-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-gray-400" />
@@ -481,7 +533,7 @@ export default function TransactionsPage() {
                 <p className="text-xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">Cumulative account total</p>
               </div>
-              <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+              <div data-tut="transactions-available-card" className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-[11px] text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
@@ -489,7 +541,7 @@ export default function TransactionsPage() {
                 <p className="text-xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5">Orders cleared (2+ business days old)</p>
               </div>
-              <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+              <div data-tut="transactions-clearing-card" className="bg-amber-50 rounded-xl p-4 border border-amber-100">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-[11px] text-gray-500 uppercase tracking-wider">In Clearing</p>
                   <Clock className="w-3.5 h-3.5 text-amber-500" />
@@ -535,6 +587,7 @@ export default function TransactionsPage() {
           </div>
         </div>
       </div>
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("transactions")} />}
     </div>
   );
 

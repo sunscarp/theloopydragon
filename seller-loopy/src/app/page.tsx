@@ -11,6 +11,8 @@ import {
   Package, CreditCard, Smartphone
 } from "lucide-react";
 
+import Footer from "@/components/Footer";
+
 function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -547,55 +549,7 @@ export default function SellerLandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-deep-navy text-white/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Store className="w-5 h-5 text-white/80" />
-                <span className={`${arapey.className} text-white/80 text-lg`} style={{ letterSpacing: '0.2em' }}>
-                  THE LOOPY DRAGON
-                </span>
-              </div>
-              <p className="text-sm leading-relaxed max-w-xs">
-                India's marketplace for handmade crochet creations. Empowering individual artists to scale their craft.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-wider">Quick Links</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="/support" className="hover:text-white transition-colors">Seller Support</a></li>
-                <li><a href="/login" className="hover:text-white transition-colors">Seller Login</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-wider">Connect With Us</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <Mail className="w-4 h-4" /> Email Us
-                  </a>
-                </li>
-                <li>
-                  <a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <InstagramIcon /> Instagram
-                  </a>
-                </li>
-                <li>
-                  <a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <Phone className="w-4 h-4" /> WhatsApp
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-10 pt-8 border-t border-white/10 text-center text-xs">
-            &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-3 h-3 inline text-red-400" /> for makers
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

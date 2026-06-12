@@ -29,6 +29,34 @@ export default function SellerSettingsPage() {
   const [originPincode, setOriginPincode] = useState("411033");
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState("");
   const [saved, setSaved] = useState(false);
+  const [infoTooltip, setInfoTooltip] = useState<string | null>(null);
+
+  const cardDescriptions: Record<string, { title: string; description: string }> = {
+    payment: {
+      title: "Payment Preferences",
+      description: "This section controls your payment and delivery settings. The Free Delivery toggle lets you offer free shipping on all orders to boost sales. Origin Pincode is where your products ship from. The Free Delivery Threshold lets you set a minimum order amount for free delivery — for example, if set to ₹500, customers get free shipping when their cart exceeds ₹500.",
+    },
+    upi: {
+      title: "UPI Payment Details",
+      description: "Enter your UPI ID (Virtual Payment Address) to receive payouts. Payouts are securely processed via Razorpay every Tuesday. Make sure this is correct — all earnings are sent here.",
+    },
+    policies: {
+      title: "Seller Policies",
+      description: "Configure your return and exchange policies. Toggle 'Allow Returns' to let customers return items, and 'Allow Exchanges' to offer replacements. When enabled, customers see your policy at checkout, and requests come to your email for manual approval.",
+    },
+    terms: {
+      title: "Terms & Conditions",
+      description: "Before completing onboarding, please review and accept the Seller Terms & Conditions. These cover important topics like fees (2% Razorpay), product listings, order fulfillment, payments, and your rights as a seller. Required to receive payouts. You can update this anytime.",
+    },
+    profile: {
+      title: "Profile Appearance",
+      description: "Here you can customize your public storefront. Set your URL Slug (the custom part of your store URL), upload a store logo and banner image. Your store will be accessible at theloopydragon.in/your-slug.",
+    },
+    security: {
+      title: "Security",
+      description: "Change your account password here. Use a strong, unique password to keep your seller account secure.",
+    },
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
@@ -142,9 +170,11 @@ export default function SellerSettingsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <header>
-        <h2 className="text-headline-lg text-deep-navy font-headline-lg">Store Settings</h2>
-        <p className="text-body-md text-on-surface-variant">Configure your store preferences and payout details</p>
+      <header className="flex items-start justify-between">
+        <div>
+          <h2 className="text-headline-lg text-deep-navy font-headline-lg">Store Settings</h2>
+          <p className="text-body-md text-on-surface-variant">Configure your store preferences and payout details</p>
+        </div>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
@@ -155,7 +185,15 @@ export default function SellerSettingsPage() {
             <div className="flex items-center gap-3 mb-6">
               <Wallet className="w-6 h-6 text-deep-navy" />
               <h3 className="text-title-lg text-deep-navy font-title-lg">Payment Preferences</h3>
+              <button onClick={() => setInfoTooltip(infoTooltip === "payment" ? null : "payment")} className="ml-auto p-1.5 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+                <Info className="w-4 h-4" />
+              </button>
             </div>
+            {infoTooltip === "payment" && (
+              <div className="mb-6 bg-surface-blue border border-outline-variant/30 rounded-lg p-4 text-sm text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                {cardDescriptions.payment.description}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="col-span-2 flex items-center justify-between p-4 bg-surface-blue rounded-lg">
                 <div>
@@ -187,7 +225,17 @@ export default function SellerSettingsPage() {
               </div>
             </div>
             <div className="pt-6 border-t border-surface-container">
-              <h4 className="font-label-sm text-on-surface-variant mb-4 uppercase tracking-widest opacity-60">UPI Payment Details</h4>
+              <div className="flex items-center gap-2 mb-4">
+                <h4 className="font-label-sm text-on-surface-variant uppercase tracking-widest opacity-60">UPI Payment Details</h4>
+                <button onClick={() => setInfoTooltip(infoTooltip === "upi" ? null : "upi")} className="p-1 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {infoTooltip === "upi" && (
+                <div className="mb-4 bg-surface-blue border border-outline-variant/30 rounded-lg p-3 text-xs text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                  {cardDescriptions.upi.description}
+                </div>
+              )}
               <div className="space-y-2">
                 <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">UPI ID / VPA</label>
                 <div className="relative">
@@ -212,7 +260,15 @@ export default function SellerSettingsPage() {
             <div className="flex items-center gap-3 mb-6">
               <FileText className="w-6 h-6 text-deep-navy" />
               <h3 className="text-title-lg text-deep-navy font-title-lg">Seller Policies</h3>
+              <button onClick={() => setInfoTooltip(infoTooltip === "policies" ? null : "policies")} className="ml-auto p-1.5 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+                <Info className="w-4 h-4" />
+              </button>
             </div>
+            {infoTooltip === "policies" && (
+              <div className="mb-6 bg-surface-blue border border-outline-variant/30 rounded-lg p-4 text-sm text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                {cardDescriptions.policies.description}
+              </div>
+            )}
             <div className="space-y-4 mb-6">
               <div className="flex items-center justify-between">
                 <p className="text-body-md font-semibold">Allow Returns</p>
@@ -248,7 +304,15 @@ export default function SellerSettingsPage() {
             <div className="flex items-center gap-3 mb-6">
               <Scale className="w-6 h-6 text-deep-navy" />
               <h3 className="text-title-lg text-deep-navy font-title-lg">Seller Terms &amp; Conditions</h3>
+              <button onClick={() => setInfoTooltip(infoTooltip === "terms" ? null : "terms")} className="ml-auto p-1.5 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+                <Info className="w-4 h-4" />
+              </button>
             </div>
+            {infoTooltip === "terms" && (
+              <div className="mb-6 bg-surface-blue border border-outline-variant/30 rounded-lg p-4 text-sm text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                {cardDescriptions.terms.description}
+              </div>
+            )}
             <div className="max-h-60 overflow-y-auto bg-surface-blue p-6 rounded-lg border border-outline-variant/30 mb-6 text-sm text-on-surface-variant leading-relaxed space-y-3">
               <p className="font-semibold text-deep-navy">The Loopy Dragon — Seller Terms &amp; Conditions</p>
               <p><strong>1. Introduction</strong><br />Welcome to The Loopy Dragon! We're a marketplace connecting independent creators and sellers with customers who love unique, handcrafted, and curated products. By registering as a seller or listing any product on our platform, you agree to be bound by these Seller Terms &amp; Conditions. Please read them carefully before you get started.</p>
@@ -308,7 +372,15 @@ export default function SellerSettingsPage() {
             <div className="flex items-center gap-3 mb-6">
               <Store className="w-6 h-6 text-deep-navy" />
               <h3 className="text-title-lg text-deep-navy font-title-lg">Profile Appearance</h3>
+              <button onClick={() => setInfoTooltip(infoTooltip === "profile" ? null : "profile")} className="ml-auto p-1.5 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+                <Info className="w-4 h-4" />
+              </button>
             </div>
+            {infoTooltip === "profile" && (
+              <div className="mb-6 bg-surface-blue border border-outline-variant/30 rounded-lg p-4 text-sm text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                {cardDescriptions.profile.description}
+              </div>
+            )}
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">URL Slug</label>
@@ -370,7 +442,7 @@ export default function SellerSettingsPage() {
           </section>
 
           {/* Change Password */}
-          <PasswordChangeSection sellerId={seller.id} />
+          <PasswordChangeSection sellerId={seller.id} infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip} />
 
           {/* Help Card */}
           <div className="bg-deep-navy rounded-xl p-6 text-white relative overflow-hidden">
@@ -386,11 +458,12 @@ export default function SellerSettingsPage() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
 
-function PasswordChangeSection({ sellerId }: { sellerId: number }) {
+function PasswordChangeSection({ sellerId, infoTooltip, setInfoTooltip }: { sellerId: number; infoTooltip: string | null; setInfoTooltip: (v: string | null) => void }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -442,7 +515,15 @@ function PasswordChangeSection({ sellerId }: { sellerId: number }) {
       <div className="flex items-center gap-3 mb-6">
         <Lock className="w-6 h-6 text-deep-navy" />
         <h3 className="text-title-lg text-deep-navy font-title-lg">Security</h3>
+        <button onClick={() => setInfoTooltip(infoTooltip === "security" ? null : "security")} className="ml-auto p-1.5 text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue rounded-lg transition-all">
+          <Info className="w-4 h-4" />
+        </button>
       </div>
+      {infoTooltip === "security" && (
+        <div className="mb-6 bg-surface-blue border border-outline-variant/30 rounded-lg p-4 text-sm text-on-surface-variant leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+          Change your account password here. Use a strong, unique password to keep your seller account secure.
+        </div>
+      )}
       <form onSubmit={handleChangePassword} className="space-y-5">
         <div className="space-y-1">
           <label className="font-label-sm text-on-surface-variant uppercase">Current Password</label>

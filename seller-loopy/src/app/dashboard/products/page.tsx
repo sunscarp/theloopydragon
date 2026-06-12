@@ -10,8 +10,10 @@ import {
   ShoppingBag, Tag, Layers, TrendingUp, AlertTriangle, Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 export default function SellerProductsPage() {
+  const tutorial = useTutorial();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
@@ -195,7 +197,7 @@ const CATEGORIES = [
         <div className="lg:col-span-8 space-y-6">
           {/* Search */}
           {products.length > 0 && (
-            <div className="relative">
+            <div data-tut="products-search" className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -206,16 +208,16 @@ const CATEGORIES = [
 
           {/* Products Grid */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <div data-tut="products-add-btn" className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">
                 {searchTerm
                   ? `Search results (${filtered.length})`
                   : `All Products (${products.length})`
                 }
               </h3>
-                <button onClick={() => router.push("/dashboard/products/add")}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#22223B] bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-lg transition-all shadow-sm"
-                  style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <button onClick={() => { if (tutorial.isOnboarding) return; router.push("/dashboard/products/add"); }}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#22223B] bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-lg transition-all shadow-sm"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 <Plus className="w-4 h-4" /> Add Product
               </button>
             </div>
@@ -240,7 +242,7 @@ const CATEGORIES = [
                 </button>
               </div>
             ) : (
-              <div className="p-5">
+              <div data-tut="products-grid" className="p-5">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {filtered.map((product, idx) => (
                     <div key={product.id}
@@ -307,7 +309,8 @@ const CATEGORIES = [
         {/* Right column - Summary + Stats */}
         <div className="lg:col-span-4 space-y-6">
           {/* Summary Cards */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div data-tut="products-summary-cards" className="space-y-6">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-500 uppercase tracking-wider">Total Products</p>
               <Package className="w-5 h-5 text-gray-300" />
@@ -332,6 +335,7 @@ const CATEGORIES = [
             </div>
             <p className="text-2xl font-bold text-amber-600">{stats.lowStockProducts}</p>
             <p className="text-xs text-gray-400 mt-1.5">Products with quantity &le; 5</p>
+          </div>
           </div>
 
           {/* Quick Stats */}
@@ -520,6 +524,7 @@ const CATEGORIES = [
           </div>
         </div>
       )}
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("products")} />}
     </div>
   );
 }

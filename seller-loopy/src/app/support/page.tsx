@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Store, ArrowLeft, Loader2 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function SupportPage() {
   const [name, setName] = useState("");
@@ -328,14 +329,7 @@ export default function SupportPage() {
 
         <br />
 
-        {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 py-6">
-          <div className="text-center">
-            <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              The Loopy Dragon — Seller Portal
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );

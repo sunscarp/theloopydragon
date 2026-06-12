@@ -8,6 +8,8 @@ import {
   Menu, X, Receipt, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { TutorialProvider } from "@/components/tutorial/TutorialProvider";
+import { useTutorial } from "@/components/tutorial/TutorialProvider";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -150,6 +152,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href}
                   onClick={() => setSidebarOpen(false)}
+                  data-tut={href === "/dashboard/products" ? "sidebar-products" : href === "/dashboard/orders" ? "sidebar-orders" : href === "/dashboard/transactions" ? "sidebar-transactions" : href === "/dashboard/financials" ? "sidebar-financials" : href === "/dashboard/support" ? "sidebar-support" : href === "/dashboard/settings" ? "sidebar-settings" : undefined}
                   className={`flex items-center gap-3 px-3 py-2 text-sm text-[#47464d] hover:bg-[#eff4ff] transition-all rounded-lg ${
                     isActive(href) ? "bg-[#e6eeff] text-[#22223B] font-semibold" : ""
                   }`}>
@@ -194,7 +197,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           {/* Page content */}
           <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-            {children}
+            <TutorialProvider>
+              {children}
+            </TutorialProvider>
           </main>
         </div>
       </body>

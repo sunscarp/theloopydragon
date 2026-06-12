@@ -7,6 +7,8 @@ import {
   Ban, ThumbsUp, Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
+import { DEMO_ORDER_ID } from "@/lib/tutorials";
 
 interface OrderRow {
   id: number;
@@ -83,6 +85,7 @@ const STATUS_META: Record<string, { label: string; message: string; icon: any; c
 };
 
 export default function SellerOrdersPage() {
+  const tutorial = useTutorial();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
@@ -131,13 +134,31 @@ export default function SellerOrdersPage() {
       (profiles || []).forEach((p: any) => {
         profileMap[p.order_id] = p;
       });
+
+      if (tutorial.isOnboarding && tutorial.includeDemoOrder && tutorial.demoOrderProfile) {
+        profileMap[DEMO_ORDER_ID] = { ...tutorial.demoOrderProfile };
+      }
       setProfileOrders(profileMap);
+    } else if (tutorial.isOnboarding && tutorial.includeDemoOrder && tutorial.demoOrderProfile) {
+      setProfileOrders({ [DEMO_ORDER_ID]: { ...tutorial.demoOrderProfile } });
     }
     setLoading(false);
   };
 
   const handleAcceptOrder = async (orderId: string) => {
     if (!seller) return;
+    if (tutorial.isOnboarding && orderId === DEMO_ORDER_ID) {
+      setActionLoading(orderId);
+      await new Promise(r => setTimeout(r, 500));
+      setProfileOrders(prev => ({
+        ...prev,
+        [DEMO_ORDER_ID]: { ...prev[DEMO_ORDER_ID], seller_action: "accepted", Status: "accepted" },
+      }));
+      toast.success("Order accepted");
+      setActionLoading(null);
+      tutorial.triggerAdvance("orders-accept");
+      return;
+    }
     setActionLoading(orderId);
     try {
       const res = await fetch("/api/sellers/orders/action", {
@@ -200,6 +221,13 @@ export default function SellerOrdersPage() {
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    if (tutorial.isOnboarding && orderId === DEMO_ORDER_ID) {
+      setProfileOrders(prev => ({ ...prev, [orderId]: { ...prev[orderId], Status: newStatus } }));
+      toast.success("Status updated");
+      setEditingStatus(null);
+      tutorial.triggerAdvance("orders-status");
+      return;
+    }
     setUpdatingStatus(orderId);
     const { error } = await supabase
       .from("Your Profile")
@@ -217,6 +245,13 @@ export default function SellerOrdersPage() {
   };
 
   const updateTrackingID = async (orderId: string, newTracking: string) => {
+    if (tutorial.isOnboarding && orderId === DEMO_ORDER_ID) {
+      setProfileOrders(prev => ({ ...prev, [orderId]: { ...prev[orderId], Tracking_ID: newTracking } }));
+      toast.success("Tracking ID saved");
+      setEditingTracking(null);
+      tutorial.triggerAdvance("orders-tracking");
+      return;
+    }
     setUpdatingTracking(orderId);
     const { error } = await supabase
       .from("Your Profile")
@@ -238,12 +273,19 @@ export default function SellerOrdersPage() {
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
-  const totalRevenue = orders.reduce((sum: number, o: any) =>
-    sum + (parseFloat(o["Total Price"]) || 0), 0);
+  const mergedOrders = tutorial.isOnboarding && tutorial.demoOrder
+    ? [tutorial.demoOrder as any, ...orders]
+    : orders;
+
+  const totalRevenue = mergedOrders.reduce((sum: number, o: any) => {
+    const profile = profileOrders[o.order_id];
+    if (profile?.seller_action !== "accepted") return sum;
+    return sum + (parseFloat(o["Total Price"]) || 0) + (parseFloat(o["Shipping Cost"]) || 0);
+  }, 0);
 
   const groupedOrders = useMemo(() => {
     const map = new Map<string, OrderRow[]>();
-    orders.forEach(o => {
+    mergedOrders.forEach(o => {
       const existing = map.get(o.order_id) || [];
       existing.push(o);
       map.set(o.order_id, existing);
@@ -339,7 +381,7 @@ export default function SellerOrdersPage() {
           <p className="text-on-surface-variant font-body-md flex items-center gap-2 flex-wrap">
             <span className="flex items-center gap-1">
               <ShoppingBag className="w-[18px] h-[18px]" />
-              <span>{orders.length} items sold</span>
+              <span>{mergedOrders.length} items sold</span>
             </span>
             <span className="w-1 h-1 bg-outline-variant rounded-full" />
             <span className="font-bold text-primary">₹{totalRevenue.toFixed(2)} total</span>
@@ -417,6 +459,7 @@ export default function SellerOrdersPage() {
 
             return (
               <div key={group.orderId}
+                data-tut={group.orderId === DEMO_ORDER_ID ? "orders-demo-card" : undefined}
                 className={`bg-white/80 backdrop-blur-sm border border-outline-variant/10 rounded-xl p-6 transition-all ${needsApproval ? 'border-amber-300 bg-amber-50/30' : ''}`}>
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 min-w-0">
@@ -471,7 +514,7 @@ export default function SellerOrdersPage() {
                   </div>
 
                   <div className="flex flex-col items-end gap-2 lg:border-l border-outline-variant/20 lg:pl-6">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div data-tut={group.orderId === DEMO_ORDER_ID ? "orders-actions" : undefined} className="flex flex-wrap items-center gap-2">
                       {needsApproval && (
                         <>
                           <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
@@ -479,6 +522,7 @@ export default function SellerOrdersPage() {
                             Details
                           </button>
                           <button
+                            data-tut={group.orderId === DEMO_ORDER_ID ? "orders-accept-btn" : undefined}
                             onClick={() => handleAcceptOrder(group.orderId)}
                             disabled={actionLoading === group.orderId}
                             className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-1.5">
@@ -505,13 +549,15 @@ export default function SellerOrdersPage() {
                             {isExpanded ? "Hide" : "Details"}
                           </button>
                           {showTrackingButton && (
-                            <button onClick={() => { setEditingTracking(group.orderId); setCustomTracking(group.trackingId || ""); }}
+                            <button data-tut={group.orderId === DEMO_ORDER_ID ? "orders-tracking-btn" : undefined}
+                              onClick={() => { setEditingTracking(group.orderId); setCustomTracking(group.trackingId || ""); }}
                               className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
                               {group.trackingId ? "Edit Tracking" : "Add Tracking"}
                             </button>
                           )}
                           {!isEditingStatus ? (
-                            <button onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
+                            <button data-tut={group.orderId === DEMO_ORDER_ID ? "orders-status-btn" : undefined}
+                              onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
                               className="px-4 py-2.5 bg-lavender-accent text-deep-navy rounded-lg text-xs font-bold hover:opacity-80 transition-all">
                               Change Status
                             </button>
@@ -676,6 +722,7 @@ export default function SellerOrdersPage() {
           </div>
         </div>
       )}
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("orders")} />}
     </div>
   );
 }

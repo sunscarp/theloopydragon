@@ -6,8 +6,10 @@ import { storage } from "@/utils/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Plus, Upload, Loader2, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 export default function AddProductPage() {
+  const tutorial = useTutorial();
   const router = useRouter();
   const [seller, setSeller] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -91,7 +93,6 @@ export default function AddProductPage() {
             <p className="text-xs text-gray-400">List a new product in your store</p>
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -215,6 +216,7 @@ export default function AddProductPage() {
           </div>
         </form>
       </div>
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("products")} />}
     </div>
   );
 }
