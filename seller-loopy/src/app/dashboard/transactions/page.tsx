@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState, useMemo, Fragment } from "react";
-import Link from "next/link";
 import { supabase } from "@/utils/supabase";
 import { Wallet, Loader2, Clock, CheckCircle,
   ChevronDown, ChevronUp, Landmark, Send, Copy, Check,
-  Info, Receipt, History, HelpCircle, TrendingUp, XCircle,
+  Info, Receipt, History, XCircle, Banknote,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -287,40 +286,10 @@ export default function TransactionsPage() {
         <p className="text-sm text-gray-500 mt-0.5">Your earnings and withdrawal requests</p>
       </div>
 
-      {/* Summary Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Total Balance</p>
-            <Landmark className="w-5 h-5 text-gray-300 group-hover:text-violet-400 transition-colors" />
-          </div>
-          <p className="text-2xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1.5">Cumulative account total</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
-            <CheckCircle className="w-5 h-5 text-gray-300 group-hover:text-emerald-500 transition-colors" />
-          </div>
-          <p className="text-2xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1.5">Orders cleared (2+ business days old)</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:-translate-y-0.5 transition-all duration-200 group">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">In Clearing</p>
-            <Clock className="w-5 h-5 text-gray-300 group-hover:text-amber-500 transition-colors" />
-          </div>
-          <p className="text-2xl font-bold text-amber-600 font-mono">₹{balanceData.clearing.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1.5">Recent orders (awaiting 2 business days)</p>
-        </div>
-      </div>
-
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left column - Withdrawal + Stats */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Left column - Request Withdrawal + Recent Transactions + Withdrawals */}
+        <div className="lg:col-span-7 space-y-6">
           {/* Request Withdrawal */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="mb-5">
@@ -358,56 +327,7 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="bg-gradient-to-br from-[#22223B] to-[#2a2a4a] text-white p-6 rounded-xl shadow-md relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl" />
-            <h3 className="text-xs uppercase tracking-widest text-white/60 mb-5">Quick Stats</h3>
-            <div className="space-y-3 relative z-10">
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Total Revenue</span>
-                <span className="text-sm font-bold text-purple-300 font-mono">₹{stats.totalRevenue.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Razorpay Fee (2%)</span>
-                <span className="text-sm font-mono text-red-400">-₹{stats.totalRazorpayFees.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Commission</span>
-                <span className="text-sm font-mono text-red-400">-₹{stats.totalCommission.toFixed(2)}</span>
-              </div>
-              {stats.totalPenalties > 0 && (
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-sm text-white/70">Penalties</span>
-                  <span className="text-sm font-mono text-red-400">-₹{stats.totalPenalties.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm font-semibold">Paid Out</span>
-                <span className="text-base font-bold text-emerald-400 font-mono">₹{stats.paidOut.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs text-white/50">Pending</span>
-                <span className="text-xs font-mono text-white/50">₹{stats.pending.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Withdrawal History (mobile only) */}
-          <div className="lg:hidden bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <History className="w-4 h-4 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-900">Withdrawals & Penalties</h3>
-              {pendingWithdrawalSum > 0 && (
-                <span className="ml-auto text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
-              )}
-            </div>
-            {renderLedger()}
-          </div>
-        </div>
-
-        {/* Right column - Transactions */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* Transactions Table */}
+          {/* Recent Transactions */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Transactions</h3>
@@ -529,8 +449,8 @@ export default function TransactionsPage() {
             )}
           </div>
 
-          {/* Withdrawal History (desktop) */}
-          <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm">
+          {/* Withdrawals & Penalties */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="p-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-gray-400" />
@@ -541,6 +461,77 @@ export default function TransactionsPage() {
               </div>
             </div>
             {renderLedger()}
+          </div>
+        </div>
+
+        {/* Right column - Balance Cards + Revenue Breakdown */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Balance Cards */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Landmark className="w-4 h-4 text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-900">Balance Overview</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">Total Balance</p>
+                  <Wallet className="w-3.5 h-3.5 text-gray-400" />
+                </div>
+                <p className="text-xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Cumulative account total</p>
+              </div>
+              <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <p className="text-xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Orders cleared (2+ business days old)</p>
+              </div>
+              <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">In Clearing</p>
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+                <p className="text-xl font-bold text-amber-600 font-mono">₹{balanceData.clearing.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Recent orders (awaiting 2 business days)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Breakdown - all items same color */}
+          <div className="bg-gradient-to-br from-[#22223B] to-[#2a2a4a] text-white p-6 rounded-xl shadow-md relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl" />
+            <h3 className="text-xs uppercase tracking-widest text-white/60 mb-5">Revenue Breakdown</h3>
+            <div className="space-y-3 relative z-10">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="text-sm text-white/70">Total Revenue</span>
+                <span className="text-sm font-bold text-white font-mono">₹{stats.totalRevenue.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="text-sm text-white/70">Razorpay Fee (2%)</span>
+                <span className="text-sm font-mono text-white">-₹{stats.totalRazorpayFees.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="text-sm text-white/70">Commission</span>
+                <span className="text-sm font-mono text-white">-₹{stats.totalCommission.toFixed(2)}</span>
+              </div>
+              {stats.totalPenalties > 0 && (
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm text-white/70">Penalties</span>
+                  <span className="text-sm font-mono text-white">-₹{stats.totalPenalties.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm font-semibold text-white/80">Paid Out</span>
+                <span className="text-base font-bold text-emerald-400 font-mono">₹{stats.paidOut.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-xs text-white/50">Pending</span>
+                <span className="text-xs font-mono text-white/50">₹{stats.pending.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

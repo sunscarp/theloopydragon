@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Arapey, Montserrat } from "next/font/google";
 import {
   Store, LogOut, Package, ShoppingBag, LayoutDashboard, Settings, Wallet,
-  Menu, X, HelpCircle, Receipt,
+  Menu, X, Receipt, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
 import "./globals.css";

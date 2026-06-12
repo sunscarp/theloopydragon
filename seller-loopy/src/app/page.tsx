@@ -7,9 +7,19 @@ import {
   Store, LogIn, Percent, Zap, Shield, Heart, Users, DollarSign,
   ChevronDown, BadgeDollarSign, TrendingUp, BadgeCheck, CheckCircle,
   Wallet, BarChart3, ShoppingBag, Image, Search, Globe,
-  Mail, Phone, MessageCircle, Gift,
+  Mail, Phone, Gift,
   Package, CreditCard, Smartphone
 } from "lucide-react";
+
+function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
 
 const arapey = Arapey({ subsets: ["latin"], weight: "400" });
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -78,6 +88,8 @@ export default function SellerLandingPage() {
       answer: "The Loopy Dragon specializes in handmade crochet creations and related crafts. This includes but isn't limited to: plushies, keychains, hair accessories (scrunchies, claw clips, hair ties, etc.), flowers, jewellery, home decor, and character items. All items must be handmade or curated by you."
     }
   ];
+
+  // FAQ item removed: "Can I list custom or made-to-order items?"
 
   const dashboardFeatures = [
     { icon: Package, title: "Inventory Management", desc: "Add, edit, and manage your product listings with bulk upload support. Track stock levels, set prices, and update product photos anytime." },
@@ -238,73 +250,9 @@ export default function SellerLandingPage() {
         </div>
       </section>
 
-      {/* Features Bar */}
-      <section className="w-full py-3.5 bg-white">
-        <div className="relative w-full">
-          <div className="hidden sm:flex items-center justify-between w-full px-4">
-            <div className="flex flex-col items-center" style={{ marginLeft: 'clamp(20px, 12.8vw, 246px)' }}>
-              <div className="w-12 h-12 sm:w-[50px] sm:h-[50px] flex items-center justify-center mb-4">
-                <Percent className="w-full h-full text-purple-600" style={{ width: 'clamp(25px, 2.6vw, 50px)', height: 'clamp(25px, 2.6vw, 50px)' }} />
-              </div>
-              <p className="text-black text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 'clamp(12px, 1.04vw, 20px)', lineHeight: '100%', letterSpacing: '0.05em' }}>
-                Low Commission
-              </p>
-            </div>
-            <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 sm:w-[60px] sm:h-[60px] flex items-center justify-center mb-4">
-                <Zap className="w-full h-full text-purple-600" style={{ width: 'clamp(30px, 3.125vw, 60px)', height: 'clamp(30px, 3.125vw, 60px)' }} />
-              </div>
-              <p className="text-black text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 'clamp(12px, 1.04vw, 20px)', lineHeight: '100%', letterSpacing: '0.05em' }}>
-                Quick Setup
-              </p>
-            </div>
-            <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 sm:w-[48px] sm:h-[48px] flex items-center justify-center mb-4">
-                <Shield className="w-full h-full text-purple-600" style={{ width: 'clamp(24px, 2.5vw, 48px)', height: 'clamp(24px, 2.5vw, 48px)' }} />
-              </div>
-              <p className="text-black text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 'clamp(12px, 1.04vw, 20px)', lineHeight: '100%', letterSpacing: '0.05em' }}>
-                Secure Payouts
-              </p>
-            </div>
-            <div className="w-px bg-gray-300" style={{ height: 'clamp(60px, 4vw, 90px)', minHeight: '60px' }}></div>
-            <div className="flex flex-col items-center" style={{ marginRight: 'clamp(20px, 12.8vw, 246px)' }}>
-              <div className="w-12 h-12 sm:w-[56px] sm:h-[56px] flex items-center justify-center mb-4">
-                <Heart className="w-full h-full text-purple-600" style={{ width: 'clamp(28px, 2.92vw, 56px)', height: 'clamp(28px, 2.92vw, 56px)' }} />
-              </div>
-              <p className="text-black text-center" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 'clamp(12px, 1.04vw, 20px)', lineHeight: '100%', letterSpacing: '0.05em' }}>
-                Dedicated Support
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="block sm:hidden px-6">
-          <div className="grid grid-cols-2 gap-6 max-w-sm mx-auto">
-            <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-pink-50 py-4 px-4 rounded-2xl shadow-sm">
-              <Percent className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Low Commission</p>
-            </div>
-            <div className="flex flex-col items-center bg-gradient-to-br from-blue-50 to-purple-50 py-4 px-4 rounded-2xl shadow-sm">
-              <Zap className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Quick Setup</p>
-            </div>
-            <div className="flex flex-col items-center bg-gradient-to-br from-green-50 to-blue-50 py-4 px-4 rounded-2xl shadow-sm">
-              <Shield className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Secure Payouts</p>
-            </div>
-            <div className="flex flex-col items-center bg-gradient-to-br from-orange-50 to-pink-50 py-4 px-4 rounded-2xl shadow-sm">
-              <Heart className="w-8 h-8 text-purple-600 mb-3" />
-              <p className="text-gray-800 text-center text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>Dedicated Support</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
 
       {/* Platform Benefits Deep Dive */}
-      <section className="py-16 md:py-20 bg-white">
+      <section className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
@@ -316,9 +264,9 @@ export default function SellerLandingPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {platformBenefits.map((benefit, i) => (
-              <div key={i} className="bg-surface-blue/60 border border-purple-100/50 rounded-2xl p-6 sm:p-8 hover:shadow-lg hover:border-purple-200/50 transition-all duration-300 group">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                  <benefit.icon className="w-6 h-6 text-white" />
+              <div key={i} className="bg-surface-blue/60 border border-purple-100/50 rounded-2xl p-6 sm:p-8">
+                <div className="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center mb-5">
+                  <benefit.icon className="w-6 h-6 text-black" />
                 </div>
                 <h3 className="text-deep-navy font-bold mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(16px, 1.2vw, 19px)' }}>
                   {benefit.title}
@@ -326,7 +274,7 @@ export default function SellerLandingPage() {
                 <p className="text-on-surface-variant text-sm leading-relaxed mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   {benefit.desc}
                 </p>
-                <span className="inline-block text-xs font-semibold text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                <span className="inline-block text-xs font-semibold text-black bg-white border border-gray-200 px-3 py-1 rounded-full">
                   {benefit.highlight}
                 </span>
               </div>
@@ -336,7 +284,7 @@ export default function SellerLandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 md:py-20 bg-white" id="how-it-works">
+      <section className="py-12 md:py-16 bg-white" id="how-it-works">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
@@ -353,8 +301,8 @@ export default function SellerLandingPage() {
               { icon: Store, step: "3", title: "List Products", desc: "Get full dashboard access to upload items with photos, descriptions, and pricing. Manage inventory in real-time." },
               { icon: DollarSign, step: "4", title: "Start Earning", desc: "Receive orders, fulfill them, and get paid directly to your UPI account. Track everything from your dashboard." },
             ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center text-center group">
-                <div className="w-20 h-20 rounded-full bg-white border-4 border-lavender-accent flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+              <div key={i} className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-white border-4 border-lavender-accent flex items-center justify-center mb-5">
                   <item.icon className="w-8 h-8 text-deep-navy" />
                 </div>
                 <h3 className="font-semibold text-deep-navy mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(16px, 1.3vw, 20px)' }}>
@@ -384,7 +332,7 @@ export default function SellerLandingPage() {
       </section>
 
       {/* Seller Dashboard Features */}
-      <section className="py-16 md:py-20 bg-surface-blue" id="dashboard-features">
+      <section className="py-12 md:py-16 bg-surface-blue" id="dashboard-features">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
@@ -413,7 +361,7 @@ export default function SellerLandingPage() {
       </section>
 
       {/* Why Sell With Us */}
-      <section className="py-16 md:py-20 bg-white" id="why-sell">
+      <section className="py-12 md:py-16 bg-white" id="why-sell">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -423,7 +371,7 @@ export default function SellerLandingPage() {
                 { icon: TrendingUp, title: "Easy Dashboard", desc: "Track orders, manage stock, and view earnings with our intuitive seller portal. Real-time updates." },
                 { icon: BadgeCheck, title: "Fast Approval", desc: "No long waiting lists or complicated processes. Start selling your first piece in under 48 hours." },
               ].map((item, i) => (
-                <div key={i} className={`bg-surface-blue/60 backdrop-blur-md border border-purple-100/30 p-6 rounded-2xl ${i % 2 === 1 ? 'sm:translate-y-8' : ''}`}>
+                <div key={i} className={`bg-[#e8edf5] backdrop-blur-md border border-purple-100/30 p-6 rounded-2xl ${i % 2 === 1 ? 'sm:translate-y-8' : ''}`}>
                   <item.icon className="w-7 h-7 text-deep-navy mb-3" />
                   <h4 className="font-semibold text-deep-navy mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(15px, 1.2vw, 18px)' }}>
                     {item.title}
@@ -464,7 +412,7 @@ export default function SellerLandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 md:py-20 bg-surface-blue" id="pricing">
+      <section className="py-12 md:py-16 bg-surface-blue" id="pricing">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
@@ -486,10 +434,10 @@ export default function SellerLandingPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-white rounded-2xl p-8 border-2 border-purple-300 shadow-lg relative">
+            <div className="bg-white rounded-2xl p-8 border border-purple-100 shadow-sm relative">
               <div className="text-center mb-6">
-                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-                  <Percent className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                  <Percent className="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 className="font-bold text-deep-navy text-lg" style={{ fontFamily: 'Montserrat, sans-serif' }}>2% Transaction Fee</h3>
                 <p className="text-sm text-on-surface-variant mt-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -518,7 +466,7 @@ export default function SellerLandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 md:py-20 bg-white" id="faq">
+      <section className="py-12 md:py-16 bg-white" id="faq">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-deep-navy font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(24px, 2.5vw, 32px)' }}>
@@ -554,19 +502,21 @@ export default function SellerLandingPage() {
       {/* Connect Section */}
       <section className="py-12 md:py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-deep-navy rounded-[2rem] p-8 sm:p-12 md:p-20 text-center relative overflow-hidden">
+          <div className="bg-deep-navy rounded-[2rem] p-8 sm:p-12 md:p-20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-lavender-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
-            <div className="relative z-10">
-              <h2 className="text-white font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(20px, 2.5vw, 32px)' }}>
-                Ready to Start Your Journey?
-              </h2>
-              <p className="text-primary-fixed-dim mb-8 max-w-2xl mx-auto" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
-                Have questions or ready to join? Reach out to us through any of these channels and we'll help you get started.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+              <div className="text-left">
+                <h2 className="text-white font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(20px, 2.5vw, 32px)' }}>
+                  Ready to Start Your Journey?
+                </h2>
+                <p className="text-primary-fixed-dim max-w-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
+                  Have questions or ready to join? Reach out to us through any of these channels and we'll help you get started.
+                </p>
+              </div>
+              <div className="flex flex-col items-start md:items-end gap-5">
                 <Link
                   href="/support"
-                  className="inline-flex items-center justify-center bg-white text-deep-navy font-semibold hover:bg-lavender-accent transition-all transform hover:-translate-y-1 shadow-lg"
+                  className="inline-flex items-center justify-center bg-white text-deep-navy font-semibold hover:bg-lavender-accent transition-all shadow-lg"
                   style={{
                     padding: 'clamp(14px, 1.5vw, 20px) clamp(32px, 4vw, 60px)',
                     fontFamily: 'Montserrat, sans-serif',
@@ -577,20 +527,20 @@ export default function SellerLandingPage() {
                   <Mail className="w-5 h-5 mr-2" />
                   Contact Us
                 </Link>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-6 text-white/70 text-sm">
-                <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
-                  <Mail className="w-4 h-4" />
-                  theloopydragon123@gmail.com
-                </a>
-                <a href="https://instagram.com/the.loopy.dragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                  <MessageCircle className="w-4 h-4" />
-                  @the.loopy.dragon
-                </a>
-                <span className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Available via WhatsApp
-                </span>
+                <div className="flex flex-col items-start md:items-end gap-3 text-white/70 text-sm">
+                  <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <Mail className="w-4 h-4" />
+                    theloopydragon123@gmail.com
+                  </a>
+                  <a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <InstagramIcon />
+                    @theloopydragon
+                  </a>
+                  <a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <Phone className="w-4 h-4" />
+                    +91 9307502865 (WhatsApp)
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -598,18 +548,51 @@ export default function SellerLandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-deep-navy text-white/60 py-8 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Store className="w-4 h-4" />
-              <span className={`${arapey.className} text-sm`} style={{ letterSpacing: '0.2em' }}>
-                THE LOOPY DRAGON
-              </span>
+      <footer className="bg-deep-navy text-white/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Store className="w-5 h-5 text-white/80" />
+                <span className={`${arapey.className} text-white/80 text-lg`} style={{ letterSpacing: '0.2em' }}>
+                  THE LOOPY DRAGON
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed max-w-xs">
+                India's marketplace for handmade crochet creations. Empowering individual artists to scale their craft.
+              </p>
             </div>
-            <p className="text-xs text-center sm:text-left">
-              &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-3 h-3 inline text-red-400" /> for makers
-            </p>
+            <div>
+              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-wider">Quick Links</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
+                <li><a href="/support" className="hover:text-white transition-colors">Seller Support</a></li>
+                <li><a href="/login" className="hover:text-white transition-colors">Seller Login</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white/80 font-semibold mb-4 text-sm uppercase tracking-wider">Connect With Us</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <Mail className="w-4 h-4" /> Email Us
+                  </a>
+                </li>
+                <li>
+                  <a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <InstagramIcon /> Instagram
+                  </a>
+                </li>
+                <li>
+                  <a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+                    <Phone className="w-4 h-4" /> WhatsApp
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 pt-8 border-t border-white/10 text-center text-xs">
+            &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-3 h-3 inline text-red-400" /> for makers
           </div>
         </div>
       </footer>

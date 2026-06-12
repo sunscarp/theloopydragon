@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import { storage } from "@/utils/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Plus, Upload, Loader2, ArrowLeft, Store, Sparkles } from "lucide-react";
+import { Plus, Upload, Loader2, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function AddProductPage() {
@@ -77,7 +77,7 @@ export default function AddProductPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       <button onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
 

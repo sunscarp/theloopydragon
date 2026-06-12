@@ -3,9 +3,19 @@ import { useState, useEffect } from "react";
 import {
   Mail, Phone, ExternalLink, Loader2, Send, Clock, Info,
   ShoppingCart, Wallet, ArrowRight, LayoutDashboard, Package,
-  ShoppingBag, Receipt, Settings, Store,
+  ShoppingBag, Receipt, Settings, Store, Heart,
 } from "lucide-react";
 import Link from "next/link";
+
+function InstagramIcon({ className = "w-3 h-3" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
 
 export default function SupportPage() {
   const [name, setName] = useState("");
@@ -132,7 +142,7 @@ export default function SupportPage() {
                 Open Settings <ArrowRight className="w-3 h-3" />
               </Link>
               {sellerSlug && (
-                <a href={`https://theloopydragon.in/sellers/${sellerSlug}`} target="_blank" rel="noopener noreferrer"
+                <a href={`https://theloopydragon.in/${sellerSlug}`} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#22223B] bg-[#e6eeff] px-4 py-2.5 rounded-lg hover:bg-[#d9e3f6] transition-colors">
                   <Store className="w-3 h-3" />
                   View Store
@@ -255,7 +265,7 @@ export default function SupportPage() {
           <p className="text-sm text-[#47464d] mt-1">Understanding your payout lifecycle</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-5 text-8xl font-bold text-[#22223B] select-none">1</div>
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <ShoppingCart className="w-5 h-5" />
@@ -265,10 +275,10 @@ export default function SupportPage() {
               When a customer purchases your product, the amount is recorded and enters a 2 business day clearing period.
             </p>
             <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#D7B3FB] w-1/3 group-hover:w-full transition-all duration-700"></div>
+              <div className="h-full bg-[#D7B3FB] w-1/3"></div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-5 text-8xl font-bold text-[#22223B] select-none">2</div>
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Clock className="w-5 h-5" />
@@ -278,10 +288,10 @@ export default function SupportPage() {
               After 2 business days, the amount moves from &apos;In Clearing&apos; to &apos;Available&apos; balance for withdrawal.
             </p>
             <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#D7B3FB] w-2/3 group-hover:w-full transition-all duration-700"></div>
+              <div className="h-full bg-[#D7B3FB] w-2/3"></div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+          <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-5 text-8xl font-bold text-[#22223B] select-none">3</div>
             <div className="w-10 h-10 rounded-lg bg-[#d9e3f6] flex items-center justify-center text-[#22223B] mb-4">
               <Wallet className="w-5 h-5" />
@@ -320,7 +330,40 @@ export default function SupportPage() {
         </div>
       </div>
 
-
+      {/* Footer */}
+      <footer className="bg-deep-navy text-white/60 rounded-2xl mt-8">
+        <div className="px-6 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Store className="w-4 h-4 text-white/80" />
+                <span className="text-white/80 text-sm font-semibold tracking-widest">THE LOOPY DRAGON</span>
+              </div>
+              <p className="text-xs leading-relaxed max-w-xs">
+                India's marketplace for handmade crochet creations. Empowering individual artists to scale their craft.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-white/80 font-semibold mb-3 text-xs uppercase tracking-wider">Quick Links</h4>
+              <ul className="space-y-1.5 text-xs">
+                <li><a href="/" className="hover:text-white transition-colors">Home</a></li>
+                <li><a href="/login" className="hover:text-white transition-colors">Seller Login</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white/80 font-semibold mb-3 text-xs uppercase tracking-wider">Connect</h4>
+              <ul className="space-y-1.5 text-xs">
+                <li><a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-1.5 hover:text-white transition-colors"><Mail className="w-3 h-3" /> Email</a></li>
+                <li><a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors"><InstagramIcon /> Instagram</a></li>
+                <li><a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-white transition-colors"><Phone className="w-3 h-3" /> WhatsApp</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-white/10 text-center text-[10px]">
+            &copy; {new Date().getFullYear()} The Loopy Dragon. All rights reserved. | Made with <Heart className="w-2.5 h-2.5 inline text-red-400" /> for makers
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

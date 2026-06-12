@@ -4,7 +4,7 @@ import { supabase } from "@/utils/supabase";
 import {
   Package, ShoppingBag, DollarSign, Wallet,
   Store, RefreshCw, TrendingUp,
-  ChevronRight, ShoppingBasket,
+  ChevronRight, ShoppingBasket, Copy,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -23,6 +23,13 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
   const [lastRefreshed, setLastRefreshed] = useState("");
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+
+  const copyOrderId = async (orderId: string) => {
+    await navigator.clipboard.writeText(orderId);
+    setCopiedOrderId(orderId);
+    setTimeout(() => setCopiedOrderId(null), 2000);
+  };
 
   const fetchStats = async (sellerId: number) => {
     const { count: products } = await supabase
@@ -37,7 +44,6 @@ export default function SellerDashboard() {
 
     const ordersArray = allOrders || [];
 
-    // Only include accepted orders (matching transactions page)
     const allOrderIds = [...new Set(ordersArray.map((o: any) => o.order_id))];
     const acceptedOrderIds = new Set<string>();
     if (allOrderIds.length > 0) {
@@ -51,7 +57,6 @@ export default function SellerDashboard() {
     }
     const acceptedOrders = ordersArray.filter((o: any) => acceptedOrderIds.has(o.order_id));
 
-    // Group by order_id to get unique orders
     const orderMap = new Map<string, any[]>();
     acceptedOrders.forEach((o: any) => {
       const existing = orderMap.get(o.order_id) || [];
@@ -75,7 +80,6 @@ export default function SellerDashboard() {
       return sum + total - total * 0.02 - commission + shipping;
     }, 0);
 
-    // Fetch withdrawal requests and penalties
     const { data: withdrawalData } = await supabase
       .from("withdrawal_requests")
       .select("amount, status")
@@ -93,7 +97,6 @@ export default function SellerDashboard() {
 
     const pendingPayout = totalPayoutsSum - paidWithdrawals - totalPenalties;
 
-    // Revenue change: compare this month vs last month
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -124,7 +127,6 @@ export default function SellerDashboard() {
       revenueChange: Math.round(revenueChange * 10) / 10,
     });
 
-    // Fetch recent orders (latest 5 grouped orders with status)
     const orderIds = [...new Set(ordersArray.map((o: any) => o.order_id))].slice(0, 5);
     let profileMap: Record<string, string> = {};
     if (orderIds.length > 0) {
@@ -211,87 +213,7 @@ export default function SellerDashboard() {
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Products Listed */}
-        <div className="bg-white p-6 rounded-xl border border-[#22223B]/5 shadow-sm hover:translate-y-[-2px] transition-transform flex flex-col justify-between h-full">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[#47464d] text-[12px] leading-[16px] font-[600] uppercase tracking-wider">Products Listed</span>
-              <div className="w-10 h-10 bg-[#e6eeff] rounded-lg flex items-center justify-center text-[#22223B]">
-                <Package className="w-5 h-5" />
-              </div>
-            </div>
-            <h3 className="text-[48px] leading-[56px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">{stats.products}</h3>
-            <p className="text-[#47464d] text-[12px] leading-[16px] font-[600] mb-6">{stats.products} products listed</p>
-          </div>
-          <Link href="/dashboard/products"
-            className="w-full py-3 bg-[#efdbff] text-[#290848] font-bold rounded-lg hover:bg-[#dcb8ff] transition-colors flex items-center justify-center gap-2 text-sm">
-            Manage Products
-            <ChevronRight className="w-[18px] h-[18px]" />
-          </Link>
-        </div>
-
-        {/* Items Sold */}
-        <div className="bg-white p-6 rounded-xl border border-[#22223B]/5 shadow-sm hover:translate-y-[-2px] transition-transform flex flex-col justify-between h-full">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[#47464d] text-[12px] leading-[16px] font-[600] uppercase tracking-wider">Items Sold</span>
-              <div className="w-10 h-10 bg-[#e6eeff] rounded-lg flex items-center justify-center text-[#22223B]">
-                <ShoppingBasket className="w-5 h-5" />
-              </div>
-            </div>
-            <h3 className="text-[48px] leading-[56px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">{stats.orders}</h3>
-            <p className="text-[#47464d] text-[12px] leading-[16px] font-[600] mb-6">{stats.orders} items sold</p>
-          </div>
-          <Link href="/dashboard/orders"
-            className="w-full py-3 bg-[#D7B3FB] text-[#22223B] font-bold rounded-lg hover:bg-[#D7B3FB]/80 transition-colors flex items-center justify-center gap-2 text-sm">
-            View Orders
-            <ShoppingBag className="w-[18px] h-[18px]" />
-          </Link>
-        </div>
-
-        {/* Total Revenue */}
-        <div className="bg-white p-6 rounded-xl border border-[#22223B]/5 shadow-sm hover:translate-y-[-2px] transition-transform flex flex-col h-full relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-[#10B981]/5 rounded-bl-full" />
-          <div className="flex justify-between items-start mb-4 relative">
-            <span className="text-[#47464d] text-[12px] leading-[16px] font-[600] uppercase tracking-wider">Total Revenue</span>
-            <div className="w-10 h-10 bg-[#10B981]/10 rounded-lg flex items-center justify-center text-[#10B981]">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <h3 className="text-[48px] leading-[56px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">₹{stats.revenue.toFixed(2)}</h3>
-          <div className="mt-auto">
-            <div className={`flex items-center gap-2 font-bold text-[12px] leading-[16px] font-[600] ${changeColor}`}>
-              <TrendingUp className={`w-[16px] h-[16px] ${stats.revenueChange < 0 ? "rotate-180" : ""}`} />
-              {changeIcon}{stats.revenueChange}% from last month
-            </div>
-          </div>
-          {/* Sparkline */}
-          <div className="mt-4 h-12 w-full flex items-end gap-1">
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[30%]" />
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[45%]" />
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[35%]" />
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[60%]" />
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[50%]" />
-            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[80%]" />
-            <div className="flex-1 bg-[#10B981] h-[90%]" />
-          </div>
-        </div>
-
-        {/* Pending Payout */}
-        <div className="bg-white p-6 rounded-xl border border-[#22223B]/5 shadow-sm hover:translate-y-[-2px] transition-transform flex flex-col h-full">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[#47464d] text-[12px] leading-[16px] font-[600] uppercase tracking-wider">Pending Payout</span>
-            <div className="w-10 h-10 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center text-[#F59E0B]">
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-          <h3 className="text-[48px] leading-[56px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">₹{stats.pendingPayout.toFixed(2)}</h3>
-        </div>
-      </div>
-
-      {/* Recent Orders Table */}
+      {/* Recent Orders Table - full width on top */}
       <div className="bg-white rounded-xl border border-[#22223B]/5 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-[#22223B]/10 flex items-center justify-between">
           <h4 className="text-[20px] leading-[28px] font-[600] text-[#22223B]">Recent Orders</h4>
@@ -323,7 +245,15 @@ export default function SellerDashboard() {
               ) : (
                 recentOrders.map((order) => (
                   <tr key={order.order_id} className="hover:bg-[#eff4ff] transition-colors">
-                    <td className="px-6 py-4 text-sm font-mono text-[#22223B]">#{order.order_id.slice(0, 8)}</td>
+                    <td className="px-6 py-4">
+  <span className="inline-flex items-center gap-2 font-mono text-sm text-[#22223B]">
+    <span className="cursor-pointer hover:text-purple-600 transition-colors" title={order.order_id} onClick={() => copyOrderId(order.order_id)}>#{order.order_id.slice(0, 8)}</span>
+    <button onClick={() => copyOrderId(order.order_id)} className="text-gray-400 hover:text-gray-600 transition-colors">
+      <Copy className="w-3.5 h-3.5" />
+    </button>
+    {copiedOrderId === order.order_id && <span className="text-[10px] text-emerald-600 font-medium">Copied!</span>}
+  </span>
+</td>
                     <td className="px-6 py-4 text-sm font-medium text-[#22223B]">{order.Name}</td>
                     <td className="px-6 py-4 text-sm font-mono text-[#22223B]">₹{order["Total Price"]}</td>
                     <td className="px-6 py-4">
@@ -337,6 +267,81 @@ export default function SellerDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Stats Cards - below Recent Orders */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Products Listed */}
+        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <div className="flex justify-between items-start mb-3">
+              <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Products Listed</span>
+              <div className="w-9 h-9 bg-[#e6eeff] rounded-lg flex items-center justify-center text-[#22223B]">
+                <Package className="w-[18px] h-[18px]" />
+              </div>
+            </div>
+            <h3 className="text-[36px] leading-[44px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">{stats.products}</h3>
+          </div>
+          <Link href="/dashboard/products"
+            className="w-full py-2.5 bg-[#efdbff] text-[#290848] font-bold rounded-lg hover:bg-[#dcb8ff] transition-colors flex items-center justify-center gap-2 text-sm mt-3">
+            Manage Products
+            <ChevronRight className="w-[18px] h-[18px]" />
+          </Link>
+        </div>
+
+        {/* Items Sold */}
+        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col justify-between h-full">
+          <div>
+            <div className="flex justify-between items-start mb-3">
+              <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Items Sold</span>
+              <div className="w-9 h-9 bg-[#e6eeff] rounded-lg flex items-center justify-center text-[#22223B]">
+                <ShoppingBasket className="w-[18px] h-[18px]" />
+              </div>
+            </div>
+            <h3 className="text-[36px] leading-[44px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">{stats.orders}</h3>
+          </div>
+          <Link href="/dashboard/orders"
+            className="w-full py-2.5 bg-[#D7B3FB] text-[#22223B] font-bold rounded-lg hover:bg-[#D7B3FB]/80 transition-colors flex items-center justify-center gap-2 text-sm mt-3">
+            View Orders
+            <ShoppingBag className="w-[18px] h-[18px]" />
+          </Link>
+        </div>
+
+        {/* Total Revenue */}
+        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-[#10B981]/5 rounded-bl-full" />
+          <div className="flex justify-between items-start mb-3 relative">
+            <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Total Revenue</span>
+            <div className="w-9 h-9 bg-[#10B981]/10 rounded-lg flex items-center justify-center text-[#10B981]">
+              <DollarSign className="w-[18px] h-[18px]" />
+            </div>
+          </div>
+          <h3 className="text-[36px] leading-[44px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">₹{stats.revenue.toFixed(2)}</h3>
+          <div className={`flex items-center gap-2 font-bold text-[11px] leading-[16px] font-[600] ${changeColor}`}>
+            <TrendingUp className={`w-[16px] h-[16px] ${stats.revenueChange < 0 ? "rotate-180" : ""}`} />
+            {changeIcon}{stats.revenueChange}% from last month
+          </div>
+          <div className="mt-3 h-10 w-full flex items-end gap-1">
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[30%]" />
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[45%]" />
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[35%]" />
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[60%]" />
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[50%]" />
+            <div className="flex-1 bg-[#10B981]/20 rounded-t-sm h-[80%]" />
+            <div className="flex-1 bg-[#10B981] h-[90%]" />
+          </div>
+        </div>
+
+        {/* Pending Payout */}
+        <div className="bg-white p-5 rounded-xl border border-[#22223B]/5 shadow-sm flex flex-col h-full">
+          <div className="flex justify-between items-start mb-3">
+            <span className="text-[#47464d] text-[11px] leading-[16px] font-[600] uppercase tracking-wider">Pending Payout</span>
+            <div className="w-9 h-9 bg-[#F59E0B]/10 rounded-lg flex items-center justify-center text-[#F59E0B]">
+              <Wallet className="w-[18px] h-[18px]" />
+            </div>
+          </div>
+          <h3 className="text-[36px] leading-[44px] font-[700] text-[#22223B] tracking-[-0.02em] mb-1">₹{stats.pendingPayout.toFixed(2)}</h3>
         </div>
       </div>
     </div>

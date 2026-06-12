@@ -4,7 +4,7 @@ import { supabase } from "@/utils/supabase";
 import {
   ShoppingBag, Loader2, Search, RefreshCw, Check,
   X, Truck, Package, Info, Clock, AlertTriangle, ArrowUpDown,
-  Ban, ThumbsUp,
+  Ban, ThumbsUp, Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -100,6 +100,7 @@ export default function SellerOrdersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ orderId: string; penalty: number } | null>(null);
   const [rejecting, setRejecting] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
@@ -231,6 +232,12 @@ export default function SellerOrdersPage() {
     setUpdatingTracking(null);
   };
 
+  const copyOrderId = async (orderId: string) => {
+    await navigator.clipboard.writeText(orderId);
+    setCopiedOrderId(orderId);
+    setTimeout(() => setCopiedOrderId(null), 2000);
+  };
+
   const totalRevenue = orders.reduce((sum: number, o: any) =>
     sum + (parseFloat(o["Total Price"]) || 0), 0);
 
@@ -354,7 +361,7 @@ export default function SellerOrdersPage() {
             <span>Refresh</span>
           </button>
           <div className="h-8 w-px bg-outline-variant/30 hidden md:block" />
-          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg p-1 flex items-center gap-1">
+          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg p-1 flex items-center gap-1 flex-wrap">
             {(["date", "total", "status"] as const).map(field => (
               <button key={field}
                 onClick={() => {
@@ -405,14 +412,23 @@ export default function SellerOrdersPage() {
             const isUpdatingTrk = updatingTracking === group.orderId;
             const meta = getStatusMeta(group.status);
             const needsApproval = !group.sellerAction && group.status !== "Rejected" && group.status !== "rejected";
+            const showTrackingButton = !needsApproval && !isEditingTrk;
+            const isCopied = copiedOrderId === group.orderId;
 
             return (
               <div key={group.orderId}
-                className={`bg-white/80 backdrop-blur-sm border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px] hover:shadow-[0_4px_20px_rgba(34,34,59,0.06)] ${needsApproval ? 'border-amber-300 bg-amber-50/30' : ''}`}>
+                className={`bg-white/80 backdrop-blur-sm border border-outline-variant/10 rounded-xl p-6 transition-all ${needsApproval ? 'border-amber-300 bg-amber-50/30' : ''}`}>
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
-                      <span className="font-data-mono text-title-lg text-deep-navy cursor-pointer hover:text-purple-600 transition-colors" title={group.orderId} onClick={() => { navigator.clipboard.writeText(group.orderId); toast.success("Order ID copied!"); }}>#{group.orderId.slice(0, 10)}</span>
+                      <span className="font-data-mono text-title-lg text-deep-navy inline-flex items-center gap-2">
+                        <span className="cursor-pointer hover:text-purple-600 transition-colors" title={group.orderId} onClick={() => copyOrderId(group.orderId)}>#{group.orderId.slice(0, 10)}</span>
+                        <button onClick={() => copyOrderId(group.orderId)}
+                          className="text-gray-400 hover:text-gray-600 transition-colors">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        {isCopied && <span className="text-[10px] text-emerald-600 font-medium">Copied!</span>}
+                      </span>
                       <span title={`Status: ${group.status}`}
                         className={`inline-flex px-3 py-1 rounded-full text-xs font-bold border ${meta.badgeBg}`}>
                         {needsApproval ? "Approval Needed" : STATUS_META[group.status.toLowerCase()] ? meta.label : group.status}
@@ -458,6 +474,10 @@ export default function SellerOrdersPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {needsApproval && (
                         <>
+                          <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
+                            className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
+                            Details
+                          </button>
                           <button
                             onClick={() => handleAcceptOrder(group.orderId)}
                             disabled={actionLoading === group.orderId}
@@ -478,60 +498,65 @@ export default function SellerOrdersPage() {
                           </button>
                         </>
                       )}
-                      <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
-                        className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
-                        {isExpanded ? "Hide" : "Details"}
-                      </button>
-                      {!needsApproval && !isEditingStatus ? (
-                        <button onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
-                          className="px-4 py-2.5 bg-deep-navy text-white rounded-lg text-xs font-bold hover:opacity-90 transition-all">
-                          Change Status
-                        </button>
-                      ) : !needsApproval && (
-                        <div className="flex items-center gap-1.5">
-                          <input type="text" value={customStatus}
-                            onChange={e => setCustomStatus(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter" && customStatus.trim()) updateOrderStatus(group.orderId, customStatus); }}
-                            placeholder="Enter status..."
-                            className="px-2.5 py-2 text-xs bg-white border border-outline-variant/30 rounded-lg text-on-surface placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lavender-accent w-40"
-                            autoFocus />
-                          <button onClick={() => { if (customStatus.trim()) updateOrderStatus(group.orderId, customStatus); }}
-                            disabled={isUpdatingStatus}
-                            className="p-2 text-status-success hover:bg-status-success/10 rounded-lg transition-colors">
-                            {isUpdatingStatus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      {!needsApproval && (
+                        <>
+                          <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
+                            className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
+                            {isExpanded ? "Hide" : "Details"}
                           </button>
-                          <button onClick={() => setEditingStatus(null)}
-                            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-
-                      {!isEditingTrk ? (
-                        <button onClick={() => { setEditingTracking(group.orderId); setCustomTracking(group.trackingId || ""); }}
-                          className="px-4 py-2.5 bg-lavender-accent text-deep-navy rounded-lg text-xs font-bold hover:opacity-80 transition-all">
-                          {group.trackingId ? "Edit Tracking" : "Add Tracking"}
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
-                          <input type="text" value={customTracking}
-                            onChange={e => setCustomTracking(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter" && customTracking.trim()) updateTrackingID(group.orderId, customTracking); }}
-                            placeholder="Tracking ID or URL..."
-                            className="px-2.5 py-2 text-xs bg-white border border-outline-variant/30 rounded-lg text-on-surface placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lavender-accent w-32"
-                            autoFocus />
-                          <button onClick={() => { if (customTracking.trim()) updateTrackingID(group.orderId, customTracking); }}
-                            disabled={isUpdatingTrk}
-                            className="p-2 text-status-success hover:bg-status-success/10 rounded-lg transition-colors">
-                            {isUpdatingTrk ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                          </button>
-                          <button onClick={() => setEditingTracking(null)}
-                            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                          {showTrackingButton && (
+                            <button onClick={() => { setEditingTracking(group.orderId); setCustomTracking(group.trackingId || ""); }}
+                              className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
+                              {group.trackingId ? "Edit Tracking" : "Add Tracking"}
+                            </button>
+                          )}
+                          {!isEditingStatus ? (
+                            <button onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
+                              className="px-4 py-2.5 bg-lavender-accent text-deep-navy rounded-lg text-xs font-bold hover:opacity-80 transition-all">
+                              Change Status
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <input type="text" value={customStatus}
+                                onChange={e => setCustomStatus(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter" && customStatus.trim()) updateOrderStatus(group.orderId, customStatus); }}
+                                placeholder="Enter status..."
+                                className="px-2.5 py-2 text-xs bg-white border border-outline-variant/30 rounded-lg text-on-surface placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lavender-accent w-40"
+                                autoFocus />
+                              <button onClick={() => { if (customStatus.trim()) updateOrderStatus(group.orderId, customStatus); }}
+                                disabled={isUpdatingStatus}
+                                className="p-2 text-status-success hover:bg-status-success/10 rounded-lg transition-colors">
+                                {isUpdatingStatus ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                              </button>
+                              <button onClick={() => setEditingStatus(null)}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
+
+                    {isEditingTrk && (
+                      <div className="flex items-center gap-1.5">
+                        <input type="text" value={customTracking}
+                          onChange={e => setCustomTracking(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && customTracking.trim()) updateTrackingID(group.orderId, customTracking); }}
+                          placeholder="Tracking ID or URL..."
+                          className="px-2.5 py-2 text-xs bg-white border border-outline-variant/30 rounded-lg text-on-surface placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lavender-accent w-32"
+                          autoFocus />
+                        <button onClick={() => { if (customTracking.trim()) updateTrackingID(group.orderId, customTracking); }}
+                          disabled={isUpdatingTrk}
+                          className="p-2 text-status-success hover:bg-status-success/10 rounded-lg transition-colors">
+                          {isUpdatingTrk ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => setEditingTracking(null)}
+                          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     {group.trackingId && !isEditingTrk && (
                       <a href={group.trackingId.startsWith("http") ? group.trackingId : `https://www.ship24.com/tracking/${group.trackingId}`}

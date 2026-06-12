@@ -468,7 +468,7 @@ export default function ProductPage() {
                     style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     <Store className="w-4 h-4" />
                     {sellerInfo ? (
-                      <Link href={`/sellers/${sellerInfo.slug}`} className="text-purple-600 hover:underline">
+                      <Link href={`/${sellerInfo.slug}`} className="text-purple-600 hover:underline">
                         Sold by {sellerInfo.shop_name}
                       </Link>
                     ) : "Sold by The Loopy Dragon"}

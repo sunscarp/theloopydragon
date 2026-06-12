@@ -163,7 +163,7 @@ export default function SellerSettingsPage() {
                   <p className="text-label-sm text-on-surface-variant">Offer free delivery on all orders to boost sales.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={freeDelivery}
+                  <input type="checkbox" checked={!!freeDelivery}
                     onChange={e => setFreeDelivery(e.target.checked)}
                     className="sr-only peer" />
                   <div className="w-11 h-6 bg-surface-variant rounded-full peer-checked:bg-lavender-accent transition-colors"></div>
@@ -217,7 +217,7 @@ export default function SellerSettingsPage() {
               <div className="flex items-center justify-between">
                 <p className="text-body-md font-semibold">Allow Returns</p>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={allowRefunds}
+                  <input type="checkbox" checked={!!allowRefunds}
                     onChange={e => setAllowRefunds(e.target.checked)}
                     className="sr-only peer" />
                   <div className="w-11 h-6 bg-surface-variant rounded-full peer-checked:bg-lavender-accent transition-colors"></div>
@@ -227,7 +227,7 @@ export default function SellerSettingsPage() {
               <div className="flex items-center justify-between">
                 <p className="text-body-md font-semibold">Allow Exchanges</p>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={allowReturns}
+                  <input type="checkbox" checked={!!allowReturns}
                     onChange={e => setAllowReturns(e.target.checked)}
                     className="sr-only peer" />
                   <div className="w-11 h-6 bg-surface-variant rounded-full peer-checked:bg-lavender-accent transition-colors"></div>
@@ -267,7 +267,7 @@ export default function SellerSettingsPage() {
               <p><strong>14. Contact Us</strong><br />If you have any questions about these terms or your seller account, please reach out to us: 📧 theloopydragon123@gmail.com. We aim to respond to all queries within 2–3 business days. By listing on The Loopy Dragon, you confirm that you have read, understood, and agree to all of the terms above. Last updated: June 2025</p>
             </div>
             <div className="flex items-start gap-3">
-              <input type="checkbox" checked={termsAccepted}
+              <input type="checkbox" checked={!!termsAccepted}
                 onChange={e => setTermsAccepted(e.target.checked)}
                 className="mt-1 w-5 h-5 text-deep-navy border-outline-variant rounded focus:ring-lavender-accent" id="tc-accept" />
               <label htmlFor="tc-accept">
@@ -313,7 +313,7 @@ export default function SellerSettingsPage() {
               <div className="space-y-2">
                 <label className="font-label-sm text-on-surface-variant uppercase tracking-wide">URL Slug</label>
                 <div className="flex items-center">
-                  <span className="bg-surface-blue border-y border-l border-outline-variant/50 rounded-l-lg px-3 py-3 text-on-surface-variant text-sm font-data-mono">theloopydragon.in/sellers/</span>
+                  <span className="bg-surface-blue border-y border-l border-outline-variant/50 rounded-l-lg px-3 py-3 text-on-surface-variant text-sm font-data-mono">theloopydragon.in/</span>
                   <input type="text" value={slug}
                     onChange={e => setSlug(e.target.value)}
                     className="w-full bg-white border border-outline-variant/50 rounded-r-lg p-3 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none font-data-mono text-sm" />

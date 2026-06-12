@@ -687,7 +687,7 @@ export default function Shop() {
             ₹{product.Price.toFixed(2)}
           </span>
           {product.seller_id && sellerSlugMap[String(product.seller_id)] ? (
-            <Link href={`/sellers/${sellerSlugMap[String(product.seller_id)]}`} style={{
+            <Link href={`/${sellerSlugMap[String(product.seller_id)]}`} style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '12px',
               color: '#7C3AED',
