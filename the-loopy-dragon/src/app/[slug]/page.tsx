@@ -47,7 +47,7 @@ function normalizeCategory(str: string) {
   return s.replace(/\s+/g, '');
 }
 
-const CATEGORIES = ['All Products', 'Best Sellers', 'Plushies', 'Keychains', 'Hair accessories', 'Flowers', 'Jewellery', 'Characters', 'Miscellaneous'];
+const ALL_CATEGORIES = ['All Products', 'Best Sellers', 'Plushies', 'Keychains', 'Hair accessories', 'Flowers', 'Jewellery', 'Characters', 'Miscellaneous'];
 const HAIR_SUBCATEGORIES = ['Barrette Clips', 'Bobby Pins', 'Scrunchies', 'Hairties', 'Hairbands', 'Claw Clips / Clutchers', 'Upins', 'Alligator Clips', 'Tictac Clips'];
 
 export default function SellerPage() {
@@ -117,6 +117,23 @@ export default function SellerPage() {
     : sortBy === "price-desc"
       ? [...filteredProducts].sort((a, b) => b.Price - a.Price)
       : filteredProducts;
+
+  const CATEGORIES = ALL_CATEGORIES.filter(cat => {
+    if (cat === 'All Products') return true;
+    return products.some(p => {
+      if (!p.Tag) return false;
+      const normalized = normalizeCategory(cat);
+      return p.Tag.split(',').some(t => normalizeCategory(t) === normalized);
+    });
+  });
+
+  const availableHairSubcategories = HAIR_SUBCATEGORIES.filter(sub =>
+    products.some(p => {
+      if (!p.Tag) return false;
+      const normalized = normalizeCategory(sub);
+      return p.Tag.split(',').some(t => normalizeCategory(t) === normalized);
+    })
+  );
 
   const renderProductCard = (product: ProductRow) => {
     const images = [
@@ -271,9 +288,9 @@ export default function SellerPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
-                        {isHairAccessoriesOpen && (
+                        {isHairAccessoriesOpen && availableHairSubcategories.length > 0 && (
                           <ul style={{ marginLeft: '0.75rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            {HAIR_SUBCATEGORIES.map(sub => (
+                            {availableHairSubcategories.map(sub => (
                               <li key={sub}>
                                 <button
                                   style={{

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -210,6 +210,16 @@ export default function CartPage() {
       updateShippingInfo({ shippingCost: 0 });
     }
   };
+
+  // Recalculate shipping whenever cart items change (add/remove/reload)
+  const calcRef = useRef(calculateShipping);
+  calcRef.current = calculateShipping;
+  useEffect(() => {
+    const pin = shippingInfo.pincode;
+    if (pin && pin.length === 6 && /^\d{6}$/.test(pin)) {
+      calcRef.current(pin, cartItems);
+    }
+  }, [cartItems, shippingInfo.pincode]);
 
   const grandTotal = finalTotal + shippingInfo.shippingCost;
 

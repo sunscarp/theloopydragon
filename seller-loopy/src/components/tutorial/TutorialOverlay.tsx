@@ -25,12 +25,25 @@ export default function TutorialOverlay({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isLast = currentIndex === steps.length - 1;
   const isFirst = currentIndex === 0;
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsSmallScreen(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const updatePosition = useCallback(() => {
     if (step?.targetSelector && step.placement !== "center") {
       const el = document.querySelector(step.targetSelector) as HTMLElement;
       if (el) {
         const rect = el.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.left < window.innerWidth;
+        if (!isVisible) {
+          setTargetRect(null);
+          return;
+        }
         setTargetRect(rect);
       } else {
         setTargetRect(null);
@@ -74,11 +87,18 @@ export default function TutorialOverlay({
           return document.documentElement;
         };
         const rect = el.getBoundingClientRect();
-        const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+        const isVisible = rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.left < window.innerWidth;
+        if (!isVisible) {
+          setTargetRect(null);
+          return;
+        }
+        const headerOffset = 64;
+        const inView = rect.top >= headerOffset && rect.bottom <= window.innerHeight;
         if (!inView) {
           const scrollParent = getScrollParent(el);
           if (scrollParent === document.documentElement) {
             el.scrollIntoView({ behavior: "instant", block: "center" });
+            document.documentElement.scrollBy(0, -headerOffset / 2);
           } else {
             const parentRect = scrollParent.getBoundingClientRect();
             const elTop = el.getBoundingClientRect().top - parentRect.top + scrollParent.scrollTop;
@@ -87,18 +107,13 @@ export default function TutorialOverlay({
               behavior: "instant",
             });
           }
+          requestAnimationFrame(() => {
+            const newRect = el.getBoundingClientRect();
+            setTargetRect(newRect);
+          });
+        } else {
+          setTargetRect(rect);
         }
-      }
-    }
-  }, [step]);
-
-  useEffect(() => {
-    if (!step) return;
-    if (step?.targetSelector && step.placement !== "center") {
-      const el = document.querySelector(step.targetSelector) as HTMLElement;
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setTargetRect(rect);
         return;
       }
     }
@@ -126,22 +141,22 @@ export default function TutorialOverlay({
 
   if (!step) return null;
 
-  const tooltipWidth = step.mockup === "stats" ? 780 : step.mockup ? 480 : 320;
+  const tooltipWidth = step.mockup === "stats" ? Math.min(780, window.innerWidth - 32) : step.mockup ? Math.min(480, window.innerWidth - 32) : Math.min(320, window.innerWidth - 32);
   const tooltipStyle: React.CSSProperties = {};
-  let tooltipClasses = "absolute z-[10010]";
+  let tooltipClasses = "fixed z-[10010]";
   if (step.mockup === "stats") {
-    tooltipClasses += " w-[780px]";
+    tooltipClasses += " w-[780px] max-w-[calc(100vw-2rem)]";
   } else if (step.mockup) {
-    tooltipClasses += " w-[480px]";
+    tooltipClasses += " w-[480px] max-w-[calc(100vw-2rem)]";
   } else {
-    tooltipClasses += " w-80";
+    tooltipClasses += " w-80 max-w-[calc(100vw-2rem)]";
   }
   let arrowClasses = "absolute w-3 h-3 bg-white rotate-45";
 
-  if (step.placement === "center" || !targetRect) {
+  if (step.placement === "center" || !targetRect || isSmallScreen) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-8 relative animate-in fade-in zoom-in duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-4 sm:p-8 relative animate-in fade-in zoom-in duration-200">
           <button onClick={onClose} className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-4 h-4" />
           </button>
@@ -221,23 +236,23 @@ export default function TutorialOverlay({
             </div>
           )}
           {step.mockup === "stats" && (
-            <div className="mb-4 flex flex-row gap-3">
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+            <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Products Listed</div>
                 <div className="text-lg font-bold text-gray-900">0</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Total items in your catalog. Click "Manage Products" on the card to go directly to your product catalog.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Items Sold</div>
                 <div className="text-lg font-bold text-gray-900">0</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Unique customer orders accepted and fulfilled. Each customer order counts as one.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Total Revenue</div>
                 <div className="text-lg font-bold text-gray-900">₹0.00</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Your total earnings from all accepted orders, including item prices and shipping. The sparkline chart shows your trend.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Pending Payout</div>
                 <div className="text-lg font-bold text-gray-900">₹0.00</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Amount available after deducting paid withdrawals and penalties. Request withdrawals from the Transactions page.</div>
@@ -259,54 +274,29 @@ export default function TutorialOverlay({
           )}
           {step.mockup === "withdraw" && (
             <div className="mb-4 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-              <div className="p-4 space-y-3">
-                <div className="flex items-center gap-3 pb-2 border-b border-gray-200">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900">Request Withdrawal</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>Available for Withdrawal</span>
-                  <span className="font-semibold text-gray-900">₹344.14</span>
-                </div>
-                <div>
-                  <div className="text-[10px] text-gray-400 uppercase mb-1.5">Amount (₹)</div>
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">₹</span>
-                      <div className="text-xs text-gray-900 bg-white rounded-lg pl-6 pr-3 py-2 border border-emerald-300 ring-1 ring-emerald-200 font-medium">250.00</div>
-                    </div>
-                    <div className="px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg cursor-default">Max</div>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <div className="w-full px-4 py-2.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg shadow-sm text-center">Request Withdrawal</div>
-                </div>
-              </div>
-              <div className="border-t border-gray-200">
-                <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+              <div className="px-4 pt-3 pb-2 border-b border-gray-200">
+                <div className="flex items-center gap-2">
                   <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   <span className="text-xs font-bold text-gray-700">Withdrawals &amp; Penalties</span>
                 </div>
-                <div className="px-4 pb-3">
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="grid grid-cols-3 gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200">
-                      <span className="text-[10px] font-medium text-gray-500 uppercase">Amount</span>
-                      <span className="text-[10px] font-medium text-gray-500 uppercase">Status</span>
-                      <span className="text-[10px] font-medium text-gray-500 uppercase text-right">Date</span>
+              </div>
+              <div className="p-4">
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="grid grid-cols-3 gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase">Amount</span>
+                    <span className="text-[10px] font-medium text-gray-500 uppercase">Status</span>
+                    <span className="text-[10px] font-medium text-gray-500 uppercase text-right">Date</span>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    <div className="grid grid-cols-3 gap-2 px-3 py-2.5 items-center">
+                      <span className="text-xs font-medium text-gray-900">₹250.00</span>
+                      <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit">Pending</span>
+                      <span className="text-xs text-gray-400 text-right">Just now</span>
                     </div>
-                    <div className="divide-y divide-gray-100">
-                      <div className="grid grid-cols-3 gap-2 px-3 py-2.5 items-center">
-                        <span className="text-xs font-medium text-gray-900">₹250.00</span>
-                        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit">Pending</span>
-                        <span className="text-xs text-gray-400 text-right">Just now</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 px-3 py-2.5 items-center">
-                        <span className="text-xs font-medium text-gray-400">₹50.00</span>
-                        <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full w-fit">Rejected</span>
-                        <span className="text-xs text-gray-400 text-right">2 days ago</span>
-                      </div>
+                    <div className="grid grid-cols-3 gap-2 px-3 py-2.5 items-center">
+                      <span className="text-xs font-medium text-gray-400">₹50.00</span>
+                      <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full w-fit">Rejected</span>
+                      <span className="text-xs text-gray-400 text-right">2 days ago</span>
                     </div>
                   </div>
                 </div>
@@ -386,6 +376,9 @@ export default function TutorialOverlay({
       break;
   }
 
+  tooltipStyle.left = Math.max(16, Math.min(Number(tooltipStyle.left ?? 0), window.innerWidth - tooltipWidth - 16));
+  tooltipStyle.top = Math.max(16, Math.min(Number(tooltipStyle.top ?? 0), window.innerHeight - 250));
+
   return (
     <>
       {/* Backdrop - single cutout with massive outline to avoid seam lines between panels */}
@@ -407,32 +400,32 @@ export default function TutorialOverlay({
         className={tooltipClasses}
         style={tooltipStyle}
       >
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-5 relative z-[10010]">
+        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 sm:p-5 relative z-[10010]">
           <button onClick={onClose} className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-3.5 h-3.5" />
           </button>
           <div className="mb-3 pr-6">
             <h3 className="text-sm font-bold text-gray-900 mb-1.5">{step.title}</h3>
-            <p className="text-xs text-gray-600 leading-relaxed">{step.description}</p>
+            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{step.description}</p>
           </div>
           {step.mockup === "stats" && (
-            <div className="mb-4 flex flex-row gap-3">
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+            <div className="mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Products Listed</div>
                 <div className="text-lg font-bold text-gray-900">0</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Total items in your catalog. Click "Manage Products" on the card to go directly to your product catalog.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Items Sold</div>
                 <div className="text-lg font-bold text-gray-900">0</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Unique customer orders accepted and fulfilled. Each customer order counts as one.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Total Revenue</div>
                 <div className="text-lg font-bold text-gray-900">₹0.00</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Your total earnings from all accepted orders, including item prices and shipping. The sparkline chart shows your trend.</div>
               </div>
-              <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Pending Payout</div>
                 <div className="text-lg font-bold text-gray-900">₹0.00</div>
                 <div className="text-[11px] text-gray-500 mt-1 leading-relaxed">Amount available after deducting paid withdrawals and penalties. Request withdrawals from the Transactions page.</div>
@@ -475,6 +468,17 @@ export default function TutorialOverlay({
 }
 
 export function TutorialHelpButton({ onClick }: { onClick: () => void }) {
+  const [isPhone, setIsPhone] = useState(true);
+
+  useEffect(() => {
+    const check = () => setIsPhone(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (isPhone) return null;
+
   return (
     <button
       onClick={onClick}

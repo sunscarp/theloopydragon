@@ -7,21 +7,11 @@ import {
   Store, LogIn, Percent, Zap, Shield, Heart, Users, DollarSign,
   ChevronDown, BadgeDollarSign, TrendingUp, BadgeCheck, CheckCircle,
   Wallet, BarChart3, ShoppingBag, Image, Search, Globe,
-  Mail, Phone, Gift,
+  Gift,
   Package, CreditCard, Smartphone
 } from "lucide-react";
 
 import Footer from "@/components/Footer";
-
-function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-    </svg>
-  );
-}
 
 const arapey = Arapey({ subsets: ["latin"], weight: "400" });
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -215,7 +205,7 @@ export default function SellerLandingPage() {
                   letterSpacing: '0.05em'
                 }}
               >
-                SELL YOUR CROCHET <br />CREATIONS
+                SELL YOUR HANDMADE <br />CREATIONS
               </h1>
 
               <p
@@ -501,53 +491,7 @@ export default function SellerLandingPage() {
         </div>
       </section>
 
-      {/* Connect Section */}
-      <section className="py-12 md:py-16 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-deep-navy rounded-[2rem] p-8 sm:p-12 md:p-20 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-lavender-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-              <div className="text-left">
-                <h2 className="text-white font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(20px, 2.5vw, 32px)' }}>
-                  Ready to Start Your Journey?
-                </h2>
-                <p className="text-primary-fixed-dim max-w-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 'clamp(14px, 1.2vw, 18px)' }}>
-                  Have questions or ready to join? Reach out to us through any of these channels and we'll help you get started.
-                </p>
-              </div>
-              <div className="flex flex-col items-start md:items-end gap-5">
-                <Link
-                  href="/support"
-                  className="inline-flex items-center justify-center bg-white text-deep-navy font-semibold hover:bg-lavender-accent transition-all shadow-lg"
-                  style={{
-                    padding: 'clamp(14px, 1.5vw, 20px) clamp(32px, 4vw, 60px)',
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontSize: 'clamp(14px, 1.1vw, 18px)',
-                    borderRadius: '1rem',
-                  }}
-                >
-                  <Mail className="w-5 h-5 mr-2" />
-                  Contact Us
-                </Link>
-                <div className="flex flex-col items-start md:items-end gap-3 text-white/70 text-sm">
-                  <a href="mailto:theloopydragon123@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <Mail className="w-4 h-4" />
-                    theloopydragon123@gmail.com
-                  </a>
-                  <a href="https://instagram.com/theloopydragon" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <InstagramIcon />
-                    @theloopydragon
-                  </a>
-                  <a href="https://wa.me/919307502865" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
-                    <Phone className="w-4 h-4" />
-                    +91 9307502865 (WhatsApp)
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       <Footer />
     </div>

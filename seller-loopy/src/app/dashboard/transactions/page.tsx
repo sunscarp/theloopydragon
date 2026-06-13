@@ -380,7 +380,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div data-tut="transactions-recent" className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Transactions</h3>
               <div className="flex items-center gap-2">

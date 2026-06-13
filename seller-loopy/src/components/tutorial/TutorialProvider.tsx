@@ -165,6 +165,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const startPageTutorial = useCallback((page: string) => {
+    if (window.innerWidth < 640) return;
     const pt = PAGE_TUTORIALS[page];
     if (!pt) return;
     setMode("page");
@@ -188,8 +189,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const demoOrderProfile = includeDemoOrder ? DEMO_TUTORIAL_ORDER_PROFILE : null;
   const demoTransaction = includeDemoOrder ? DEMO_TRANSACTION : null;
 
-  // Auto-start onboarding on mount
+  // Auto-start onboarding on mount (skip on phones)
   useEffect(() => {
+    if (window.innerWidth < 640) return;
     const stored = localStorage.getItem("seller-loopy-auth");
     if (!stored) return;
     try {

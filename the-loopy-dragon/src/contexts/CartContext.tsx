@@ -295,7 +295,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const sellerIds = Object.keys(sellerGroups).filter(id => id !== 'own');
 
     // Fetch seller settings
-    let sellerSettings: Record<string, { free_delivery: boolean; origin_pincode: string; free_delivery_threshold: number }> = {};
+    let sellerSettings: Record<string, {
+      free_delivery: boolean;
+      origin_pincode: string;
+      free_delivery_threshold: number;
+      delivery_slabs?: { min_distance_km: number; max_distance_km: number; price: number }[];
+    }> = {};
     if (sellerIds.length > 0) {
       try {
         const res = await fetch("/api/seller-settings", {
@@ -328,16 +333,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return threshold > 0 && getSellerSubtotal(sId) >= threshold;
     };
 
-    // Calculate per-seller shipping independently
     const sellerShipping: { [sellerId: string]: number } = {};
     let anyOutOfRange = false;
     let totalShippingCost = 0;
 
-    // Helper to map API cost to tiered pricing
     const tieredCost = (apiCost: number): number => {
       if (apiCost < 60) return 60;
       if (apiCost <= 90) return 90;
       return 120;
+    };
+
+    const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    const getPincodeLocation = async (pin: string): Promise<{ latitude: number; longitude: number } | null> => {
+      try {
+        const res = await fetch(`/api/pincode-location?pincode=${pin}`);
+        const data = await res.json();
+        if (data.error) return null;
+        return { latitude: data.latitude, longitude: data.longitude };
+      } catch {
+        return null;
+      }
+    };
+
+    const estimateDistanceKm = (pin1: string, pin2: string): number => {
+      const p1 = parseInt(pin1.slice(0, 3));
+      const p2 = parseInt(pin2.slice(0, 3));
+      const diff = Math.abs(p1 - p2);
+      if (diff === 0) return 10;
+      if (diff <= 10) return 50;
+      if (diff <= 50) return 200;
+      if (diff <= 200) return 500;
+      return 1000;
     };
 
     for (const sId of Object.keys(sellerGroups)) {
@@ -350,25 +386,103 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { weightInGrams, dimensions } = calculateWeights(sellerItems);
       const o_pin = sId === 'own' ? '411033' : (sellerSettings[sId]?.origin_pincode || '411033');
 
-      try {
-        const response = await fetch(`/api/shipping?d_pin=${pincode}&o_pin=${o_pin}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
-        const data = await response.json();
+      const settings = sellerSettings[sId];
+      const slabs = settings?.delivery_slabs;
+      let usedSlab = false;
 
-        if (data.error || !data.total) {
-          console.error(`Shipping API Error for seller ${sId}:`, data.error);
+      console.log(`[${sId}] slabs:`, JSON.stringify(slabs));
+
+      if (slabs && slabs.length > 0) {
+        const [originLoc, destLoc] = await Promise.all([
+          getPincodeLocation(o_pin),
+          getPincodeLocation(pincode),
+        ]);
+        console.log(`[${sId}] originLoc:`, originLoc, `destLoc:`, destLoc);
+
+        const distance = originLoc && destLoc
+          ? haversineDistance(originLoc.latitude, originLoc.longitude, destLoc.latitude, destLoc.longitude)
+          : null;
+
+        console.log(`[${sId}] haversine distance:`, distance, `fallback estimate:`, estimateDistanceKm(o_pin, pincode));
+
+        if (distance !== null) {
+          for (const slab of slabs) {
+            const min = Number(slab.min_distance_km);
+            const max = Number(slab.max_distance_km);
+            const maxIsUnbounded = max === -1;
+
+            if (distance >= min && (maxIsUnbounded || distance <= max)) {
+              const price = Number(slab.price);
+              console.log(`[${sId}] matched slab [${min}, ${max === -1 ? '∞' : max}] distance=${distance} price=${price}`);
+              sellerShipping[sId] = price;
+              totalShippingCost += price;
+              usedSlab = true;
+              break;
+            }
+          }
+
+          if (!usedSlab) {
+            const nearestSlab = distance < Number(slabs[0].min_distance_km)
+              ? slabs[0]
+              : slabs[slabs.length - 1];
+            const price = Number(nearestSlab.price);
+            console.log(`[${sId}] no exact match, using nearest slab (${distance < Number(slabs[0].min_distance_km) ? 'first' : 'last'}) price=${price}`);
+            sellerShipping[sId] = price;
+            totalShippingCost += price;
+            usedSlab = true;
+          }
+        } else {
+          const fallbackDist = estimateDistanceKm(o_pin, pincode);
+          console.log(`[${sId}] using estimate fallback, fallbackDist=${fallbackDist}`);
+          for (const slab of slabs) {
+            const min = Number(slab.min_distance_km);
+            const max = Number(slab.max_distance_km);
+            const maxIsUnbounded = max === -1;
+
+            if (fallbackDist >= min && (maxIsUnbounded || fallbackDist <= max)) {
+              const price = Number(slab.price);
+              console.log(`[${sId}] matched slab [${min}, ${max === -1 ? '∞' : max}] fallbackDist=${fallbackDist} price=${price}`);
+              sellerShipping[sId] = price;
+              totalShippingCost += price;
+              usedSlab = true;
+              break;
+            }
+          }
+
+          if (!usedSlab) {
+            const nearestSlab = fallbackDist < Number(slabs[0].min_distance_km)
+              ? slabs[0]
+              : slabs[slabs.length - 1];
+            const price = Number(nearestSlab.price);
+            console.log(`[${sId}] no exact match on estimate, using nearest slab (${fallbackDist < Number(slabs[0].min_distance_km) ? 'first' : 'last'}) price=${price}`);
+            sellerShipping[sId] = price;
+            totalShippingCost += price;
+            usedSlab = true;
+          }
+        }
+      }
+
+      if (!usedSlab) {
+        try {
+          const response = await fetch(`/api/shipping?d_pin=${pincode}&o_pin=${o_pin}&cgm=${weightInGrams}&dimensions=${dimensions.join(',')}`);
+          const data = await response.json();
+
+          if (data.error || !data.total) {
+            console.error(`Shipping API Error for seller ${sId}:`, data.error);
+            sellerShipping[sId] = 80;
+            anyOutOfRange = true;
+            totalShippingCost += 80;
+          } else {
+            const cost = tieredCost(Number(data.total));
+            sellerShipping[sId] = cost;
+            totalShippingCost += cost;
+          }
+        } catch (error) {
+          console.error(`Shipping calculation error for seller ${sId}:`, error);
           sellerShipping[sId] = 80;
           anyOutOfRange = true;
           totalShippingCost += 80;
-        } else {
-          const cost = tieredCost(Number(data.total));
-          sellerShipping[sId] = cost;
-          totalShippingCost += cost;
         }
-      } catch (error) {
-        console.error(`Shipping calculation error for seller ${sId}:`, error);
-        sellerShipping[sId] = 80;
-        anyOutOfRange = true;
-        totalShippingCost += 80;
       }
     }
 

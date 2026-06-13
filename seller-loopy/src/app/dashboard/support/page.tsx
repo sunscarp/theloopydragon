@@ -278,9 +278,6 @@ export default function SupportPage() {
             <p className="text-sm text-[#47464d] leading-relaxed">
               When a customer purchases your product, the amount is recorded and enters a 2 business day clearing period.
             </p>
-            <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#10B981] w-1/3"></div>
-            </div>
           </div>
           <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-5 text-8xl font-bold text-[#22223B] select-none">2</div>
@@ -291,9 +288,6 @@ export default function SupportPage() {
             <p className="text-sm text-[#47464d] leading-relaxed">
               After 2 business days, the amount moves from &apos;In Clearing&apos; to &apos;Available&apos; balance for withdrawal.
             </p>
-            <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#10B981] w-2/3"></div>
-            </div>
           </div>
           <div className="bg-white rounded-xl p-6 border border-[#22223B]/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-5 text-8xl font-bold text-[#22223B] select-none">3</div>
@@ -304,9 +298,6 @@ export default function SupportPage() {
             <p className="text-sm text-[#47464d] leading-relaxed">
               The platform reviews and processes your withdrawal via UPI within 2 days. A UPI transaction ID is provided for tracking.
             </p>
-            <div className="mt-5 h-1 w-full bg-[#d9e3f6] rounded-full overflow-hidden">
-              <div className="h-full bg-[#10B981] w-full"></div>
-            </div>
           </div>
         </div>
       </div>
