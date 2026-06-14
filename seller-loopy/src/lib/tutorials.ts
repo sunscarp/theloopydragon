@@ -97,7 +97,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "dash-stats-products",
     title: "Pending Payout",
     description:
-      "• Money you can withdraw\n• Clears in 2 business days\n• Request on Transactions page",
+      "• Money you can withdraw\n• Clears in 2 business days\n• Request for Withdrawal on Transactions page",
     targetSelector: '[data-tut="dash-stat-payout"]',
     placement: "left",
   },
@@ -172,7 +172,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "orders-after-accept",
     title: "Order Management",
     description:
-      "After accepting: add tracking info, update status, view breakdowns, and track shipments. Click Details for full order info.",
+      "After accepting: add tracking info, update status, view breakdowns, and track shipments. Details button gives full order info.",
     targetSelector: '[data-tut="orders-actions"]',
     placement: "left",
   },
