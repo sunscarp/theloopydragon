@@ -57,7 +57,7 @@ type CartContextType = {
   calculateOrderTotals: () => {
     subtotal: number;
     dragonDiscount: number;
-    christmasDiscount: number;
+
     finalTotal: number;
     freeItems: string[]; // <-- Add this line
   };
@@ -723,15 +723,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const subtotal = filteredCartItems.reduce((sum, item) => sum + (item?.totalPrice || 0), 0);
     
-    // Calculate Christmas discount (26% off for orders above Rs. 250)
-    const christmasDiscount = subtotal >= 250 ? subtotal * 0.26 : 0;
-    
-    const finalTotal = Math.max(0, subtotal - dragonDiscount - christmasDiscount);
+    const finalTotal = Math.max(0, subtotal - dragonDiscount);
 
     return {
       subtotal,
       dragonDiscount,
-      christmasDiscount,
       finalTotal,
       freeItems
     };

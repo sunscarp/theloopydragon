@@ -13,7 +13,7 @@ interface OrderSummaryProps {
   total: number;
   activeDragonOffer?: DragonOffer | null;
   dragonDiscount?: number;
-  christmasDiscount?: number;
+
   buyXGetYDiscount?: number;
 }
 
@@ -26,14 +26,14 @@ export default function OrderSummary({
   total,
   activeDragonOffer,
   dragonDiscount = 0,
-  christmasDiscount = 0,
+
   buyXGetYDiscount = 0
 }: OrderSummaryProps) {
   const { getProductIdFromCartKey } = useCart();
 
   // Calculate the subtotal after dragon discounts
   const totalDragonDiscount = dragonDiscount + buyXGetYDiscount;
-  const totalDiscount = totalDragonDiscount + christmasDiscount;
+  const totalDiscount = totalDragonDiscount;
   const subtotalAfterDiscount = subtotal - totalDiscount;
   const finalTotal = subtotalAfterDiscount + shippingCost;
 
@@ -135,14 +135,6 @@ export default function OrderSummary({
           </div>
         )}
         
-        {/* Christmas Discount */}
-        {christmasDiscount > 0 && (
-          <div className="flex justify-between" style={{ color: "#B80000" }}>
-            <span>🎄 Christmas Special (26% OFF)</span>
-            <span>-₹{christmasDiscount.toFixed(2)}</span>
-          </div>
-        )}
-
         {/* Free Product Items Notice */}
         {cartItems.some((item) => item.isSpecialOffer) && (
           <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800">

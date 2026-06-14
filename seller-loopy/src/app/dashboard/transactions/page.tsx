@@ -2,8 +2,8 @@
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { supabase } from "@/utils/supabase";
 import { Wallet, Loader2, Clock, CheckCircle,
-  ChevronDown, ChevronUp, Landmark, Send, Copy, Check,
-  Info, Receipt, History, XCircle, Banknote,
+  ChevronDown, ChevronUp, Send, Copy, Check,
+  Info, Receipt, History, XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
@@ -73,9 +73,11 @@ export default function TransactionsPage() {
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [penalties, setPenalties] = useState<PenaltyEntry[]>([]);
-  const [requestAmount, setRequestAmount] = useState("");
   const [requesting, setRequesting] = useState(false);
   const [loadingWithdrawals, setLoadingWithdrawals] = useState(true);
+  const [ledgerTab, setLedgerTab] = useState<"transactions" | "ledger">("transactions");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [demoTxCleared, setDemoTxCleared] = useState(false);
 
@@ -86,17 +88,24 @@ export default function TransactionsPage() {
   }, [tutorial.isOnboarding, tutorial.currentStep?.id]);
 
   useEffect(() => {
+    if (showConfirmModal && tutorial.isOnboarding && tutorial.currentStep?.id !== "transactions-withdraw-confirm") {
+      setShowConfirmModal(false);
+    }
+  }, [tutorial.isOnboarding, tutorial.currentStep?.id, showConfirmModal]);
+
+  useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
     if (!stored) { window.location.href = "/"; return; }
     const s = JSON.parse(stored);
     setSeller(s);
-    fetchTransactions(s.id);
-    fetchWithdrawals(s.id);
-    fetchPenalties(s.id);
+    Promise.all([
+      fetchTransactions(s.id),
+      fetchWithdrawals(s.id),
+      fetchPenalties(s.id),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const fetchTransactions = async (sellerId: number) => {
-    setLoading(true);
     const { data, error } = await supabase
       .from("Orders")
       .select("*")
@@ -116,7 +125,6 @@ export default function TransactionsPage() {
         seller_action: profileMap.get(o.order_id) ?? null,
       })) as Transaction[]);
     }
-    setLoading(false);
   };
 
   const fetchWithdrawals = async (sellerId: number) => {
@@ -142,17 +150,17 @@ export default function TransactionsPage() {
     setPenalties(data || []);
   };
 
-  const handleRequestWithdrawal = async () => {
-    const amount = parseFloat(requestAmount);
-    if (!amount || amount <= 0) { toast.error("Enter a valid amount"); return; }
-    if (amount > balanceData.available && !tutorial.isOnboarding) { toast.error("Amount exceeds available balance"); return; }
+  const executeWithdrawal = async () => {
+    const amount = balanceData.available;
+    setShowConfirmModal(false);
+    if (!amount || amount <= 0) { toast.error("No balance available for withdrawal"); return; }
+    if (!seller?.terms_accepted && !tutorial.isOnboarding) { toast.error("You must accept the Seller Terms & Conditions before withdrawing. Go to Settings > Terms."); return; }
     if (tutorial.isOnboarding) {
       setRequesting(true);
       await new Promise(r => setTimeout(r, 600));
-      toast.success("Tutorial withdrawal submitted (simulated)");
-      setRequestAmount("");
+      toast.success("Withdraw initiated (simulated)");
       setRequesting(false);
-      tutorial.triggerAdvance("transactions-withdraw-form");
+      tutorial.triggerAdvance("transactions-withdraw-confirm");
       return;
     }
     setRequesting(true);
@@ -164,11 +172,12 @@ export default function TransactionsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Withdrawal request submitted");
-        setRequestAmount("");
+        setConfirmed(true);
+        setTimeout(() => setConfirmed(false), 3000);
+        toast.success("Withdraw initiated!");
         fetchWithdrawals(seller.id);
       } else {
-        toast.error(data.error || "Failed to submit request");
+        toast.error(data.error || "Failed to submit withdrawal");
       }
     } catch {
       toast.error("Something went wrong");
@@ -338,49 +347,66 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left column - Request Withdrawal + Recent Transactions + Withdrawals */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Request Withdrawal */}
-          <div data-tut="transactions-withdraw-form" className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="mb-5">
-              <h3 className="text-sm font-semibold text-gray-900">Request Withdrawal</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Request payout for your cleared balance</p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5" htmlFor="amount">Amount (₹)</label>
-                <div className="flex gap-2">
-                  <input id="amount" type="number" value={requestAmount}
-                    onChange={e => setRequestAmount(e.target.value)}
-                    placeholder="0.00" max={balanceData.available}
-                    className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all font-mono" />
-                  <button type="button" onClick={() => setRequestAmount(String(balanceData.available))}
-                    disabled={balanceData.available <= 0}
-                    className="px-3 py-2.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
-                    Max
-                  </button>
-                </div>
-              </div>
-              <button onClick={handleRequestWithdrawal}
-                disabled={requesting || balanceData.available <= 0 || !requestAmount}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
-                {requesting ? <><Loader2 className="w-4 h-4 animate-spin" /> Requesting...</> : <><Send className="w-4 h-4" /> Request</>}
-              </button>
-              {balanceData.available <= 0 && (
-                <div className="bg-amber-50 border border-dashed border-amber-200 rounded-lg p-3">
-                  <p className="text-xs text-amber-700 flex items-start gap-2">
-                    <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <span>No balance available for withdrawal yet. Orders need 2 business days to clear.</span>
-                  </p>
-                </div>
-              )}
-            </div>
+      {/* Balance Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Total Balance</p>
+            <Wallet className="w-4 h-4 text-gray-400" />
           </div>
+          <p className="text-2xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">Cumulative account total</p>
+        </div>
+        <div data-tut="transactions-available-card" className="bg-emerald-50 rounded-xl p-5 border border-emerald-100 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+          </div>
+          <p className="text-2xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">Orders cleared (2+ business days old)</p>
+          <div className="mt-auto pt-3">
+            {balanceData.available > 0 && !seller?.terms_accepted && (
+              <p className="text-xs text-amber-600 mb-2">Accept <a href="/dashboard/settings?tab=terms" className="underline hover:text-amber-800">Terms in Settings → Terms</a> to withdraw</p>
+            )}
+            {balanceData.available > 0 && (
+              <button onClick={() => { if (tutorial.isOnboarding) tutorial.triggerAdvance("transactions-withdraw"); setShowConfirmModal(true); }} disabled={requesting || !seller?.terms_accepted}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                {confirmed ? <><CheckCircle className="w-4 h-4" /> Withdraw Initiated</> : requesting ? <><Loader2 className="w-4 h-4 animate-spin" /> Withdrawing...</> : <><Send className="w-4 h-4" /> Withdraw</>}
+              </button>
+            )}
+            {balanceData.available <= 0 && (
+              <p className="text-xs text-gray-400">No balance available yet</p>
+            )}
+          </div>
+        </div>
+        <div data-tut="transactions-clearing-card" className="bg-amber-50 rounded-xl p-5 border border-amber-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">In Clearing</p>
+            <Clock className="w-4 h-4 text-amber-500" />
+          </div>
+          <p className="text-2xl font-bold text-amber-600 font-mono">₹{balanceData.clearing.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">Money from recent orders that is on a 2-day hold. After 2 business days, it moves to "Available" and you can withdraw it.</p>
+        </div>
+      </div>
 
-          {/* Recent Transactions */}
-          <div data-tut="transactions-recent" className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Combined Tabbed Card */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          <button onClick={() => setLedgerTab("transactions")}
+            className={`px-5 py-3.5 text-sm font-semibold transition-all border-b-2 ${ledgerTab === "transactions" ? "border-violet-600 text-violet-700" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+            Recent Transactions
+          </button>
+          <button onClick={() => setLedgerTab("ledger")}
+            className={`px-5 py-3.5 text-sm font-semibold transition-all border-b-2 ${ledgerTab === "ledger" ? "border-violet-600 text-violet-700" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+            Withdrawals & Penalties
+            {pendingWithdrawalSum > 0 && (
+              <span className="ml-2 text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
+            )}
+          </button>
+        </div>
+
+        {ledgerTab === "transactions" ? (
+          <>
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Recent Transactions</h3>
               <div className="flex items-center gap-2">
@@ -499,95 +525,46 @@ export default function TransactionsPage() {
                 </table>
               </div>
             )}
-          </div>
-
-          {/* Withdrawals & Penalties */}
-          <div data-tut="transactions-withdrawals-section" className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          </>
+        ) : (
+          <>
             <div className="p-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-gray-400" />
                 <h3 className="text-sm font-semibold text-gray-900">Withdrawals & Penalties</h3>
-                {pendingWithdrawalSum > 0 && (
-                  <span className="ml-auto text-xs text-amber-600">₹{pendingWithdrawalSum.toFixed(2)} pending</span>
-                )}
               </div>
             </div>
             {renderLedger()}
-          </div>
-        </div>
-
-        {/* Right column - Balance Cards + Revenue Breakdown */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Balance Cards */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Landmark className="w-4 h-4 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-900">Balance Overview</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">Total Balance</p>
-                  <Wallet className="w-3.5 h-3.5 text-gray-400" />
-                </div>
-                <p className="text-xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Cumulative account total</p>
-              </div>
-              <div data-tut="transactions-available-card" className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                </div>
-                <p className="text-xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Orders cleared (2+ business days old)</p>
-              </div>
-              <div data-tut="transactions-clearing-card" className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">In Clearing</p>
-                  <Clock className="w-3.5 h-3.5 text-amber-500" />
-                </div>
-                <p className="text-xl font-bold text-amber-600 font-mono">₹{balanceData.clearing.toFixed(2)}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">Recent orders (awaiting 2 business days)</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Revenue Breakdown - all items same color */}
-          <div className="bg-gradient-to-br from-[#22223B] to-[#2a2a4a] text-white p-6 rounded-xl shadow-md relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl" />
-            <h3 className="text-xs uppercase tracking-widest text-white/60 mb-5">Revenue Breakdown</h3>
-            <div className="space-y-3 relative z-10">
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Total Revenue</span>
-                <span className="text-sm font-bold text-white font-mono">₹{stats.totalRevenue.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Razorpay Fee (2%)</span>
-                <span className="text-sm font-mono text-white">-₹{stats.totalRazorpayFees.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Commission</span>
-                <span className="text-sm font-mono text-white">-₹{stats.totalCommission.toFixed(2)}</span>
-              </div>
-              {stats.totalPenalties > 0 && (
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-sm text-white/70">Penalties</span>
-                  <span className="text-sm font-mono text-white">-₹{stats.totalPenalties.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm font-semibold text-white/80">Paid Out</span>
-                <span className="text-base font-bold text-emerald-400 font-mono">₹{stats.paidOut.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs text-white/50">Pending</span>
-                <span className="text-xs font-mono text-white/50">₹{stats.pending.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
       {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("transactions")} />}
+
+      {/* Withdrawal Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+          <div data-tut="transactions-confirm-card" className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Confirm Withdrawal</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              You are about to withdraw <strong>₹{balanceData.available.toFixed(2)}</strong> to your registered UPI account.
+            </p>
+            <p className="text-xs text-gray-400 mb-6">
+              This action cannot be undone. The amount will be processed and sent to your linked UPI account.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-all">
+                Cancel
+              </button>
+              <button onClick={executeWithdrawal}
+                data-tut="transactions-confirm-btn"
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition-all">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

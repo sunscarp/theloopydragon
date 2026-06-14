@@ -275,23 +275,22 @@ function CheckoutContent() {
       return {
         subtotal,
         dragonDiscount: 0, // Custom orders don't have dragon discounts
-        christmasDiscount: 0, // Custom orders don't have Christmas discounts
+
         finalTotal: subtotal,
         total: subtotal + shippingCost
       };
     } else {
-      const { subtotal, dragonDiscount, christmasDiscount, finalTotal } = calculateOrderTotals();
+      const { subtotal, dragonDiscount, finalTotal } = calculateOrderTotals();
       return {
         subtotal,
         dragonDiscount,
-        christmasDiscount,
         finalTotal,
         total: finalTotal + shippingInfo.shippingCost
       };
     }
   };
 
-  const { subtotal, dragonDiscount, christmasDiscount, finalTotal, total } = calculateTotals();
+  const { subtotal, dragonDiscount, finalTotal, total } = calculateTotals();
 
   const validate = () => {
     // For custom orders, skip pincode matching validation
@@ -467,8 +466,7 @@ function CheckoutContent() {
                   })),
                   total: total,
                   dragonOffer: null,
-                  dragonDiscount: 0,
-                  christmasDiscount: 0
+                  dragonDiscount: 0
                 }),
               });
 
@@ -545,7 +543,7 @@ function CheckoutContent() {
                 'Shipping Cost': itemShippingCost.toFixed(2),
                 'Fire Offer': activeDragonOffer ? activeDragonOffer.title : "",
                 'Fire Discount': dragonDiscount.toFixed(2),
-                'Christmas Discount': christmasDiscount.toFixed(2),
+                
                 isSpecialOffer: !!specialOffer,
                 seller_id: sId,
                 commission_earned: commissionEarned.toFixed(2),
@@ -591,8 +589,8 @@ function CheckoutContent() {
                       Products: groupItems,
                       uid: user.id,
                       "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
-                      "Total Discount": (dragonDiscount + christmasDiscount).toFixed(2),
-                      "Christmas Discount": christmasDiscount.toFixed(2),
+                      "Total Discount": dragonDiscount.toFixed(2),
+
                       Country: country,
                       City: city,
                       State: stateName
@@ -627,7 +625,7 @@ function CheckoutContent() {
                   total: total,
                   dragonOffer: activeDragonOffer ? activeDragonOffer.title : null,
                   dragonDiscount: dragonDiscount,
-                  christmasDiscount: christmasDiscount
+
                 }),
               });
             } catch (emailError) {
@@ -701,7 +699,7 @@ function CheckoutContent() {
                       payment_id: response.razorpay_payment_id,
                       "Order Date": orderDate,
                       "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
-                      "Christmas Discount": christmasDiscount.toFixed(2),
+
                       isSpecialOffer: !!specialOffer,
                       seller_id: sId,
                       commission_earned: commissionEarned.toFixed(2),
@@ -1753,14 +1751,8 @@ function CheckoutContent() {
                 </div>
                 {dragonDiscount > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#B80000", fontWeight: 500 }}>🎄 Christmas Discount</span>
+                    <span style={{ color: "#B80000", fontWeight: 500 }}>🎄 Dragon Discount</span>
                     <span style={{ fontWeight: 600, color: "#B80000" }}>-₹{dragonDiscount.toFixed(2)}</span>
-                  </div>
-                )}
-                {christmasDiscount > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#059669", fontWeight: 500 }}>Christmas Special (26% OFF)</span>
-                    <span style={{ fontWeight: 600, color: "#059669" }}>-₹{christmasDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>

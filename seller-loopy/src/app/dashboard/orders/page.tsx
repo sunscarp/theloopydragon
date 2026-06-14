@@ -402,26 +402,19 @@ export default function SellerOrdersPage() {
             <RefreshCw className="w-[20px] h-[20px]" />
             <span>Refresh</span>
           </button>
-          <div className="h-8 w-px bg-outline-variant/30 hidden md:block" />
-          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg p-1 flex items-center gap-1 flex-wrap">
-            {(["date", "total", "status"] as const).map(field => (
-              <button key={field}
-                onClick={() => {
-                  if (sortBy === field) setSortOrder(o => o === "desc" ? "asc" : "desc");
-                  else { setSortBy(field); setSortOrder("desc"); }
-                }}
-                className={`px-3 py-1.5 text-xs font-semibold rounded transition-colors flex items-center gap-1 ${
-                  sortBy === field
-                    ? "bg-deep-navy text-white shadow-sm"
-                    : "text-on-surface-variant hover:bg-surface-container-low"
-                }`}>
-                Sort: {field.charAt(0).toUpperCase() + field.slice(1)}
-                {sortBy === field && (
-                  <ArrowUpDown className={`w-[14px] h-[14px] transition-transform ${sortOrder === "asc" ? "rotate-180" : ""}`} />
-                )}
-              </button>
-            ))}
-          </div>
+          <select
+            value={sortBy}
+            onChange={e => { setSortBy(e.target.value as any); setSortOrder("desc"); }}
+            className="bg-surface-container-lowest border border-outline-variant/10 rounded-lg px-3 py-2 text-xs font-semibold text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-lavender-accent cursor-pointer">
+            <option value="date">Sort: Date</option>
+            <option value="total">Sort: Total</option>
+            <option value="status">Sort: Status</option>
+          </select>
+          <button onClick={() => setSortOrder(o => o === "desc" ? "asc" : "desc")}
+            className="p-2 text-xs font-semibold text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors"
+            title={sortOrder === "desc" ? "Descending" : "Ascending"}>
+            <ArrowUpDown className={`w-4 h-4 transition-transform ${sortOrder === "asc" ? "rotate-180" : ""}`} />
+          </button>
         </div>
       </div>
 
@@ -454,7 +447,8 @@ export default function SellerOrdersPage() {
             const isUpdatingTrk = updatingTracking === group.orderId;
             const meta = getStatusMeta(group.status);
             const needsApproval = !group.sellerAction && group.status !== "Rejected" && group.status !== "rejected";
-            const showTrackingButton = !needsApproval && !isEditingTrk;
+            const isRejected = group.status?.toLowerCase() === "rejected";
+            const showTrackingButton = !needsApproval && !isEditingTrk && !isRejected;
             const isCopied = copiedOrderId === group.orderId;
 
             return (
@@ -544,10 +538,12 @@ export default function SellerOrdersPage() {
                       )}
                       {!needsApproval && (
                         <>
-                          <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
-                            className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
-                            {isExpanded ? "Hide" : "Details"}
-                          </button>
+                          {!isRejected && (
+                            <button onClick={() => setExpandedOrder(isExpanded ? null : group.orderId)}
+                              className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
+                              {isExpanded ? "Hide" : "Details"}
+                            </button>
+                          )}
                           {showTrackingButton && (
                             <button data-tut={group.orderId === DEMO_ORDER_ID ? "orders-tracking-btn" : undefined}
                               onClick={() => { setEditingTracking(group.orderId); setCustomTracking(group.trackingId || ""); }}
@@ -555,7 +551,8 @@ export default function SellerOrdersPage() {
                               {group.trackingId ? "Edit Tracking" : "Add Tracking"}
                             </button>
                           )}
-                          {!isEditingStatus ? (
+                          {!isRejected && (
+                          !isEditingStatus ? (
                             <button data-tut={group.orderId === DEMO_ORDER_ID ? "orders-status-btn" : undefined}
                               onClick={() => { setEditingStatus(group.orderId); setCustomStatus(group.status); }}
                               className="px-4 py-2.5 bg-lavender-accent text-deep-navy rounded-lg text-xs font-bold hover:opacity-80 transition-all">
@@ -579,6 +576,7 @@ export default function SellerOrdersPage() {
                                 <X className="w-3.5 h-3.5" />
                               </button>
                             </div>
+                          )
                           )}
                         </>
                       )}
@@ -604,7 +602,7 @@ export default function SellerOrdersPage() {
                       </div>
                     )}
 
-                    {group.trackingId && !isEditingTrk && (
+                    {group.trackingId && !isEditingTrk && !isRejected && (
                       <a href={group.trackingId.startsWith("http") ? group.trackingId : `https://www.ship24.com/tracking/${group.trackingId}`}
                         target="_blank" rel="noopener noreferrer"
                         className="px-4 py-2.5 border border-outline-variant/30 text-on-surface-variant rounded-lg text-xs font-bold hover:bg-surface-container-high transition-all">
@@ -614,7 +612,7 @@ export default function SellerOrdersPage() {
                   </div>
                 </div>
 
-                {isExpanded && (
+                {isExpanded && !isRejected && (
                   <div className="mt-6 pt-6 border-t border-outline-variant/10">
                     <div className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

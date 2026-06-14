@@ -26,13 +26,14 @@ type ProductRow = {
   ImageUrl5?: string | null;
   seller_id?: string | null;
   status?: string | null;
+  sort_order?: number | null;
 };
 
 export default function Shop() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<"name" | "price-asc" | "price-desc">("name");
+  const [sortBy, setSortBy] = useState<"relevance" | "price-asc" | "price-desc">("relevance");
   const [search, setSearch] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Products");
@@ -64,7 +65,7 @@ export default function Shop() {
       setErrorMsg(null);
       const { data, error } = await supabase
         .from("Inventory")
-        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, seller_id, status");
+        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, seller_id, status, sort_order");
 
       if (error) {
         setProducts([]);
@@ -601,7 +602,13 @@ export default function Shop() {
     ? [...filteredProducts].sort((a, b) => a.Price - b.Price)
     : sortBy === "price-desc"
       ? [...filteredProducts].sort((a, b) => b.Price - a.Price)
-      : filteredProducts;
+      : sortBy === "relevance"
+        ? [...filteredProducts].sort((a, b) => {
+            const aOrder = a.sort_order && a.sort_order > 0 ? a.sort_order : 9999;
+            const bOrder = b.sort_order && b.sort_order > 0 ? b.sort_order : 9999;
+            return aOrder - bOrder;
+          })
+        : filteredProducts;
 
   const renderProductCard = (product: ProductRow) => {
     const images = [
@@ -725,7 +732,7 @@ export default function Shop() {
         onClick={() => {
           setSearch("");
           setSelectedCategory("All Products");
-          setSortBy("name");
+          setSortBy("relevance");
         }}
         className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 text-sm"
       >
@@ -1576,7 +1583,7 @@ export default function Shop() {
                       fontWeight: 400
                     }}
                   >
-                    <option value="name">Relevance</option>
+                    <option value="relevance">Relevance</option>
                     <option value="price-asc">Price: Low to High</option>
                     <option value="price-desc">Price: High to Low</option>
                   </select>

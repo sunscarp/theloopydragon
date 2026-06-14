@@ -43,7 +43,7 @@ export default function ProductPage() {
   const router = useRouter();
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductDetails[]>([]);
-  const [sellerInfo, setSellerInfo] = useState<{ shop_name: string; slug: string; allow_refunds: boolean; allow_returns: boolean } | null>(null);
+  const [sellerInfo, setSellerInfo] = useState<{ shop_name: string; slug: string; allow_refunds: boolean; allow_returns: boolean; free_delivery: boolean; free_delivery_threshold: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -88,10 +88,10 @@ export default function ProductPage() {
         if (data.seller_id) {
           const { data: seller } = await supabase
             .from("sellers")
-            .select("shop_name, slug, allow_refunds, allow_returns")
+            .select("shop_name, slug, allow_refunds, allow_returns, free_delivery, free_delivery_threshold")
             .eq("id", data.seller_id)
             .single();
-          if (seller) setSellerInfo({ ...seller, allow_refunds: seller.allow_refunds === true || seller.allow_refunds === "true", allow_returns: seller.allow_returns === true || seller.allow_returns === "true" });
+          if (seller) setSellerInfo({ ...seller, allow_refunds: seller.allow_refunds === true || seller.allow_refunds === "true", allow_returns: seller.allow_returns === true || seller.allow_returns === "true", free_delivery: seller.free_delivery === true, free_delivery_threshold: Number(seller.free_delivery_threshold) || 0 });
         }
       }
       setLoading(false);
@@ -612,21 +612,23 @@ export default function ProductPage() {
                 <div className="mt-4"></div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <svg className="w-4 h-4 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span 
-                      className="text-gray-900"
-                      style={{
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontWeight: '500',
-                        fontSize: '15px'
-                      }}
-                    >
-                      Free shipping on orders above ₹1000
-                    </span>
-                  </div>
+                  {(isLoopyDragon || sellerInfo?.free_delivery || (sellerInfo && sellerInfo.free_delivery_threshold > 0)) && (
+                    <div className="flex items-center space-x-3">
+                      <svg className="w-4 h-4 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span 
+                        className="text-gray-900"
+                        style={{
+                          fontFamily: 'Montserrat, sans-serif',
+                          fontWeight: '500',
+                          fontSize: '15px'
+                        }}
+                      >
+                        {isLoopyDragon ? "Free shipping on orders above ₹1000" : sellerInfo?.free_delivery ? "Free delivery on all orders" : `Free shipping on orders above ₹${sellerInfo!.free_delivery_threshold}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-3">
                     <svg className="w-4 h-4 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-7V7a4 4 0 00-8 0v4h8z" />

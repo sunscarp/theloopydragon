@@ -12,6 +12,16 @@ export default function AddProductPage() {
   const tutorial = useTutorial();
   const router = useRouter();
   const [seller, setSeller] = useState<any>(null);
+  const [inventoryMode, setInventoryMode] = useState<"stock" | "demand">(() => {
+    try {
+      const stored = localStorage.getItem("seller-loopy-auth");
+      if (stored) {
+        const s = JSON.parse(stored);
+        return s.inventory_mode === "demand" ? "demand" : "stock";
+      }
+    } catch {}
+    return "stock";
+  });
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({
     image1: false, image2: false, image3: false, image4: false, image5: false,
@@ -78,12 +88,19 @@ export default function AddProductPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <button onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+      <div className="flex items-start justify-between gap-4">
+        <button onClick={() => router.back()}
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        {inventoryMode === "demand" && (
+          <div className="shrink-0 bg-surface-blue border border-outline-variant/20 rounded-lg px-3 py-2 text-xs text-on-surface-variant">
+            <span className="font-semibold">Made on Demand</span> — quantities hidden
+          </div>
+        )}
+      </div>
 
-      <div className="rounded-2xl bg-white border border-gray-200 p-6 md:p-8">
+        <div className="rounded-2xl bg-white border border-gray-200 p-6 md:p-8">
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
             <Plus className="w-5 h-5 text-white" />
@@ -107,12 +124,14 @@ export default function AddProductPage() {
                 onChange={e => setFormData(p => ({ ...p, Price: parseFloat(e.target.value) || 0 }))}
                 className={inputClass} placeholder="100" />
             </div>
+            {inventoryMode === "stock" && (
             <div>
               <label className={labelClass}>Quantity</label>
               <input type="number" value={formData.Quantity || ""}
                 onChange={e => setFormData(p => ({ ...p, Quantity: parseFloat(e.target.value) || 0 }))}
                 className={inputClass} placeholder="999" />
             </div>
+            )}
             <div>
               <label className={labelClass}>Weight (grams)</label>
               <input type="number" value={formData.Weight || ""} step="0.01"

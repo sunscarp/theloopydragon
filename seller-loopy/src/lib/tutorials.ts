@@ -89,7 +89,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "dash-recent-orders",
     title: "Recent Orders",
     description:
-      "View recent orders at a glance. Each row shows: Order ID, Customer, Amount, Status, Date. Click an Order ID to copy it.",
+      "View recent orders at a glance with order ID, customer, amount, status, and date.",
     targetSelector: '[data-tut="dash-recent-orders"]',
     placement: "bottom",
   },
@@ -197,11 +197,11 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     placement: "center",
   },
   {
-    id: "transactions-demo",
+    id: "transactions-demo-row",
     title: "Tutorial Transaction",
     description:
-      "'In Clearing' status — funds are temporarily held.",
-    targetSelector: '[data-tut="transactions-recent"]',
+      "'In Clearing' status — funds are temporarily held. After 2 business days it moves to Available.",
+    targetSelector: '[data-tut="transactions-demo-row"]',
     placement: "right",
   },
   {
@@ -221,22 +221,24 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     placement: "bottom",
   },
   {
-    id: "transactions-withdraw-form",
+    id: "transactions-withdraw",
     title: "Request a Withdrawal",
     description:
-      "Click 'Max' to fill your available balance, then click 'Request' to submit.",
-    targetSelector: '[data-tut="transactions-withdraw-form"]',
-    placement: "right",
-    actionRequired: "Click Max, then click Request to submit your withdrawal",
+      "Click 'Withdraw' on the Available for Withdrawal card to open the confirmation popup.",
+    targetSelector: '[data-tut="transactions-available-card"]',
+    placement: "bottom",
+    actionRequired: "Click Withdraw on the card to open the confirmation popup",
     actionType: "custom",
   },
   {
-    id: "transactions-withdraw-mockup",
-    title: "Withdrawals & Penalties",
+    id: "transactions-withdraw-confirm",
+    title: "Confirm Withdrawal",
     description:
-      "Withdrawal requests show as Pending until approved. Penalties (5% of rejected orders) also appear here.",
-    placement: "center",
-    mockup: "withdraw",
+      "Click 'Confirm' in the popup to submit your withdrawal request.",
+    targetSelector: '[data-tut="transactions-confirm-card"]',
+    placement: "right",
+    actionRequired: "Click Confirm to submit your withdrawal",
+    actionType: "custom",
   },
   // ===== SUPPORT PAGE =====
   {
@@ -254,7 +256,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "support-overview",
     title: "Support Options",
     description:
-      "Getting Started Guide, contact form, email, WhatsApp, and Instagram support. Response within 1-2 business days.",
+      "Contact form, email, WhatsApp, and Instagram support. Response within 1-2 business days.",
     placement: "center",
   },
 

@@ -17,6 +17,16 @@ export default function SellerProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
+  const [inventoryMode, setInventoryMode] = useState<"stock" | "demand">(() => {
+    try {
+      const stored = localStorage.getItem("seller-loopy-auth");
+      if (stored) {
+        const s = JSON.parse(stored);
+        return s.inventory_mode === "demand" ? "demand" : "stock";
+      }
+    } catch {}
+    return "stock";
+  });
   const [searchTerm, setSearchTerm] = useState("");
 const CATEGORIES = [
   { label: "Select a category", value: "" },
@@ -87,7 +97,7 @@ const CATEGORIES = [
     setEditForm({
       Product: product.Product || "",
       Price: product.Price || 0,
-      Quantity: product.Quantity || 0,
+      Quantity: inventoryMode === "demand" ? 9999999 : (product.Quantity || 0),
       Description: product.Description || "",
       Material: product.Material || "",
       Tag: tagStr,
@@ -125,7 +135,7 @@ const CATEGORIES = [
     const { error } = await supabase
       .from("Inventory")
       .update({
-        Product: editForm.Product, Price: editForm.Price, Quantity: editForm.Quantity,
+        Product: editForm.Product, Price: editForm.Price, Quantity: inventoryMode === "demand" ? 9999999 : editForm.Quantity,
         Description: editForm.Description, Material: editForm.Material, Tag: combinedTag,
         ImageUrl1: editForm.ImageUrl1, ImageUrl2: editForm.ImageUrl2, ImageUrl3: editForm.ImageUrl3,
         ImageUrl4: editForm.ImageUrl4, ImageUrl5: editForm.ImageUrl5,
@@ -163,8 +173,8 @@ const CATEGORIES = [
     const p = products;
     const totalProducts = p.length;
     const activeProducts = p.filter((p: any) => p.status === "active" || !p.status).length;
-    const lowStockProducts = p.filter((p: any) => p.Quantity <= 5).length;
-    const totalValue = p.reduce((sum: number, p: any) => sum + (p.Price || 0) * (p.Quantity || 0), 0);
+    const lowStockProducts = inventoryMode === "stock" ? p.filter((p: any) => p.Quantity <= 5).length : 0;
+    const totalValue = inventoryMode === "stock" ? p.reduce((sum: number, p: any) => sum + (p.Price || 0) * (p.Quantity || 0), 0) : 0;
     const avgPrice = totalProducts > 0 ? p.reduce((sum: number, p: any) => sum + (p.Price || 0), 0) / totalProducts : 0;
     const tagCount = new Set(p.filter((p: any) => p.Tag).map((p: any) => p.Tag)).size;
     return { totalProducts, activeProducts, lowStockProducts, totalValue, avgPrice, tagCount };
@@ -186,9 +196,16 @@ const CATEGORIES = [
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">My Products</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage your product catalog and listings</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">My Products</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage your product catalog and listings</p>
+        </div>
+        {inventoryMode === "demand" && (
+          <div className="shrink-0 bg-surface-blue border border-outline-variant/20 rounded-lg px-3 py-2 text-xs text-on-surface-variant">
+            <span className="font-semibold">Made on Demand</span> — quantities hidden
+          </div>
+        )}
       </div>
 
       {/* Two-column layout */}
@@ -277,12 +294,14 @@ const CATEGORIES = [
                             </p>
                           </div>
                           <div className="flex flex-col items-end gap-1 shrink-0">
-                            {product.Quantity <= 5 ? (
+                            {inventoryMode === "stock" && product.Quantity <= 5 ? (
                               <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md whitespace-nowrap">
                                 {product.Quantity <= 0 ? "Out of Stock" : "Low Stock"}
                               </span>
                             ) : null}
-                            <span className="text-xs text-gray-400">Qty: {product.Quantity}</span>
+                            {inventoryMode === "stock" && (
+                              <span className="text-xs text-gray-400">Qty: {product.Quantity}</span>
+                            )}
                           </div>
                         </div>
 
@@ -328,6 +347,7 @@ const CATEGORIES = [
             <p className="text-xs text-gray-400 mt-1.5">Currently available for sale</p>
           </div>
 
+          {inventoryMode === "stock" && (
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-gray-500 uppercase tracking-wider">Low Stock</p>
@@ -336,9 +356,11 @@ const CATEGORIES = [
             <p className="text-2xl font-bold text-amber-600">{stats.lowStockProducts}</p>
             <p className="text-xs text-gray-400 mt-1.5">Products with quantity &le; 5</p>
           </div>
+          )}
           </div>
 
           {/* Quick Stats */}
+          {inventoryMode === "stock" && (
           <div className="bg-gradient-to-br from-[#22223B] to-[#2a2a4a] text-white p-6 rounded-xl shadow-md relative overflow-hidden">
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl" />
             <h3 className="text-xs uppercase tracking-widest text-white/60 mb-5">Catalog Overview</h3>
@@ -347,16 +369,21 @@ const CATEGORIES = [
                 <span className="text-sm font-semibold">Active Products</span>
                 <span className="text-base font-bold text-emerald-400">{stats.activeProducts}</span>
               </div>
-              <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                <span className="text-sm text-white/70">Low Stock</span>
-                <span className="text-sm font-bold text-amber-400">{stats.lowStockProducts}</span>
-              </div>
+              {inventoryMode === "stock" && (
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm text-white/70">Low Stock</span>
+                  <span className="text-sm font-bold text-amber-400">{stats.lowStockProducts}</span>
+                </div>
+              )}
+              {inventoryMode === "stock" && (
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-white/70">Total Value</span>
                 <span className="text-sm font-bold text-purple-300 font-mono">₹{stats.totalValue.toFixed(2)}</span>
               </div>
+              )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
@@ -417,12 +444,14 @@ const CATEGORIES = [
                     onChange={e => setEditForm(p => ({ ...p, Price: Math.min(parseFloat(e.target.value) || 0, 100000) }))}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
                 </div>
+                {inventoryMode === "stock" && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Quantity</label>
                   <input type="number" value={editForm.Quantity}
                     onChange={e => setEditForm(p => ({ ...p, Quantity: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
                 </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -493,17 +522,15 @@ const CATEGORIES = [
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all resize-none" />
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <a href={`https://theloopydragon.in/product/${encodeURIComponent(editingProduct.Product)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700">
-                  <Eye className="w-3.5 h-3.5" /> View live product
-                </a>
-                {editingProduct.status === "deactivated" ? (
-                  <button onClick={() => toggleProductStatus(editingProduct.id, "active")} disabled={togglingStatus}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all disabled:opacity-50">
-                    {togglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    Reactivate
-                  </button>
+                {editingProduct.status !== "deactivated" && editingProduct.status !== "owner_deactivated" && (
+                  <a href={`https://theloopydragon.in/product/${encodeURIComponent(editingProduct.Product)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700">
+                    <Eye className="w-3.5 h-3.5" /> View live product
+                  </a>
+                )}
+                {editingProduct.status === "deactivated" || editingProduct.status === "owner_deactivated" ? (
+                  <a href="/dashboard/support" className="text-xs text-red-500 font-medium underline hover:text-red-600">Deactivated by Loopy Dragon: Reach out via support to reactivate this product</a>
                 ) : (
                   <button onClick={() => toggleProductStatus(editingProduct.id, "deactivated")} disabled={togglingStatus}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-all disabled:opacity-50">

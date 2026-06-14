@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   TutorialStep,
@@ -13,6 +13,7 @@ import {
   DEMO_TRANSACTION,
 } from "@/lib/tutorials";
 import TutorialOverlay from "./TutorialOverlay";
+import TermsModal from "./TermsModal";
 export { TutorialHelpButton } from "./TutorialOverlay";
 
 interface TutorialContextType {
@@ -75,6 +76,7 @@ export function useTutorial() {
 
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isActive, setIsActive] = useState(false);
   const [mode, setMode] = useState<"onboarding" | "page" | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -86,7 +88,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [tutorialStatusChanged, setTutorialStatusChanged] = useState(false);
   const [tutorialWithdrawalDone, setTutorialWithdrawalDone] = useState(false);
   const [tutorialTermsAccepted, setTutorialTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [sellerId, setSellerId] = useState<number | null>(null);
+  const savedStartIndex = useRef(0);
   const prevPathname = useRef(pathname);
 
   const currentStep = steps[currentStepIndex] || null;
@@ -133,7 +137,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setIncludeDemoOrder(false);
     closeTutorial();
     toast.success("Onboarding complete! You're all set.");
-  }, [sellerId, closeTutorial]);
+    router.push("/dashboard");
+  }, [sellerId, closeTutorial, router]);
 
   const skipTutorial = useCallback(() => {
     completeOnboarding();
@@ -189,6 +194,33 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const demoOrderProfile = includeDemoOrder ? DEMO_TUTORIAL_ORDER_PROFILE : null;
   const demoTransaction = includeDemoOrder ? DEMO_TRANSACTION : null;
 
+  const handleTermsAccept = async () => {
+    try {
+      await fetch("/api/sellers/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: sellerId, terms_accepted: true }),
+      });
+      const stored = localStorage.getItem("seller-loopy-auth");
+      if (stored) {
+        const seller = JSON.parse(stored);
+        seller.terms_accepted = true;
+        localStorage.setItem("seller-loopy-auth", JSON.stringify(seller));
+      }
+    } catch {
+      console.error("Failed to save terms_accepted");
+    }
+    setShowTermsModal(false);
+    startOnboarding(savedStartIndex.current);
+  };
+
+  const startOnboarding = (startIndex = 0) => {
+    setMode("onboarding");
+    setSteps(ONBOARDING_STEPS);
+    setCurrentStepIndex(startIndex);
+    setIsActive(true);
+  };
+
   // Auto-start onboarding on mount (skip on phones)
   useEffect(() => {
     if (window.innerWidth < 640) return;
@@ -210,10 +242,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           }
         } catch {}
       }
-      setMode("onboarding");
-      setSteps(ONBOARDING_STEPS);
-      setCurrentStepIndex(startIndex);
-      setIsActive(true);
+
+      // Check if terms have been accepted
+      if (!(seller.terms_accepted === true || seller.terms_accepted === "true")) {
+        savedStartIndex.current = startIndex;
+        setShowTermsModal(true);
+        return;
+      }
+
+      startOnboarding(startIndex);
     } catch {
       // ignore
     }
@@ -247,7 +284,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isOnboarding || !isActive || !currentStep) return;
     const orderStepIds = ["orders-nav", "orders-overview", "orders-demo-order", "orders-accept", "orders-after-accept", "orders-tracking", "orders-status"];
-    const txStepIds = ["transactions-nav", "transactions-overview", "transactions-demo", "transactions-clearing", "transactions-cleared", "transactions-withdraw-form", "transactions-withdraw-mockup"];
+    const txStepIds = ["transactions-nav", "transactions-overview", "transactions-demo-row", "transactions-clearing", "transactions-cleared", "transactions-withdraw", "transactions-withdraw-confirm"];
     const isOrderSection = orderStepIds.includes(currentStep.id);
     const isTxSection = txStepIds.includes(currentStep.id);
     if (isOrderSection || isTxSection) {
@@ -295,6 +332,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           onPrev={prevStep}
           onSkip={skipTutorial}
           onClose={skipTutorial}
+        />
+      )}
+      {showTermsModal && (
+        <TermsModal
+          onAccept={handleTermsAccept}
+          onSkip={() => {
+            setShowTermsModal(false);
+            startOnboarding(savedStartIndex.current);
+          }}
         />
       )}
     </TutorialContext.Provider>

@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       total,
       dragonOffer,
       dragonDiscount,
-      christmasDiscount,
     } = body;
 
     // Configure your SMTP transporter
@@ -104,8 +103,7 @@ export async function POST(req: NextRequest) {
     }, 0);
     
     const dragonDiscountAmount = Number(dragonDiscount || 0);
-    const christmasDiscountAmount = Number(christmasDiscount || 0);
-    const totalDiscount = dragonDiscountAmount + christmasDiscountAmount;
+    const totalDiscount = dragonDiscountAmount;
     const subtotalAfterDiscount = Math.max(0, subtotal - totalDiscount);
     const grandTotal = subtotalAfterDiscount + Number(shippingCost);
 
@@ -121,10 +119,6 @@ export async function POST(req: NextRequest) {
         <b>🔥 Fire Offer Applied:</b> ${dragonOffer}
         ${dragonDiscountAmount > 0 ? `<br/>Fire Discount Applied: -₹${dragonDiscountAmount.toFixed(2)}` : ''}
         ${orders.some((item: any) => item.isSpecialOffer) ? `<br/>🎁 Includes ${orders.filter((item: any) => item.isSpecialOffer).length} free fire offer item(s)` : ''}
-      </div>` : ''}
-      ${christmasDiscountAmount > 0 ? `<br/><div style="background:#fef2f2;border:1px solid #dc2626;padding:10px;border-radius:8px;margin:10px 0;">
-        <b>🎄 Christmas Special Applied:</b> 26% OFF on orders above ₹250
-        <br/>Christmas Discount: -₹${christmasDiscountAmount.toFixed(2)}
       </div>` : ''}
       <br/>
       <table style="border-collapse:collapse;width:100%;margin-top:10px;">
@@ -149,14 +143,6 @@ export async function POST(req: NextRequest) {
               ${dragonOffer?.includes('Buy 3 Get 1 Free') ? '<br/><small>(Cheapest items made free)</small>' : ''}
             </td>
             <td style="padding:12px;border:1px solid #ddd;text-align:right;color:#16a34a;font-weight:bold;">-₹${dragonDiscountAmount.toFixed(2)}</td>
-          </tr>
-          ` : ''}
-          ${christmasDiscountAmount > 0 ? `
-          <tr style="background-color:#fef2f2;">
-            <td colspan="3" style="padding:12px;border:1px solid #ddd;text-align:right;color:#dc2626;font-weight:bold;">
-              🎄 Christmas Special (26% OFF)
-            </td>
-            <td style="padding:12px;border:1px solid #ddd;text-align:right;color:#dc2626;font-weight:bold;">-₹${christmasDiscountAmount.toFixed(2)}</td>
           </tr>
           ` : ''}
           ${totalDiscount > 0 ? `

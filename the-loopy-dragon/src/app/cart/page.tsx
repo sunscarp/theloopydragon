@@ -191,7 +191,7 @@ export default function CartPage() {
 
   // Calculate totals using the new function
   const orderTotals = calculateOrderTotals();
-  const { subtotal, dragonDiscount, christmasDiscount, finalTotal } = orderTotals;
+  const { subtotal, dragonDiscount, finalTotal } = orderTotals;
   const freeItems: any = orderTotals.freeItems ?? [];
 
   // Calculate total including add-ons
@@ -1194,26 +1194,6 @@ export default function CartPage() {
                       </div>
                     )}
                     
-                    {/* Christmas Discount */}
-                    {christmasDiscount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{
-                          fontFamily: "Montserrat, sans-serif",
-                          fontSize: "16px",
-                          color: "#059669"
-                        }}>
-                          Christmas Special (26% OFF)
-                        </span>
-                        <span style={{
-                          fontFamily: "Montserrat, sans-serif",
-                          fontSize: "16px",
-                          fontWeight: 600,
-                          color: "#059669"
-                        }}>
-                          -₹{christmasDiscount.toFixed(2)}
-                        </span>
-                      </div>
-                    )}
                     
                     {/* Free Product Items Notice */}
                     {cartItems.some(item => item.isSpecialOffer) && (
@@ -1243,16 +1223,16 @@ export default function CartPage() {
                         fontFamily: "Montserrat, sans-serif",
                         fontSize: "16px",
                         fontWeight: 600,
-                        color: finalTotal >= 1000 ? "#10B981" : (shippingInfo.isOutOfRange ? "#EF4444" : "#22223B")
+                        color: shippingInfo.shippingCost === 0 ? "#10B981" : (shippingInfo.isOutOfRange ? "#EF4444" : "#22223B")
                       }}>
-                        {finalTotal >= 1000 ? 'FREE' : (
+                        {shippingInfo.shippingCost === 0 ? 'FREE' : (
                           shippingInfo.pincode && shippingInfo.pincode.length === 6 ? 
                             (shippingInfo.isOutOfRange ? 'Out of Range' : `₹${shippingInfo.shippingCost.toFixed(2)}`) : 
                             'Enter pincode'
                         )}
                       </span>
                     </div>
-                    {finalTotal >= 1000 && !shippingInfo.isOutOfRange && (
+                    {shippingInfo.shippingCost === 0 && !shippingInfo.isOutOfRange && (
                       <div style={{
                         backgroundColor: "#F0FDF4",
                         border: "1px solid #10B981",
