@@ -124,12 +124,10 @@ export default function PaymentSection({
                           value={Number(slab.max_distance_km) === -1 ? "" : slab.max_distance_km}
                           onChange={e => {
                             const val = Number(e.target.value);
-                            setDeliverySlabs(prev => {
-                              const next = [...prev];
-                              next[idx] = { ...next[idx], max_distance_km: val };
-                              if (next[idx + 1]) next[idx + 1] = { ...next[idx + 1], min_distance_km: val };
-                              return next;
-                            });
+                            const next = [...deliverySlabs];
+                            next[idx] = { ...next[idx], max_distance_km: val };
+                            if (next[idx + 1]) next[idx + 1] = { ...next[idx + 1], min_distance_km: val };
+                            setDeliverySlabs(next);;
                           }}
                           className="w-full bg-white border border-outline-variant/50 rounded-lg p-2 focus:ring-2 focus:ring-lavender-accent focus:border-lavender-accent outline-none transition-all font-data-mono text-data-mono"
                         />
@@ -149,11 +147,11 @@ export default function PaymentSection({
                     </td>
                     <td className="py-1.5 pl-2">
                       <button
-                        onClick={() => setDeliverySlabs(prev => {
-                          const next = prev.filter((_, i) => i !== idx);
+                        onClick={() => {
+                          const next = deliverySlabs.filter((_, i) => i !== idx);
                           if (next.length > 0) next[next.length - 1] = { ...next[next.length - 1], max_distance_km: -1 };
-                          return next;
-                        })}
+                          setDeliverySlabs(next);
+                        }}
                         className="p-1.5 text-status-error hover:bg-red-50 rounded-lg transition-all"
                       >
                         <X className="w-4 h-4" />
@@ -190,10 +188,9 @@ export default function PaymentSection({
             const minDist = Number(lastSlab.max_distance_km) === -1
               ? Number(lastSlab.min_distance_km)
               : Number(lastSlab.max_distance_km);
-            setDeliverySlabs(prev => [
-              ...prev.map((s, i) => i === prev.length - 1 ? { ...s, max_distance_km: minDist + 50 } : s),
-              { min_distance_km: minDist + 50, max_distance_km: -1, price: 0 }
-            ]);
+            const next = deliverySlabs.map((s, i) => i === deliverySlabs.length - 1 ? { ...s, max_distance_km: minDist + 50 } : s);
+            next.push({ min_distance_km: minDist + 50, max_distance_km: -1, price: 0 });
+            setDeliverySlabs(next);;
           }}
             className="px-4 py-2 text-sm border border-outline-variant/50 rounded-lg text-on-surface-variant hover:text-deep-navy hover:border-lavender-accent transition-all">
             + Add Slab
