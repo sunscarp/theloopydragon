@@ -208,7 +208,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "transactions-clearing",
     title: "What is 'In Clearing'?",
     description:
-      "• 2 business day clearing period after acceptance\n• Protects against disputes and chargebacks\n• Amber badge = In Clearing, then moves to Cleared",
+      "Funds on hold for 2 business days before you can withdraw. Amber border = In Clearing.",
     targetSelector: '[data-tut="transactions-clearing-card"]',
     placement: "left",
   },
@@ -216,7 +216,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "transactions-cleared",
     title: "Funds Available",
     description:
-      "• Demo transaction moved to 'Cleared' status\n• Amount reflected in 'Available for Withdrawal'\n• Cards show: Total Balance, Available (green), In Clearing (amber)",
+      "• Demo transaction moved to 'Cleared' status\n• Amount reflected in 'Available for Withdrawal'\n• Cards with green/amber borders show current status",
     targetSelector: '[data-tut="transactions-available-card"]',
     placement: "bottom",
   },
@@ -224,20 +224,9 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
     id: "transactions-withdraw",
     title: "Request a Withdrawal",
     description:
-      "Click 'Withdraw' on the Available for Withdrawal card to open the confirmation popup.",
+      "Click 'Withdraw' on the Available for Withdrawal card to withdraw your money",
     targetSelector: '[data-tut="transactions-available-card"]',
     placement: "bottom",
-    actionRequired: "Click Withdraw on the card to open the confirmation popup",
-    actionType: "custom",
-  },
-  {
-    id: "transactions-withdraw-confirm",
-    title: "Confirm Withdrawal",
-    description:
-      "Click 'Confirm' in the popup to submit your withdrawal request.",
-    targetSelector: '[data-tut="transactions-confirm-card"]',
-    placement: "right",
-    actionRequired: "Click Confirm to submit your withdrawal",
     actionType: "custom",
   },
   // ===== SUPPORT PAGE =====

@@ -166,8 +166,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   }, [steps.length, currentStepIndex, finishTutorial]);
 
   const prevStep = useCallback(() => {
-    setCurrentStepIndex((prev) => Math.max(0, prev - 1));
-  }, []);
+    const nextIndex = Math.max(0, currentStepIndex - 1);
+    for (let i = nextIndex; i >= 0; i--) {
+      if (steps[i]?.actionRoute) {
+        router.push(steps[i].actionRoute!);
+        break;
+      }
+    }
+    setCurrentStepIndex(nextIndex);
+  }, [currentStepIndex, steps, router]);
 
   const startPageTutorial = useCallback((page: string) => {
     if (window.innerWidth < 640) return;
@@ -189,6 +196,16 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     },
     [isActive, currentStep, nextStep]
   );
+
+  const handlePerformAction = useCallback(() => {
+    const step = currentStep;
+    if (!step) return;
+    if (step.actionType === "navigate" && step.actionRoute) {
+      router.push(step.actionRoute);
+      return;
+    }
+    nextStep();
+  }, [currentStep, nextStep, router]);
 
   const demoOrder = includeDemoOrder ? DEMO_TUTORIAL_ORDER : null;
   const demoOrderProfile = includeDemoOrder ? DEMO_TUTORIAL_ORDER_PROFILE : null;
@@ -284,7 +301,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isOnboarding || !isActive || !currentStep) return;
     const orderStepIds = ["orders-nav", "orders-overview", "orders-demo-order", "orders-accept", "orders-after-accept", "orders-tracking", "orders-status"];
-    const txStepIds = ["transactions-nav", "transactions-overview", "transactions-demo-row", "transactions-clearing", "transactions-cleared", "transactions-withdraw", "transactions-withdraw-confirm"];
+    const txStepIds = ["transactions-nav", "transactions-overview", "transactions-demo-row", "transactions-clearing", "transactions-cleared", "transactions-withdraw"];
     const isOrderSection = orderStepIds.includes(currentStep.id);
     const isTxSection = txStepIds.includes(currentStep.id);
     if (isOrderSection || isTxSection) {
@@ -332,6 +349,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
           onPrev={prevStep}
           onSkip={skipTutorial}
           onClose={skipTutorial}
+          onPerformAction={handlePerformAction}
         />
       )}
       {showTermsModal && (

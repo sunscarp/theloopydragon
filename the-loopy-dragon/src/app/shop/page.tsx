@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../utils/supabase";
 import Navbar from "@/components/Navbar";
@@ -39,8 +39,8 @@ export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All Products");
   const [sellers, setSellers] = useState<{id: number; shop_name: string; slug: string}[]>([]);
   const [sellerSlugMap, setSellerSlugMap] = useState<Record<string, string>>({});
-  const [selectedStore, setSelectedStore] = useState<string>("All Stores");
   const [isHairAccessoriesOpen, setIsHairAccessoriesOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const { cart, addToCart, isLoaded } = useCart();
   const router = useRouter();
 
@@ -481,6 +481,16 @@ export default function Shop() {
   }, [showDisableDragonsPopup]);
   */
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCategory, sortBy]);
+
+  useEffect(() => {
+    const el = document.querySelector(".products-area");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentPage]);
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#F5F9FF]">
@@ -592,11 +602,7 @@ export default function Shop() {
 
       return matchesSearch && matchesCategory;
     })
-    .filter(product => {
-      if (selectedStore === "All Stores") return true;
-      if (selectedStore === "The Loopy Dragon") return !product.seller_id;
-      return String(product.seller_id) === selectedStore;
-    });
+    ;
 
   const sortedProducts = sortBy === "price-asc"
     ? [...filteredProducts].sort((a, b) => a.Price - b.Price)
@@ -609,6 +615,11 @@ export default function Shop() {
             return aOrder - bOrder;
           })
         : filteredProducts;
+
+  const ITEMS_PER_PAGE = 30;
+  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / ITEMS_PER_PAGE));
+  const safePage = currentPage > totalPages ? 1 : currentPage;
+  const paginatedProducts = sortedProducts.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   const renderProductCard = (product: ProductRow) => {
     const images = [
@@ -1511,41 +1522,11 @@ export default function Shop() {
                 ))}
               </ul>
             </div>
-            {/* Store Filter */}
-            <div style={{ marginTop: "2rem" }}>
-              <h3 style={{
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 700, fontSize: '16px', lineHeight: '1.2',
-                letterSpacing: '0.01em', color: '#22223B', marginBottom: '1rem'
-              }}>
-                Stores
-              </h3>
-              <div style={{ borderBottom: '1px solid #000000', marginBottom: '1rem' }}></div>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {["All Stores", "The Loopy Dragon", ...sellers.map(s => s.shop_name)].map(store => (
-                  <li key={store}>
-                    <button
-                      style={{
-                        width: '100%', textAlign: 'left', padding: '0.5rem 1rem',
-                        borderRadius: '0.75rem', fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '14px',
-                        color: selectedStore === store ? '#000000' : '#1F2937',
-                        fontWeight: selectedStore === store ? 700 : 400,
-                        backgroundColor: 'transparent', border: 'none', cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      className={selectedStore === store ? '' : 'hover:text-purple-600'}
-                      onClick={() => setSelectedStore(store === "The Loopy Dragon" ? "The Loopy Dragon" : store === "All Stores" ? "All Stores" : String(sellers.find(s => s.shop_name === store)?.id || store))}>
-                      {store}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+
           </div>
           
           {/* Products Area */}
-          <div style={{ width: '100%' }}>
+          <div className="products-area" style={{ width: '100%' }}>
             {/* Sort and Product Count */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -1626,9 +1607,79 @@ export default function Shop() {
               ) : sortedProducts.length === 0 ? (
                 renderNoProductsMessage()
               ) : (
-                sortedProducts.map(renderProductCard)
+                paginatedProducts.map(renderProductCard)
               )}
             </div>
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem' }}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0',
+                    border: '1px solid #D1D5DB',
+                    background: safePage === 1 ? '#F3F4F6' : '#FFFFFF',
+                    color: safePage === 1 ? '#9CA3AF' : '#1F2937',
+                    cursor: safePage === 1 ? 'not-allowed' : 'pointer',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  Previous
+                </button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (safePage <= 4) {
+                    pageNum = i + 1;
+                  } else if (safePage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = safePage - 3 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '0',
+                        border: safePage === pageNum ? '1px solid #22223B' : '1px solid #D1D5DB',
+                        background: safePage === pageNum ? '#22223B' : '#FFFFFF',
+                        color: safePage === pageNum ? '#FFFFFF' : '#1F2937',
+                        cursor: 'pointer',
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '14px',
+                        fontWeight: safePage === pageNum ? 700 : 400,
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0',
+                    border: '1px solid #D1D5DB',
+                    background: safePage === totalPages ? '#F3F4F6' : '#FFFFFF',
+                    color: safePage === totalPages ? '#9CA3AF' : '#1F2937',
+                    cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>

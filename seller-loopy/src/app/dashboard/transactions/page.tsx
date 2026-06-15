@@ -88,12 +88,6 @@ export default function TransactionsPage() {
   }, [tutorial.isOnboarding, tutorial.currentStep?.id]);
 
   useEffect(() => {
-    if (showConfirmModal && tutorial.isOnboarding && tutorial.currentStep?.id !== "transactions-withdraw-confirm") {
-      setShowConfirmModal(false);
-    }
-  }, [tutorial.isOnboarding, tutorial.currentStep?.id, showConfirmModal]);
-
-  useEffect(() => {
     const stored = localStorage.getItem("seller-loopy-auth");
     if (!stored) { window.location.href = "/"; return; }
     const s = JSON.parse(stored);
@@ -155,14 +149,6 @@ export default function TransactionsPage() {
     setShowConfirmModal(false);
     if (!amount || amount <= 0) { toast.error("No balance available for withdrawal"); return; }
     if (!seller?.terms_accepted && !tutorial.isOnboarding) { toast.error("You must accept the Seller Terms & Conditions before withdrawing. Go to Settings > Terms."); return; }
-    if (tutorial.isOnboarding) {
-      setRequesting(true);
-      await new Promise(r => setTimeout(r, 600));
-      toast.success("Withdraw initiated (simulated)");
-      setRequesting(false);
-      tutorial.triggerAdvance("transactions-withdraw-confirm");
-      return;
-    }
     setRequesting(true);
     try {
       const res = await fetch("/api/sellers/request-withdrawal", {
@@ -349,7 +335,7 @@ export default function TransactionsPage() {
 
       {/* Balance Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+        <div className="bg-white rounded-xl p-5 border border-gray-200">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Total Balance</p>
             <Wallet className="w-4 h-4 text-gray-400" />
@@ -357,35 +343,34 @@ export default function TransactionsPage() {
           <p className="text-2xl font-bold text-gray-900 font-mono">₹{stats.totalBalance.toFixed(2)}</p>
           <p className="text-xs text-gray-400 mt-1">Cumulative account total</p>
         </div>
-        <div data-tut="transactions-available-card" className="bg-emerald-50 rounded-xl p-5 border border-emerald-100 flex flex-col">
+        <div data-tut="transactions-available-card" className="bg-white rounded-xl p-5 border border-emerald-300 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Available for Withdrawal</p>
             <CheckCircle className="w-4 h-4 text-emerald-500" />
           </div>
           <p className="text-2xl font-bold text-emerald-600 font-mono">₹{balanceData.available.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1">Orders cleared (2+ business days old)</p>
+          {balanceData.available <= 0 && (
+            <p className="text-xs text-gray-400 mt-1">No balance available yet</p>
+          )}
           <div className="mt-auto pt-3">
             {balanceData.available > 0 && !seller?.terms_accepted && (
               <p className="text-xs text-amber-600 mb-2">Accept <a href="/dashboard/settings?tab=terms" className="underline hover:text-amber-800">Terms in Settings → Terms</a> to withdraw</p>
             )}
             {balanceData.available > 0 && (
-              <button onClick={() => { if (tutorial.isOnboarding) tutorial.triggerAdvance("transactions-withdraw"); setShowConfirmModal(true); }} disabled={requesting || !seller?.terms_accepted}
+              <button onClick={() => setShowConfirmModal(true)} disabled={requesting || !seller?.terms_accepted}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 {confirmed ? <><CheckCircle className="w-4 h-4" /> Withdraw Initiated</> : requesting ? <><Loader2 className="w-4 h-4 animate-spin" /> Withdrawing...</> : <><Send className="w-4 h-4" /> Withdraw</>}
               </button>
             )}
-            {balanceData.available <= 0 && (
-              <p className="text-xs text-gray-400">No balance available yet</p>
-            )}
           </div>
         </div>
-        <div data-tut="transactions-clearing-card" className="bg-amber-50 rounded-xl p-5 border border-amber-100">
+        <div data-tut="transactions-clearing-card" className="bg-white rounded-xl p-5 border border-amber-300">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-500 uppercase tracking-wider">In Clearing</p>
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <p className="text-2xl font-bold text-amber-600 font-mono">₹{balanceData.clearing.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1">Money from recent orders that is on a 2-day hold. After 2 business days, it moves to "Available" and you can withdraw it.</p>
+          <p className="text-xs text-gray-400 mt-1">Funds on hold for 2 business days before you can withdraw.</p>
         </div>
       </div>
 

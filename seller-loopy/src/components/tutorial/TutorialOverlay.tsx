@@ -10,6 +10,7 @@ interface TutorialOverlayProps {
   onPrev: () => void;
   onSkip: () => void;
   onClose: () => void;
+  onPerformAction?: () => void;
 }
 
 export default function TutorialOverlay({
@@ -19,6 +20,7 @@ export default function TutorialOverlay({
   onPrev,
   onSkip,
   onClose,
+  onPerformAction,
 }: TutorialOverlayProps) {
   const step = steps[currentIndex];
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -130,7 +132,8 @@ export default function TutorialOverlay({
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") onClose();
         if (e.key === "ArrowRight" || e.key === "Enter") {
-          if (!step.actionRequired) onNext();
+          if (step.actionRequired) onPerformAction?.();
+          else onNext();
         }
         if (e.key === "ArrowLeft") onPrev();
       };
@@ -303,34 +306,21 @@ export default function TutorialOverlay({
               </div>
             </div>
           )}
-          {step.actionRequired && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-              <p className="text-xs font-medium text-amber-800">
-                Action required: {step.actionRequired}
-              </p>
-            </div>
-          )}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2">
               <button onClick={onSkip}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
                 <SkipForward className="w-3 h-3" />
                 Skip
               </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400 font-medium">
-                {currentIndex + 1} / {steps.length}
-              </span>
-              <div className="flex gap-1.5">
+              <div className="flex items-center gap-1.5">
                 {!isFirst && (
                   <button onClick={onPrev}
                     className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                 )}
-                {!step.actionRequired && !isLast && (
-                  <button onClick={onNext}
+                {!isLast && (
+                  <button onClick={() => { if (step.actionRequired) onPerformAction?.(); else onNext(); }}
                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors">
                     Next <ChevronRight className="w-3 h-3" />
                   </button>
@@ -343,7 +333,6 @@ export default function TutorialOverlay({
                 )}
               </div>
             </div>
-          </div>
         </div>
       </div>
     );
@@ -383,7 +372,7 @@ export default function TutorialOverlay({
     <>
       {/* Backdrop - single cutout with massive outline to avoid seam lines between panels */}
       <div
-        className={`fixed z-[9999] ${step.actionRequired ? "pointer-events-none" : "pointer-events-auto"}`}
+        className="fixed z-[9999] pointer-events-auto"
         style={{
           top: Math.max(0, targetRect.top - 8),
           left: Math.max(0, targetRect.left - 8),
@@ -437,18 +426,15 @@ export default function TutorialOverlay({
               className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
               Skip
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 font-medium">
-                {currentIndex + 1} / {steps.length}
-              </span>
+            <div className="flex items-center gap-1.5">
               {!isFirst && (
                 <button onClick={onPrev}
                   className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
               )}
-              {!step.actionRequired && !isLast && (
-                <button onClick={onNext}
+              {!isLast && (
+                <button onClick={() => { if (step.actionRequired) onPerformAction?.(); else onNext(); }}
                   className="flex items-center gap-0.5 px-2.5 py-1 text-[10px] font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors">
                   Next <ChevronRight className="w-3 h-3" />
                 </button>
