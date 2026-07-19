@@ -106,7 +106,7 @@ export default function Home() {
 
       if (!error && data) {
         const filtered = data.filter(
-          p => p.status !== "deactivated" && !p.seller_id
+          (p: any) => p.status !== "deactivated" && !p.seller_id
         ).slice(0, 4);
         setNewArrivalsProducts(filtered);
       }
