@@ -8,6 +8,7 @@ import OrderSummary from "@/components/OrderSummary";
 import { SPECIAL_OFFER_PRODUCTS } from "@/utils/dragonOffers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { trackInitiateCheckout, trackPurchase } from "@/utils/metaPixel";
 
 interface CartItem {
   cartKey: string;
@@ -367,6 +368,8 @@ function CheckoutContent() {
         return;
       }
     }
+
+    trackInitiateCheckout(total, customOrder ? customOrder.Products.length : Object.values(cart).reduce((sum, qty) => sum + qty, 0));
 
     try {
       const response = await fetch("/api/razorpay", {
@@ -766,6 +769,13 @@ function CheckoutContent() {
             }
           }
           if (allSuccess) {
+            const contentIds = customOrder
+              ? customOrder.Products.map((p: any) => String(p.Product))
+              : Object.entries(cart).map(([cartKey]) => {
+                  const productId = getProductIdFromCartKey(cartKey);
+                  return String(productId);
+                });
+            trackPurchase(total, contentIds, contentIds.length);
             router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
             console.error("Order partially failed. Supabase error:", supabaseErrorMsg);

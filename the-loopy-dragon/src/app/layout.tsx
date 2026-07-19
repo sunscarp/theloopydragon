@@ -5,6 +5,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { Inter } from "next/font/google";
 import { Arapey } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import MetaPixel from "@/components/MetaPixel";
  
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <MetaPixel />
         <CartProvider>{children}</CartProvider>
         <Toaster position="top-right" />
       </body>

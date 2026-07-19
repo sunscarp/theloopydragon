@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import Navbar from "@/components/Navbar";
 import { useCart } from "@/contexts/CartContext";
+import { trackViewContent, trackAddToCart } from "@/utils/metaPixel";
 import { Store } from "lucide-react";
 import Link from "next/link";
 import { isMobile as isMobileSSR } from "react-device-detect";
@@ -85,6 +86,7 @@ export default function ProductPage() {
         setProduct(null);
       } else {
         setProduct(data);
+        trackViewContent(data.Product, String(data.id), data.Price);
         if (data.seller_id) {
           const { data: seller } = await supabase
             .from("sellers")
@@ -143,6 +145,8 @@ export default function ProductPage() {
         carMirror: addOns.carMirror,
         customMessage: "" // No message at product level
       }, quantity);
+      
+      trackAddToCart(product.Product, String(product.id), product.Price * quantity, quantity);
       
       // Optionally show a quick success message
       setShowCartConfirmation(true);
