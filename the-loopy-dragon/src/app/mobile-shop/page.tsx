@@ -23,6 +23,7 @@ type ProductRow = {
   ImageUrl4?: string | null;
   ImageUrl5?: string | null;
   status?: string | null;
+  sort_order?: number | null;
 };
 
 export default function MobileShop() {
@@ -424,7 +425,7 @@ export default function MobileShop() {
       setErrorMsg(null);
       const { data, error } = await supabase
         .from("Inventory")
-        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, status");
+        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, status, sort_order");
 
       if (error) {
         setProducts([]);
@@ -626,7 +627,11 @@ export default function MobileShop() {
     ? [...filteredProducts].sort((a, b) => a.Price - b.Price)
     : sortBy === "price-desc"
       ? [...filteredProducts].sort((a, b) => b.Price - a.Price)
-      : filteredProducts;
+      : [...filteredProducts].sort((a, b) => {
+          const aOrder = a.sort_order && a.sort_order > 0 ? a.sort_order : Infinity;
+          const bOrder = b.sort_order && b.sort_order > 0 ? b.sort_order : Infinity;
+          return aOrder - bOrder;
+        });
 
   const renderProductCard = (product: ProductRow) => {
     const images = [

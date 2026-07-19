@@ -16,6 +16,7 @@ import {
   X,
   ChevronDown,
   Store,
+  ThumbsDown,
 } from "lucide-react";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { href: "/sellers", label: "Sellers", icon: Users },
   { href: "/payouts", label: "Payouts", icon: DollarSign },
   { href: "/custom-orders", label: "Custom Orders", icon: ClipboardList },
+  { href: "/rejected-orders", label: "Rejected Orders", icon: ThumbsDown },
   { href: "/dragon-game", label: "Dragon Game", icon: Gamepad2 },
 ];
 
@@ -153,6 +155,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <title>Owner Dashboard - The Loopy Dragon</title>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-slate-50">
         <Toaster

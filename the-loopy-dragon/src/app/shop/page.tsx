@@ -26,6 +26,7 @@ type ProductRow = {
   ImageUrl5?: string | null;
   seller_id?: string | null;
   status?: string | null;
+  sort_order?: number | null;
 };
 
 export default function Shop() {
@@ -64,7 +65,7 @@ export default function Shop() {
       setErrorMsg(null);
       const { data, error } = await supabase
         .from("Inventory")
-        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, seller_id, status");
+        .select("id, Product, Quantity, Price, Tag, ImageUrl1, ImageUrl2, ImageUrl3, ImageUrl4, ImageUrl5, seller_id, status, sort_order");
 
       if (error) {
         setProducts([]);
@@ -601,7 +602,11 @@ export default function Shop() {
     ? [...filteredProducts].sort((a, b) => a.Price - b.Price)
     : sortBy === "price-desc"
       ? [...filteredProducts].sort((a, b) => b.Price - a.Price)
-      : filteredProducts;
+      : [...filteredProducts].sort((a, b) => {
+          const aOrder = a.sort_order && a.sort_order > 0 ? a.sort_order : Infinity;
+          const bOrder = b.sort_order && b.sort_order > 0 ? b.sort_order : Infinity;
+          return aOrder - bOrder;
+        });
 
   const renderProductCard = (product: ProductRow) => {
     const images = [
@@ -1500,37 +1505,6 @@ export default function Shop() {
                         {category}
                       </button>
                     )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* Store Filter */}
-            <div style={{ marginTop: "2rem" }}>
-              <h3 style={{
-                fontFamily: 'Montserrat, sans-serif',
-                fontWeight: 700, fontSize: '16px', lineHeight: '1.2',
-                letterSpacing: '0.01em', color: '#22223B', marginBottom: '1rem'
-              }}>
-                Stores
-              </h3>
-              <div style={{ borderBottom: '1px solid #000000', marginBottom: '1rem' }}></div>
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {["All Stores", "The Loopy Dragon", ...sellers.map(s => s.shop_name)].map(store => (
-                  <li key={store}>
-                    <button
-                      style={{
-                        width: '100%', textAlign: 'left', padding: '0.5rem 1rem',
-                        borderRadius: '0.75rem', fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '14px',
-                        color: selectedStore === store ? '#000000' : '#1F2937',
-                        fontWeight: selectedStore === store ? 700 : 400,
-                        backgroundColor: 'transparent', border: 'none', cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      className={selectedStore === store ? '' : 'hover:text-purple-600'}
-                      onClick={() => setSelectedStore(store === "The Loopy Dragon" ? "The Loopy Dragon" : store === "All Stores" ? "All Stores" : String(sellers.find(s => s.shop_name === store)?.id || store))}>
-                      {store}
-                    </button>
                   </li>
                 ))}
               </ul>

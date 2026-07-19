@@ -1173,27 +1173,6 @@ export default function CartPage() {
                       </div>
                     )}
                     
-                    {/* Christmas Discount */}
-                    {christmasDiscount > 0 && (
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{
-                          fontFamily: "Montserrat, sans-serif",
-                          fontSize: "16px",
-                          color: "#059669"
-                        }}>
-                          Christmas Special (26% OFF)
-                        </span>
-                        <span style={{
-                          fontFamily: "Montserrat, sans-serif",
-                          fontSize: "16px",
-                          fontWeight: 600,
-                          color: "#059669"
-                        }}>
-                          -₹{christmasDiscount.toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-                    
                     {/* Free Product Items Notice */}
                     {cartItems.some(item => item.isSpecialOffer) && (
                       <div style={{

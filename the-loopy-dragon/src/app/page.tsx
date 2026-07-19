@@ -97,17 +97,18 @@ export default function Home() {
 
       const totalProducts = allData.length;
       
-      // Fetch newest 4 products, excluding the bottom 4 (free offers)
-      // We'll fetch products sorted by id descending, skip the first 4 (which are the free offers)
-      // and take the next 4
       const { data, error } = await supabase
         .from('Inventory')
-        .select('Product, Price, ImageUrl1, id')
+        .select('Product, Price, ImageUrl1, id, status, seller_id')
+        .not('id', 'in', '(999001,999002,999003,999004)')
         .order('id', { ascending: false })
-        .range(4, 7); // Skip first 4 (indices 0-3), get next 4 (indices 4-7)
+        .range(0, 49);
 
       if (!error && data) {
-        setNewArrivalsProducts(data);
+        const filtered = data.filter(
+          p => p.status !== "deactivated" && !p.seller_id
+        ).slice(0, 4);
+        setNewArrivalsProducts(filtered);
       }
     }
 

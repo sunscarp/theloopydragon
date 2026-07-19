@@ -73,6 +73,7 @@ function CheckoutContent() {
   const [city, setCity] = useState("");
   const [stateName, setStateName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -280,11 +281,11 @@ function CheckoutContent() {
         total: subtotal + shippingCost
       };
     } else {
-      const { subtotal, dragonDiscount, christmasDiscount, finalTotal } = calculateOrderTotals();
+      const { subtotal, dragonDiscount, finalTotal } = calculateOrderTotals();
       return {
         subtotal,
         dragonDiscount,
-        christmasDiscount,
+        christmasDiscount: 0,
         finalTotal,
         total: finalTotal + (finalTotal >= 1000 ? 0 : shippingInfo.shippingCost)
       };
@@ -385,7 +386,7 @@ function CheckoutContent() {
       const order = await response.json();
       if (!order || !order.id) throw new Error("Error creating payment order");
 
-      const generatedOrderId = customOrder ? customOrder.order_id : `ODR-${order.id}-${Date.now()}`;
+      const generatedOrderId = customOrder ? customOrder.order_id : `TLD-${Math.floor(100000 + Math.random() * 900000)}`;
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -395,6 +396,7 @@ function CheckoutContent() {
         description: customOrder ? "Custom Order Payment" : "Purchase from The Loopy Dragon",
         order_id: order.id,
         handler: async function (response: any) {
+          setPaymentSuccess(true);
           let allSuccess = true;
           let supabaseErrorMsg = "";
           const orderDate = new Date().toISOString();
@@ -467,8 +469,7 @@ function CheckoutContent() {
                   })),
                   total: total,
                   dragonOffer: null,
-                  dragonDiscount: 0,
-                  christmasDiscount: 0
+                  dragonDiscount: 0
                 }),
               });
 
@@ -537,7 +538,6 @@ function CheckoutContent() {
                 'Shipping Cost': finalShippingCost.toFixed(2),
                 'Fire Offer': activeDragonOffer ? activeDragonOffer.title : "",
                 'Fire Discount': dragonDiscount.toFixed(2),
-                'Christmas Discount': christmasDiscount.toFixed(2),
                 isSpecialOffer: !!specialOffer,
                 seller_id: sId,
                 commission_earned: commissionEarned.toFixed(2),
@@ -567,8 +567,7 @@ function CheckoutContent() {
                     Products: productDetails,
                     uid: user.id,
                     "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
-                    "Total Discount": (dragonDiscount + christmasDiscount).toFixed(2),
-                    "Christmas Discount": christmasDiscount.toFixed(2),
+                    "Total Discount": dragonDiscount.toFixed(2),
                     Country: country,
                     City: city,
                     State: stateName
@@ -601,8 +600,7 @@ function CheckoutContent() {
                   orders: productDetails,
                   total: total,
                   dragonOffer: activeDragonOffer ? activeDragonOffer.title : null,
-                  dragonDiscount: dragonDiscount,
-                  christmasDiscount: christmasDiscount
+                  dragonDiscount: dragonDiscount
                 }),
               });
             } catch (emailError) {
@@ -666,7 +664,6 @@ function CheckoutContent() {
                       payment_id: response.razorpay_payment_id,
                       "Order Date": orderDate,
                       "Dragon Offer": activeDragonOffer ? activeDragonOffer.title : "",
-                      "Christmas Discount": christmasDiscount.toFixed(2),
                       isSpecialOffer: !!specialOffer,
                       seller_id: sId,
                       commission_earned: commissionEarned.toFixed(2),
@@ -796,6 +793,43 @@ function CheckoutContent() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      {paymentSuccess && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,0.97)",
+          backdropFilter: "blur(8px)",
+        }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              border: "4px solid #d1fae5",
+              borderTopColor: "#10b981",
+              margin: "0 auto 1.5rem",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            <h2 style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              color: "#111827",
+              marginBottom: "0.5rem",
+            }}>Payment Received!</h2>
+            <p style={{
+              fontFamily: "Montserrat, sans-serif",
+              fontSize: "0.95rem",
+              color: "#6b7280",
+            }}>Confirming your order...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-[#F5F9FF]" style={{ fontFamily: "sans-serif", overflowX: "hidden" }}>
         {/* Fixed Navbar + Marquee (handled inside Navbar) */}
         <div className="fixed top-0 left-0 right-0 z-50">
@@ -1677,14 +1711,8 @@ function CheckoutContent() {
                 </div>
                 {dragonDiscount > 0 && (
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#B80000", fontWeight: 500 }}>🎄 Christmas Discount</span>
+                    <span style={{ color: "#B80000", fontWeight: 500 }}>Discount</span>
                     <span style={{ fontWeight: 600, color: "#B80000" }}>-₹{dragonDiscount.toFixed(2)}</span>
-                  </div>
-                )}
-                {christmasDiscount > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#059669", fontWeight: 500 }}>Christmas Special (26% OFF)</span>
-                    <span style={{ fontWeight: 600, color: "#059669" }}>-₹{christmasDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>

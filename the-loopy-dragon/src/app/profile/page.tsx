@@ -255,45 +255,21 @@ export default function ProfilePage() {
       >
         <div>
           {/* Custom Orders Section */}
-          <h2
-            style={{
-              fontFamily: "Montserrat, sans-serif",
-              fontSize: isMobile ? "20px" : "24px",
-              fontWeight: 700,
-              color: "#22223B",
-              marginBottom: isMobile ? "1rem" : "1.5rem",
-            }}
-          >
-            Custom Orders (Payment pending)
-          </h2>
-          {loading ? (
-            <div
+          {!loading && orders.filter(order => order.Status?.includes("Pending Payment")).length > 0 && (
+            <>
+            <h2
               style={{
                 fontFamily: "Montserrat, sans-serif",
-                fontSize: "16px",
-                color: "#6B7280",
-                textAlign: "center",
-                padding: "2rem 0",
+                fontSize: isMobile ? "20px" : "24px",
+                fontWeight: 700,
+                color: "#22223B",
+                marginBottom: isMobile ? "1rem" : "1.5rem",
               }}
             >
-              Loading orders...
-            </div>
-          ) : (
+              Custom Orders (Payment pending)
+            </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {orders.filter(order => order.Status?.includes("Pending Payment")).length === 0 ? (
-                <div
-                  style={{
-                    fontFamily: "Montserrat, sans-serif",
-                    fontSize: "16px",
-                    color: "#6B7280",
-                    textAlign: "center",
-                    padding: "2rem 0",
-                  }}
-                >
-                  No custom orders pending payment.
-                </div>
-              ) : (
-                orders.filter(order => order.Status?.includes("Pending Payment")).map((order: ProfileOrder) => (
+                {orders.filter(order => order.Status?.includes("Pending Payment")).map((order: ProfileOrder) => (
                   <div
                     key={order.order_id}
                     style={{
@@ -710,9 +686,9 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
-                ))
-              )}
+                ))}
             </div>
+            </>
           )}
 
           {/* Previous Orders Section */}

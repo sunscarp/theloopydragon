@@ -1,26 +1,58 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabase";
+import { useRouter, useSearchParams } from "next/navigation";
+import { storage } from "@/utils/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
-  Loader2, Truck, Smartphone, Lock, DollarSign,
-  Eye, EyeOff, Store, Check, X, FileText,
+  Store, Wallet, FileText, Scale, Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import PaymentSection from "./payment-section";
+import PoliciesSection from "./policies-section";
+import TermsSection from "./terms-section";
+import ProfileSection from "./profile-section";
+import SecuritySection from "./security-section";
+
+const TABS = [
+  { id: "payment", label: "Payment", icon: Wallet },
+  { id: "policies", label: "Policies", icon: FileText },
+  { id: "terms", label: "Terms", icon: Scale },
+  { id: "profile", label: "Profile", icon: Store },
+  { id: "security", label: "Security", icon: Lock },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
 
 export default function SellerSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [seller, setSeller] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabId>("payment");
   const [freeDelivery, setFreeDelivery] = useState(false);
   const [upiId, setUpiId] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [slug, setSlug] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allowRefunds, setAllowRefunds] = useState(false);
+  const [allowReturns, setAllowReturns] = useState(false);
+  const [originPincode, setOriginPincode] = useState("411033");
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState("");
+  const [deliverySlabs, setDeliverySlabs] = useState<{ min_distance_km: number; max_distance_km: number; price: number }[]>([]);
+  const [saved, setSaved] = useState(false);
+  const [infoTooltip, setInfoTooltip] = useState<string | null>(null);
+  const [inventoryMode, setInventoryMode] = useState<"stock" | "demand">("stock");
 
   useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && TABS.some(t => t.id === tab)) {
+      setActiveTab(tab as TabId);
+    }
+
     const stored = localStorage.getItem("seller-loopy-auth");
     if (!stored) { router.push("/"); return; }
     const s = JSON.parse(stored);
@@ -31,11 +63,26 @@ export default function SellerSettingsPage() {
     setSlug(s.slug || "");
     setLogoUrl(s.logo_url || "");
     setBannerUrl(s.banner_url || "");
+    setAllowRefunds(s.allow_refunds ?? false);
+    setAllowReturns(s.allow_returns ?? false);
+    setOriginPincode(s.origin_pincode || "411033");
+    setFreeDeliveryThreshold(s.free_delivery_threshold ? String(s.free_delivery_threshold) : "");
+    setInventoryMode(s.inventory_mode === "demand" ? "demand" : "stock");
+
+    fetch(`/api/delivery-slabs?seller_id=${s.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.slabs) setDeliverySlabs(data.slabs);
+      })
+      .catch(() => {});
+
     setLoading(false);
   }, [router]);
 
   const handleSave = async () => {
     setSaving(true);
+    setSaved(false);
+    const prevMode = seller.inventory_mode === "demand" ? "demand" : "stock";
     const res = await fetch("/api/sellers/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -47,10 +94,40 @@ export default function SellerSettingsPage() {
         slug,
         logo_url: logoUrl,
         banner_url: bannerUrl,
+        allow_refunds: allowRefunds,
+        allow_returns: allowReturns,
+        origin_pincode: originPincode,
+        free_delivery_threshold: freeDeliveryThreshold ? Number(freeDeliveryThreshold) : 0,
+        inventory_mode: inventoryMode,
       }),
     });
     const data = await res.json();
-    if (data.success) {
+
+    const slabsToSave = deliverySlabs.map((s, i) => {
+      const slab = { ...s };
+      if (i === 0) slab.min_distance_km = 0;
+      if (i === deliverySlabs.length - 1) slab.max_distance_km = -1;
+      return slab;
+    });
+    const slabRes = await fetch("/api/delivery-slabs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seller_id: seller.id, slabs: slabsToSave }),
+    });
+    const slabData = await slabRes.json();
+
+    let modeUpdateSuccess = true;
+    if (inventoryMode !== prevMode) {
+      const modeRes = await fetch("/api/sellers/update-inventory-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seller_id: seller.id, inventory_mode: inventoryMode }),
+      });
+      const modeData = await modeRes.json();
+      modeUpdateSuccess = modeData.success;
+    }
+
+    if (data.success && slabData.success && modeUpdateSuccess) {
       const updated = {
         ...seller,
         free_delivery: freeDelivery,
@@ -59,14 +136,70 @@ export default function SellerSettingsPage() {
         slug,
         logo_url: logoUrl,
         banner_url: bannerUrl,
+        allow_refunds: allowRefunds,
+        allow_returns: allowReturns,
+        origin_pincode: originPincode,
+        free_delivery_threshold: freeDeliveryThreshold ? Number(freeDeliveryThreshold) : 0,
+        inventory_mode: inventoryMode,
       };
       localStorage.setItem("seller-loopy-auth", JSON.stringify(updated));
       setSeller(updated);
+      setSaved(true);
       toast.success("Settings saved");
+      setTimeout(() => setSaved(false), 2000);
     } else {
-      toast.error(data.error || "Failed to save");
+      toast.error(data.error || slabData.error || "Failed to save");
     }
     setSaving(false);
+  };
+
+  const handleDiscard = () => {
+    setFreeDelivery(seller.free_delivery ?? false);
+    setUpiId(seller.upi_id || "");
+    setTermsAccepted(seller.terms_accepted ?? false);
+    setSlug(seller.slug || "");
+    setLogoUrl(seller.logo_url || "");
+    setBannerUrl(seller.banner_url || "");
+    setAllowRefunds(seller.allow_refunds ?? false);
+    setAllowReturns(seller.allow_returns ?? false);
+    setOriginPincode(seller.origin_pincode || "411033");
+    setFreeDeliveryThreshold(seller.free_delivery_threshold ? String(seller.free_delivery_threshold) : "");
+    setInventoryMode(seller.inventory_mode === "demand" ? "demand" : "stock");
+    fetch(`/api/delivery-slabs?seller_id=${seller.id}`)
+      .then(r => r.json())
+      .then(data => { if (data.slabs) setDeliverySlabs(data.slabs); });
+  };
+
+  const handleLogoUpload = async (file: File) => {
+    setUploadingLogo(true);
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `sellers/${fileName}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setLogoUrl(url);
+      toast.success("Logo uploaded");
+    } catch {
+      toast.error("Logo upload failed");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleBannerUpload = async (file: File) => {
+    setUploadingBanner(true);
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `sellers/${fileName}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setBannerUrl(url);
+      toast.success("Banner uploaded");
+    } catch {
+      toast.error("Banner upload failed");
+    } finally {
+      setUploadingBanner(false);
+    }
   };
 
   if (loading) {
@@ -82,269 +215,91 @@ export default function SellerSettingsPage() {
     );
   }
 
-  const inputClass = "w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all";
-
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">Store Settings</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Configure your store preferences and payout details</p>
-      </div>
-
-      {/* Payment Preferences */}
-      <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-5">
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <DollarSign className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Payment Preferences</h2>
-            <p className="text-xs text-gray-400">Control how customers pay for your products</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <Truck className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Free Delivery</p>
-              <p className="text-xs text-gray-400">Offer free delivery on all orders from your store</p>
-            </div>
-          </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" checked={freeDelivery}
-              onChange={e => setFreeDelivery(e.target.checked)}
-              className="sr-only peer" />
-            <div className="w-10 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-violet-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-          </label>
-        </div>
-      </div>
-
-      {/* UPI Payment Details */}
-      <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-5">
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <Smartphone className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">UPI Payment Details</h2>
-            <p className="text-xs text-gray-400">Your commissions will be paid to this UPI ID via Razorpay</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">UPI ID / VPA</label>
-            <input type="text" value={upiId}
-              onChange={e => setUpiId(e.target.value)}
-              className={inputClass} placeholder="sellername@upi" />
-          </div>
-          <p className="text-xs text-gray-400">Enter your UPI Virtual Payment Address (e.g. name@upi, name@okaxis, name@paytm). Payouts will be sent here via Razorpay.</p>
-        </div>
-
-      </div>
-
-      {/* Terms & Conditions */}
-      <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-4">
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Seller Terms &amp; Conditions</h2>
-            <p className="text-xs text-gray-400">You must accept the terms to receive payouts</p>
-          </div>
-        </div>
-
-        <div className="max-h-60 overflow-y-auto bg-gray-50 rounded-xl p-4 text-xs text-gray-600 space-y-3 border border-gray-100">
-          <p className="font-semibold text-gray-800">The Loopy Dragon — Seller Terms &amp; Conditions</p>
-          <p><strong>1. Introduction</strong><br />Welcome to The Loopy Dragon Marketplace! These Seller Terms govern your participation as a seller on our platform. By listing any product, you agree to be bound by these terms.</p>
-          <p><strong>2. Fees &amp; Commission</strong><br />The Loopy Dragon currently charges 0% platform commission. A 2% Razorpay payment processing fee is deducted on every transaction. Commission rates may change with prior notice via email.</p>
-          <p><strong>3. Orders &amp; Fulfilment</strong><br />You are responsible for packaging, shipping, and delivering products to buyers in India. Shipping timelines must be clearly stated. You bear responsibility for the order until it reaches the buyer.</p>
-          <p><strong>4. Payments</strong><br />All buyer payments are processed via Razorpay. Payouts to your UPI account are made after deducting Razorpay fees (2%) and any applicable platform commission. The Loopy Dragon may withhold payouts in cases of disputes or suspected fraud.</p>
-          <p><strong>5. Returns &amp; Refunds</strong><br />You must state a fair return policy. In case of damaged or defective products, you must work with the buyer to resolve. The Loopy Dragon may mediate disputes; its decision is final.</p>
-          <p><strong>6. Prohibited Conduct</strong><br />Sellers must not engage in fraud, communicate with buyers outside the platform to circumvent fees, post false reviews, or harass buyers/staff.</p>
-          <p><strong>7. Suspension &amp; Termination</strong><br />The Loopy Dragon may suspend or terminate accounts for policy violations. Pending orders must be fulfilled before account closure.</p>
-          <p><strong>8. Limitation of Liability</strong><br />The Loopy Dragon acts as a marketplace platform and is not a party to transactions between buyer and seller. We are not liable for shipping delays, damages, or disputes.</p>
-          <p><strong>9. Governing Law</strong><br />These terms are governed by the laws of India under the jurisdiction of Pune, Maharashtra.</p>
-          <p><strong>10. Contact</strong><br />Email: theloopydragon123@gmail.com</p>
-          <p className="text-gray-400 text-[10px]">By accepting, you confirm you have read, understood, and agree to all terms above.</p>
-        </div>
-
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" checked={termsAccepted}
-            onChange={e => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-          <div>
-            <span className="text-sm font-medium text-gray-900">I accept the Seller Terms &amp; Conditions</span>
-            <p className="text-xs text-gray-400 mt-0.5">Required to receive payouts. You can update this anytime.</p>
-          </div>
-        </label>
-      </div>
-
-      {/* Profile Page */}
-      <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-5">
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-            <Store className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Profile Page</h2>
-            <p className="text-xs text-gray-400">Customize your public seller page on The Loopy Dragon</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">URL Slug</label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400 whitespace-nowrap">theloopydragon.com/sellers/</span>
-              <input type="text" value={slug}
-                onChange={e => setSlug(e.target.value)}
-                className={inputClass} placeholder="your-store-name" />
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Choose a unique URL for your store page</p>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Logo URL</label>
-            <input type="text" value={logoUrl}
-              onChange={e => setLogoUrl(e.target.value)}
-              className={inputClass} placeholder="https://example.com/logo.png" />
-            <p className="text-xs text-gray-400 mt-1">Link to your store logo image (shown on your profile page)</p>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Banner URL</label>
-            <input type="text" value={bannerUrl}
-              onChange={e => setBannerUrl(e.target.value)}
-              className={inputClass} placeholder="https://example.com/banner.png" />
-            <p className="text-xs text-gray-400 mt-1">Link to your banner image (shown at the top of your profile page)</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-2">
-        <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20">
-          {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : "Save Settings"}
-        </button>
-      </div>
-
-      {/* Change Password */}
-      <PasswordChangeSection sellerId={seller.id} />
-    </div>
-  );
-}
-
-function PasswordChangeSection({ sellerId }: { sellerId: number }) {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changing, setChanging] = useState(false);
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("All fields are required");
-      return;
-    }
-    if (newPassword.length < 4) {
-      toast.error("New password must be at least 4 characters");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    setChanging(true);
-    try {
-      const res = await fetch("/api/sellers/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seller_id: sellerId, current_password: currentPassword, new_password: newPassword }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Password changed successfully");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      } else {
-        toast.error(data.error || "Failed to change password");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setChanging(false);
-    }
-  };
-
-  const pwInputClass = "w-full pr-11 pl-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all";
-
-  return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-6 space-y-5">
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-          <Lock className="w-5 h-5 text-white" />
-        </div>
+    <div className="space-y-8">
+      <header className="flex items-start justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Change Password</h2>
-          <p className="text-xs text-gray-400">Update your password. The owner won&apos;t be able to see it.</p>
+          <h2 className="text-headline-lg text-deep-navy font-headline-lg">Store Settings</h2>
+          <p className="text-body-md text-on-surface-variant">Configure your store preferences and payout details</p>
         </div>
-      </div>
+      </header>
 
-      <form onSubmit={handleChangePassword} className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Current Password</label>
-          <div className="relative">
-            <input type={showCurrent ? "text" : "password"} value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
-              className={pwInputClass} placeholder="Enter current password" />
-            <button type="button" onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      {/* Sub-navigation Tabs */}
+      <nav className="flex gap-1 bg-surface-container-lowest rounded-xl p-1.5 border border-primary/5 shadow-sm overflow-x-auto">
+        {TABS.map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-deep-navy text-white shadow-sm"
+                  : "text-on-surface-variant hover:text-deep-navy hover:bg-surface-blue"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
             </button>
-          </div>
+          );
+        })}
+      </nav>
+
+      {/* Active Section */}
+      <div className="space-y-8">
+        {activeTab === "payment" && (
+          <PaymentSection
+            freeDelivery={freeDelivery} setFreeDelivery={setFreeDelivery}
+            originPincode={originPincode} setOriginPincode={setOriginPincode}
+            freeDeliveryThreshold={freeDeliveryThreshold} setFreeDeliveryThreshold={setFreeDeliveryThreshold}
+            deliverySlabs={deliverySlabs} setDeliverySlabs={setDeliverySlabs}
+            infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip}
+            upiId={upiId} setUpiId={setUpiId}
+          />
+        )}
+        {activeTab === "policies" && (
+          <PoliciesSection
+            allowRefunds={allowRefunds} setAllowRefunds={setAllowRefunds}
+            allowReturns={allowReturns} setAllowReturns={setAllowReturns}
+            infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip}
+          />
+        )}
+        {activeTab === "terms" && (
+          <TermsSection
+            termsAccepted={termsAccepted} setTermsAccepted={setTermsAccepted}
+            infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip}
+          />
+        )}
+        {activeTab === "profile" && (
+          <ProfileSection
+            slug={slug} setSlug={setSlug}
+            logoUrl={logoUrl}
+            bannerUrl={bannerUrl}
+            uploadingLogo={uploadingLogo} uploadingBanner={uploadingBanner}
+            handleLogoUpload={handleLogoUpload} handleBannerUpload={handleBannerUpload}
+            infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip}
+            inventoryMode={inventoryMode} setInventoryMode={setInventoryMode}
+          />
+        )}
+        {activeTab === "security" && (
+          <SecuritySection
+            sellerId={seller.id}
+            infoTooltip={infoTooltip} setInfoTooltip={setInfoTooltip}
+          />
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 pt-4 pb-12">
+          <button onClick={handleDiscard}
+            className="px-8 py-3 rounded-xl border border-outline text-on-surface font-semibold hover:bg-surface-container transition-all">
+            Discard Changes
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            className={`px-12 py-3 rounded-xl text-white font-bold hover:opacity-90 active:scale-95 transition-all shadow-md ${saved ? 'bg-status-success' : 'bg-deep-navy'}`}>
+            {saving ? "Saving..." : saved ? "Saved Successfully!" : "Save Settings"}
+          </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">New Password</label>
-            <div className="relative">
-              <input type={showNew ? "text" : "password"} value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                className={pwInputClass} placeholder="Min 4 characters" />
-              <button type="button" onClick={() => setShowNew(!showNew)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Confirm Password</label>
-            <div className="relative">
-              <input type="password" value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className={pwInputClass} placeholder="Re-enter new password" />
-              {confirmPassword && (
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                  {confirmPassword === newPassword ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <X className="w-4 h-4 text-red-400" />
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <button type="submit" disabled={changing}
-          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20">
-          {changing ? <><Loader2 className="w-4 h-4 animate-spin" /> Changing...</> : "Change Password"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

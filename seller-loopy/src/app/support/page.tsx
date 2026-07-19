@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Store, ArrowLeft, Loader2 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 export default function SupportPage() {
   const [name, setName] = useState("");
@@ -46,12 +47,12 @@ export default function SupportPage() {
       answer: "Simply reach out to us via email, WhatsApp, or Instagram with your shop name and a few photos of your work. We'll review and get back to you within 24–36 hours."
     },
     {
-      question: "Is there any commission fee?",
-      answer: "No! We charge 0% commission. The only deduction is a 2% Razorpay processing fee on each transaction. You keep the rest."
+      question: "What fees apply to my sales?",
+      answer: "A 2% Razorpay payment processing fee is deducted from each transaction. Platform fees are at our discretion and will be communicated in advance."
     },
     {
       question: "How and when do I get paid?",
-      answer: "Payouts are processed via UPI directly to your account. You can request a payout from your seller dashboard, and it will be transferred after the 2% Razorpay fee is deducted."
+      answer: "Payouts are sent via UPI directly to your registered UPI ID. The platform processes payouts manually — once transferred, your orders will show as 'Paid' in your transaction history. A 2% Razorpay processing fee is deducted from each sale."
     },
     {
       question: "Can I list custom or made-to-order items?",
@@ -66,7 +67,33 @@ export default function SupportPage() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+        .contact-header {
+          font-family: Montserrat, sans-serif;
+          font-size: 40px;
+          font-weight: 700;
+          color: #22223B;
+          margin-bottom: 1rem;
+          letter-spacing: 0.05em;
+          text-transform: none;
+          line-height: 1.1;
+        }
+        @media (max-width: 767px) {
+          .contact-header {
+            font-size: 32px !important;
+            letter-spacing: 0.12em !important;
+            line-height: 0.95 !important;
+            font-weight: 700 !important;
+            text-transform: none !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .contact-header {
+            font-size: 28px !important;
+            letter-spacing: 0.15em !important;
+          }
+        }
       `}</style>
 
       <div className="min-h-screen bg-[#F5F9FF] flex flex-col font-sans scroll-smooth">
@@ -93,16 +120,7 @@ export default function SupportPage() {
         {/* Header */}
         <section style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1.5rem 0' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <h2 style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: isMobile ? '28px' : '40px',
-              fontWeight: 700,
-              color: '#22223B',
-              marginBottom: '1rem',
-              letterSpacing: isMobile ? '0.15em' : '0.05em',
-              lineHeight: isMobile ? '0.95' : '1.1',
-              textTransform: 'none'
-            }}>SELLER SUPPORT</h2>
+            <h2 className="contact-header">SELLER SUPPORT</h2>
             <p style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: isMobile ? '16px' : '20px',
@@ -125,10 +143,18 @@ export default function SupportPage() {
             <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'}`}>
               {/* Contact Information */}
               <div className={`bg-[#EFDFFF] p-8 sm:p-12 ${isMobile ? 'w-full' : 'w-full sm:w-[400px]'} max-w-full flex flex-col`}>
-                <h2 className="text-2xl font-semibold text-black mb-8" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
-                  Contact Information
+                <h2 className="text-2xl font-semibold text-black mb-6" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                  How to Apply
                 </h2>
-                <div className={`space-y-8 w-full ${isMobile ? 'max-w-full' : 'max-w-sm'}`}>
+                <div className="bg-white/50 rounded-xl p-5 mb-6">
+                  <p className="text-sm text-black leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <strong>Prefer the form?</strong> Just fill out the form on this page with your name, email, and a link to your Instagram or portfolio — we'll review your work and get back to you.
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-black mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  You can also reach out directly:
+                </p>
+                <div className={`space-y-6 w-full ${isMobile ? 'max-w-full' : 'max-w-sm'}`}>
                   <div className="flex items-start space-x-4">
                     <div className="w-full">
                       <h3 className="text-base font-medium text-black mb-1" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
@@ -180,7 +206,7 @@ export default function SupportPage() {
 
               {/* Contact Form */}
               <div className={`bg-white p-8 sm:p-12 ${isMobile ? 'pb-8' : 'pb-0'} flex flex-col justify-start ${isMobile ? 'w-full' : 'flex-1'}`}>
-                <h2 className="text-2xl font-semibold text-black mb-8 text-left" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
+                <h2 className="text-2xl font-semibold text-black mb-8" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em', lineHeight: '1.5' }}>
                   Drop us a Message
                 </h2>
                 <form onSubmit={handleSubmit} className={`space-y-6 ${isMobile ? 'pb-8' : 'pb-0'}`}>
@@ -202,7 +228,7 @@ export default function SupportPage() {
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-black mb-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                        Your email ID
+                        Your email ID (to contact if needed)
                       </label>
                       <input
                         id="email"
@@ -303,14 +329,7 @@ export default function SupportPage() {
 
         <br />
 
-        {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 py-6">
-          <div className="text-center">
-            <p className="text-gray-400 text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              The Loopy Dragon — Seller Portal
-            </p>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );

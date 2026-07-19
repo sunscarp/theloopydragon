@@ -79,6 +79,7 @@ export default function OrdersPage() {
     const { error } = await supabase.from("Your Profile").update({ Status: newStatus }).eq("order_id", orderId);
     if (error) { toast.error("Failed to update status"); setUpdatingStatus(null); return; }
     setOrders(prev => prev.map(o => o.order_id === orderId ? { ...o, Status: newStatus } : o));
+    setSelectedOrder(prev => prev?.order_id === orderId ? { ...prev, Status: newStatus } : prev);
     setEditingStatus(null);
     setUpdatingStatus(null);
     toast.success("Status updated");
@@ -141,7 +142,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header with Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -200,7 +201,7 @@ export default function OrdersPage() {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-sm font-bold text-slate-800">#{order.order_id}</p>
+                    <p className="text-sm font-bold text-slate-800 cursor-pointer hover:text-purple-600 transition-colors" title={order.order_id} onClick={() => { navigator.clipboard.writeText(order.order_id); toast.success("Order ID copied!"); }}>#{order.order_id}</p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {order["Order Date"] ? new Date(order["Order Date"]).toLocaleDateString("en-IN", {
                         year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
@@ -212,7 +213,7 @@ export default function OrdersPage() {
                       <div className="flex items-center gap-1">
                         <input type="text" value={customStatus} onChange={e => setCustomStatus(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter" && customStatus.trim()) updateStatus(order.order_id, customStatus); }}
-                          className="w-28 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 outline-none"
+                          className="w-40 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 outline-none"
                           placeholder="Enter status..." autoFocus />
                         <button onClick={() => { setEditingStatus(null); setCustomStatus(""); }}
                           className="p-1 text-slate-400 hover:text-slate-600">
@@ -253,7 +254,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                   <div className="space-y-1 text-xs text-slate-500">
                     <div className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
@@ -264,7 +265,12 @@ export default function OrdersPage() {
                       {shipping > 0 && <span className="text-slate-400">(+₹{shipping} shipping)</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-1">
+                    <button onClick={() => setSelectedOrder(order)}
+                      className="flex items-center gap-1 p-1.5 text-xs text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="View details">
+                      <ExternalLink className="w-3.5 h-3.5" /> Details
+                    </button>
                     {/* Tracking */}
                     {editingTracking === order.order_id ? (
                       <div className="flex items-center gap-1">
@@ -288,11 +294,6 @@ export default function OrdersPage() {
                         + Add Tracking
                       </button>
                     )}
-                    <button onClick={() => setSelectedOrder(order)}
-                      className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                      title="View details">
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -340,6 +341,10 @@ export default function OrdersPage() {
                   ) : (
                     <p className="text-sm text-slate-400">Not set</p>
                   )}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Shipping Cost</p>
+                  <p className="text-sm text-slate-700">₹{(selectedOrder.Orders?.["Shipping Cost"] || 0).toFixed(2)}</p>
                 </div>
               </div>
 

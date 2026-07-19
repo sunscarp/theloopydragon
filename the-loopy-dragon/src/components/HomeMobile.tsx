@@ -56,15 +56,18 @@ export default function HomeMobile() {
     const supabase = require('@supabase/supabase-js').createClient(supabaseUrl, supabaseKey);
 
     async function fetchNewArrivals() {
-      // Fetch newest 4 products, excluding the bottom 4 (free offers)
       const { data, error } = await supabase
         .from('Inventory')
-        .select('Product, Price, ImageUrl1, id')
+        .select('Product, Price, ImageUrl1, id, status, seller_id')
+        .not('id', 'in', '(999001,999002,999003,999004)')
         .order('id', { ascending: false })
-        .range(4, 7); // Skip first 4 (indices 0-3), get next 4 (indices 4-7)
+        .range(0, 49);
 
       if (!error && data) {
-        setNewArrivalsProducts(data);
+        const filtered = data.filter(
+          p => p.status !== "deactivated" && !p.seller_id
+        ).slice(0, 4);
+        setNewArrivalsProducts(filtered);
       }
     }
 
@@ -84,8 +87,8 @@ export default function HomeMobile() {
           <Navbar />
         </div>
 
-        {/* Spacer for fixed navbar + marquee (marquee is 2.5rem, navbar is ~4.5rem) */}
-        <div className="" style={{ height: 'calc(2.5rem + 4.5rem)' }}></div>
+        {/* Spacer for fixed navbar */}
+        <div style={{ height: '5rem' }}></div>
 
         {/* Mobile Hero Section */}
         <section className="relative w-full overflow-hidden" style={{ margin: 0, padding: 0, border: 'none', outline: 'none' }}>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import { storage } from "@/utils/firebase";
@@ -7,18 +7,49 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   Package, Plus, Loader2, Eye, Trash2, Search, RefreshCw,
   Sparkles, Pencil, X, Upload, Save, Image as ImageIcon,
+  ShoppingBag, Tag, Layers, TrendingUp, AlertTriangle, Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTutorial, TutorialHelpButton } from "@/components/tutorial/TutorialProvider";
 
 export default function SellerProductsPage() {
+  const tutorial = useTutorial();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<any>(null);
+  const [inventoryMode, setInventoryMode] = useState<"stock" | "demand">(() => {
+    try {
+      const stored = localStorage.getItem("seller-loopy-auth");
+      if (stored) {
+        const s = JSON.parse(stored);
+        return s.inventory_mode === "demand" ? "demand" : "stock";
+      }
+    } catch {}
+    return "stock";
+  });
   const [searchTerm, setSearchTerm] = useState("");
+const CATEGORIES = [
+  { label: "Select a category", value: "" },
+  { label: "Plushies", value: "Plushies" },
+  { label: "Keychains", value: "Keychains" },
+  { label: "Hair accessories", value: "Hair accessories" },
+  { label: "Flowers", value: "Flowers" },
+  { label: "Jewellery", value: "Jewellery" },
+  { label: "Characters", value: "Characters" },
+  { label: "Best Sellers", value: "Best Sellers" },
+  { label: "Apparel", value: "Apparel" },
+  { label: "Miscellaneous", value: "Miscellaneous" },
+];
+
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editForm, setEditForm] = useState({ Product: "", Price: 0, Quantity: 0, Description: "", Material: "", Tag: "", ImageUrl1: "", ImageUrl2: "", ImageUrl3: "", ImageUrl4: "", ImageUrl5: "" });
+  const [editCategory, setEditCategory] = useState("");
+  const [editExtraTags, setEditExtraTags] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [uploadingEditImage, setUploadingEditImage] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
   const router = useRouter();
 
   const fetchProducts = async (sellerId: number) => {
@@ -40,26 +71,41 @@ export default function SellerProductsPage() {
     fetchProducts(s.id);
   }, []);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    const { error } = await supabase.from("Inventory").delete().eq("id", id).eq("seller_id", seller.id);
-    if (error) {
+  const handleDelete = async () => {
+    if (!deleteModal) return;
+    setDeleting(true);
+    const res = await fetch("/api/delete-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: deleteModal.id, seller_id: seller.id }),
+    });
+    const result = await res.json();
+    if (!result.success) {
       toast.error("Failed to delete product");
     } else {
       toast.success("Product deleted");
-      setProducts(prev => prev.filter(p => p.id !== id));
+      setProducts(prev => prev.filter(p => p.id !== deleteModal.id));
     }
+    setDeleting(false);
+    setDeleteModal(null);
   };
 
   const openEdit = (product: any) => {
+    const tagStr = product.Tag || "";
+    const tags = tagStr.split(",").map((t: string) => t.trim()).filter(Boolean);
+    const categoryValues = CATEGORIES.map(c => c.value).filter(Boolean);
+    const matchedCategory = tags.find((t: string) => categoryValues.includes(t)) || "";
+    const extra = matchedCategory ? tags.filter((t: string) => t !== matchedCategory).join(", ") : tagStr;
     setEditingProduct(product);
+    setEditCategory(matchedCategory);
+    setEditExtraTags(extra);
     setEditForm({
       Product: product.Product || "",
       Price: product.Price || 0,
-      Quantity: product.Quantity || 0,
+      Quantity: inventoryMode === "demand" ? 9999999 : (product.Quantity || 0),
       Description: product.Description || "",
       Material: product.Material || "",
-      Tag: product.Tag || "",
+      Tag: tagStr,
       ImageUrl1: product.ImageUrl1 || "",
       ImageUrl2: product.ImageUrl2 || "",
       ImageUrl3: product.ImageUrl3 || "",
@@ -88,11 +134,14 @@ export default function SellerProductsPage() {
   const saveEdit = async () => {
     if (!editForm.Product.trim()) { toast.error("Product name is required"); return; }
     setSavingEdit(true);
+    const categoryTag = editCategory || "";
+    const extra = editExtraTags.split(",").map(t => t.trim()).filter(Boolean).join(", ");
+    const combinedTag = [categoryTag, extra].filter(Boolean).join(", ");
     const { error } = await supabase
       .from("Inventory")
       .update({
-        Product: editForm.Product, Price: editForm.Price, Quantity: editForm.Quantity,
-        Description: editForm.Description, Material: editForm.Material, Tag: editForm.Tag,
+        Product: editForm.Product, Price: editForm.Price, Quantity: inventoryMode === "demand" ? 9999999 : editForm.Quantity,
+        Description: editForm.Description, Material: editForm.Material, Tag: combinedTag,
         ImageUrl1: editForm.ImageUrl1, ImageUrl2: editForm.ImageUrl2, ImageUrl3: editForm.ImageUrl3,
         ImageUrl4: editForm.ImageUrl4, ImageUrl5: editForm.ImageUrl5,
       })
@@ -102,15 +151,39 @@ export default function SellerProductsPage() {
       toast.error("Failed to update");
     } else {
       toast.success("Product updated");
-      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...editForm } : p));
+      setProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, ...editForm, Tag: combinedTag } : p));
       setEditingProduct(null);
     }
     setSavingEdit(false);
   };
 
+  const toggleProductStatus = async (id: number, newStatus: string) => {
+    setTogglingStatus(true);
+    const { error } = await supabase.from("Inventory").update({ status: newStatus }).eq("id", id).eq("seller_id", seller.id);
+    if (error) {
+      toast.error("Failed to update status");
+    } else {
+      toast.success(`Product ${newStatus}`);
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+      setEditingProduct(null);
+    }
+    setTogglingStatus(false);
+  };
+
   const filtered = products.filter(p =>
     !searchTerm || p.Product?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const stats = useMemo(() => {
+    const p = products;
+    const totalProducts = p.length;
+    const activeProducts = p.filter((p: any) => p.status === "active" || !p.status).length;
+    const lowStockProducts = inventoryMode === "stock" ? p.filter((p: any) => p.Quantity <= 5).length : 0;
+    const totalValue = inventoryMode === "stock" ? p.reduce((sum: number, p: any) => sum + (p.Price || 0) * (p.Quantity || 0), 0) : 0;
+    const avgPrice = totalProducts > 0 ? p.reduce((sum: number, p: any) => sum + (p.Price || 0), 0) / totalProducts : 0;
+    const tagCount = new Set(p.filter((p: any) => p.Tag).map((p: any) => p.Tag)).size;
+    return { totalProducts, activeProducts, lowStockProducts, totalValue, avgPrice, tagCount };
+  }, [products]);
 
   if (loading) {
     return (
@@ -126,128 +199,231 @@ export default function SellerProductsPage() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">My Products</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            <span className="text-gray-700 font-medium">{products.length}</span> product{products.length !== 1 ? "s" : ""} listed
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">Manage your product catalog and listings</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => fetchProducts(seller.id)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-all">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => router.push("/dashboard/products/add")}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl transition-all shadow-lg shadow-violet-500/20">
-            <Plus className="w-4 h-4" /> Add Product
-          </button>
+        {inventoryMode === "demand" && (
+          <div className="shrink-0 bg-surface-blue border border-outline-variant/20 rounded-lg px-3 py-2 text-xs text-on-surface-variant">
+            <span className="font-semibold">Made on Demand</span> — quantities hidden
+          </div>
+        )}
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left column - Product Listing */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Search */}
+          {products.length > 0 && (
+            <div data-tut="products-search" className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Search products..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
+            </div>
+          )}
+
+          {/* Products Grid */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div data-tut="products-add-btn" className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">
+                {searchTerm
+                  ? `Search results (${filtered.length})`
+                  : `All Products (${products.length})`
+                }
+              </h3>
+              <button onClick={() => { if (tutorial.isOnboarding) return; router.push("/dashboard/products/add"); }}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#22223B] bg-white border border-[#D1D5DB] hover:bg-gray-50 rounded-lg transition-all shadow-sm"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <Plus className="w-4 h-4" /> Add Product
+              </button>
+            </div>
+
+            {products.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
+                  <Package className="w-6 h-6 text-gray-300" />
+                </div>
+                <p className="text-gray-700 font-medium">No products yet</p>
+                <p className="text-sm text-gray-400 mt-1">Add your first product to start selling on The Loopy Dragon</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
+                  <Search className="w-6 h-6 text-gray-300" />
+                </div>
+                <p className="text-gray-700 font-medium">No products match &quot;{searchTerm}&quot;</p>
+                <button onClick={() => setSearchTerm("")}
+                  className="mt-4 text-sm text-purple-600 hover:text-purple-700 font-medium">
+                  Clear search
+                </button>
+              </div>
+            ) : (
+              <div data-tut="products-grid" className="p-5">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {filtered.map((product, idx) => (
+                    <div key={product.id}
+                      className="relative rounded-2xl bg-white border border-gray-200 overflow-hidden cursor-pointer hover:border-gray-300 transition-colors"
+                      onClick={() => openEdit(product)}>
+                      {product.status === "deactivated" && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="text-[10px] font-semibold text-slate-500 bg-white/90 border border-slate-200 px-2 py-0.5 rounded-md shadow-sm">Deactivated</span>
+                        </div>
+                      )}
+                      {/* Image */}
+                      <div className="aspect-[4/3] bg-gray-50 relative overflow-hidden">
+                        {product.ImageUrl1 ? (
+                          <img src={product.ImageUrl1} alt={product.Product}
+                            className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-10 h-10 text-gray-200" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate">
+                              {product.Product}
+                            </h3>
+                            <p className="text-lg font-bold text-gray-900 mt-1">
+                              ₹{product.Price}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            {inventoryMode === "stock" && product.Quantity <= 5 ? (
+                              <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                {product.Quantity <= 0 ? "Out of Stock" : "Low Stock"}
+                              </span>
+                            ) : null}
+                            {inventoryMode === "stock" && (
+                              <span className="text-xs text-gray-400">Qty: {product.Quantity}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteModal({ id: product.id, name: product.Product }); }}
+                              className="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
+                              title="Delete Product">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-gray-400 italic">Click to edit</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right column - Summary + Stats */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Summary Cards */}
+          <div data-tut="products-summary-cards" className="space-y-6">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Total Products</p>
+              <Package className="w-5 h-5 text-gray-300" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
+            <p className="text-xs text-gray-400 mt-1.5">All products in your catalog</p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Active Listings</p>
+              <Sparkles className="w-5 h-5 text-gray-300" />
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{stats.activeProducts}</p>
+            <p className="text-xs text-gray-400 mt-1.5">Currently available for sale</p>
+          </div>
+
+          {inventoryMode === "stock" && (
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wider">Low Stock</p>
+              <AlertTriangle className="w-5 h-5 text-gray-300" />
+            </div>
+            <p className="text-2xl font-bold text-amber-600">{stats.lowStockProducts}</p>
+            <p className="text-xs text-gray-400 mt-1.5">Products with quantity &le; 5</p>
+          </div>
+          )}
+          </div>
+
+          {/* Quick Stats */}
+          {inventoryMode === "stock" && (
+          <div className="bg-gradient-to-br from-[#22223B] to-[#2a2a4a] text-white p-6 rounded-xl shadow-md relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl" />
+            <h3 className="text-xs uppercase tracking-widest text-white/60 mb-5">Catalog Overview</h3>
+            <div className="space-y-3 relative z-10">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <span className="text-sm font-semibold">Active Products</span>
+                <span className="text-base font-bold text-emerald-400">{stats.activeProducts}</span>
+              </div>
+              {inventoryMode === "stock" && (
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-sm text-white/70">Low Stock</span>
+                  <span className="text-sm font-bold text-amber-400">{stats.lowStockProducts}</span>
+                </div>
+              )}
+              {inventoryMode === "stock" && (
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-sm text-white/70">Total Value</span>
+                <span className="text-sm font-bold text-purple-300 font-mono">₹{stats.totalValue.toFixed(2)}</span>
+              </div>
+              )}
+            </div>
+          </div>
+          )}
         </div>
       </div>
 
-      {/* Search */}
-      {products.length > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search products..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
-        </div>
-      )}
-
-      {/* Empty state */}
-      {products.length === 0 ? (
-        <div className="text-center py-20 rounded-2xl bg-white border border-gray-200">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
-            <Package className="w-6 h-6 text-gray-300" />
-          </div>
-          <p className="text-gray-700 font-medium">No products yet</p>
-          <p className="text-sm text-gray-400 mt-1">Add your first product to start selling on The Loopy Dragon</p>
-          <button onClick={() => router.push("/dashboard/products/add")}
-            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl transition-all shadow-lg shadow-violet-500/20">
-            <Plus className="w-4 h-4" /> Add Your First Product
-          </button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-20 rounded-2xl bg-white border border-gray-200">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200">
-            <Search className="w-6 h-6 text-gray-300" />
-          </div>
-          <p className="text-gray-700 font-medium">No products match &quot;{searchTerm}&quot;</p>
-          <button onClick={() => setSearchTerm("")}
-            className="mt-4 text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors">
-            Clear search
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map(product => (
-            <div key={product.id}
-              className="group relative rounded-2xl bg-white border border-gray-200 overflow-hidden hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300">
-              {/* Image */}
-              <div className="aspect-[4/3] bg-gray-50 relative overflow-hidden">
-                {product.ImageUrl1 ? (
-                  <img src={product.ImageUrl1} alt={product.Product}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-10 h-10 text-gray-200" />
-                  </div>
-                )}
-                {/* Status badge */}
-                <div className="absolute top-3 right-3">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
-                    product.status === "active"
-                      ? "bg-green-100 text-green-700 border-green-200"
-                      : "bg-gray-100 text-gray-500 border-gray-200"
-                  }`}>
-                    {product.status === "active" && <Sparkles className="w-2.5 h-2.5" />}
-                    {product.status || "active"}
-                  </span>
-                </div>
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => !deleting && setDeleteModal(null)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-gray-200 shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-center px-6 pt-8 pb-4">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-500" />
               </div>
-
-              {/* Details */}
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-700 transition-colors">
-                  {product.Product}
-                </h3>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-lg font-bold text-gray-900">
-                    ₹<span className="text-purple-600">{product.Price}</span>
-                  </p>
-                  <p className="text-xs text-gray-400">Stock: {product.Quantity}</p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-                  <a href={`https://the-loopydragon.vercel.app/product/${encodeURIComponent(product.Product)}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all">
-                    <Eye className="w-3.5 h-3.5" /> View
-                  </a>
-                  <button onClick={() => openEdit(product)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-purple-600/60 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all">
-                    <Pencil className="w-3.5 h-3.5" /> Edit
-                  </button>
-                  <button onClick={() => handleDelete(product.id, product.Product)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-500/60 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all">
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
-                  </button>
-                </div>
-              </div>
+              <h2 className="text-lg font-bold text-gray-900">Delete Product</h2>
+              <p className="text-sm text-gray-500 mt-2">
+                Are you sure you want to delete <span className="font-semibold text-gray-700">&ldquo;{deleteModal.name}&rdquo;</span>? This action cannot be undone.
+              </p>
             </div>
-          ))}
+            <div className="flex gap-3 px-6 pb-6 pt-2">
+              <button onClick={() => setDeleteModal(null)} disabled={deleting}
+                className="flex-1 px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all disabled:opacity-50">
+                {deleting ? <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</> : <>Delete</>}
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
       {/* Edit Modal */}
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           onClick={() => setEditingProduct(null)}>
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-2xl"
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
               <div>
@@ -269,22 +445,36 @@ export default function SellerProductsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Price (₹)</label>
-                  <input type="number" value={editForm.Price} step="0.01"
-                    onChange={e => setEditForm(p => ({ ...p, Price: parseFloat(e.target.value) || 0 }))}
+                  <input type="number" value={editForm.Price} step="0.01" min="0" max="100000"
+                    onChange={e => setEditForm(p => ({ ...p, Price: Math.min(parseFloat(e.target.value) || 0, 100000) }))}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
                 </div>
+                {inventoryMode === "stock" && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Quantity</label>
                   <input type="number" value={editForm.Quantity}
                     onChange={e => setEditForm(p => ({ ...p, Quantity: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
                 </div>
+                )}
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Tags</label>
-                <input type="text" value={editForm.Tag}
-                  onChange={e => setEditForm(p => ({ ...p, Tag: e.target.value }))}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Category</label>
+                  <select value={editCategory}
+                    onChange={e => setEditCategory(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all">
+                    {CATEGORIES.map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Additional Tags</label>
+                  <input type="text" value={editExtraTags}
+                    onChange={e => setEditExtraTags(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all" />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Material</label>
@@ -336,18 +526,37 @@ export default function SellerProductsPage() {
                   onChange={e => setEditForm(p => ({ ...p, Description: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 transition-all resize-none" />
               </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                {editingProduct.status !== "deactivated" && editingProduct.status !== "owner_deactivated" && (
+                  <a href={`https://theloopydragon.in/product/${encodeURIComponent(editingProduct.Product)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700">
+                    <Eye className="w-3.5 h-3.5" /> View live product
+                  </a>
+                )}
+                {editingProduct.status === "deactivated" || editingProduct.status === "owner_deactivated" ? (
+                  <a href="/dashboard/support" className="text-xs text-red-500 font-medium underline hover:text-red-600">Deactivated by Loopy Dragon: Reach out via support to reactivate this product</a>
+                ) : (
+                  <button onClick={() => toggleProductStatus(editingProduct.id, "deactivated")} disabled={togglingStatus}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-all disabled:opacity-50">
+                    {togglingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                    Deactivate
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2 px-6 pb-6 pt-2 border-t border-gray-100">
               <button onClick={() => setEditingProduct(null)}
                 className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all">Cancel</button>
               <button onClick={saveEdit} disabled={savingEdit}
-                className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20">
+                className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-[#22223B] hover:bg-[#3a3a5c] rounded-xl transition-all disabled:opacity-50">
                 {savingEdit ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><Save className="w-4 h-4" /> Save Changes</>}
               </button>
             </div>
           </div>
         </div>
       )}
+      {!tutorial.isOnboarding && <TutorialHelpButton onClick={() => tutorial.startPageTutorial("products")} />}
     </div>
   );
 }

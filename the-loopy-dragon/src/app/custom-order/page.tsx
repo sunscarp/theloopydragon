@@ -1056,7 +1056,7 @@ export default function CustomOrder() {
                       </div>
                     )}
                     <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.02em' }}>
-                      Upload up to 3 images to share your design inspiration ({images.length}/3 selected)
+                      Upload up to 3 images to share your design inspiration ({images.length}/3 selected) — No AI generated images please
                     </p>
                   </div>
                   <div className={`grid ${isMobile ? 'grid-cols-1 gap-6' : 'grid-cols-1 md:grid-cols-2 gap-4'}`}>
