@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { trackPageView } from "@/utils/metaPixel";
 
-const META_PIXEL_ID = "1038274745238582";
+const META_PIXEL_ID = "886084574557055";
 
 export default function MetaPixel() {
   const pathname = usePathname();
