@@ -1,48 +1,13 @@
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
-type FbqFunction = {
-  (...args: any[]): void;
-  callMethod?: (...args: any[]) => void;
-  queue: any[];
-  push: any;
-  loaded: boolean;
-  version: string;
-};
-
 declare global {
   interface Window {
-    fbq: FbqFunction;
-    _fbq?: FbqFunction;
+    fbq: any;
+    _fbq: any;
   }
 }
 
-export const initMetaPixel = () => {
-  if (!META_PIXEL_ID || META_PIXEL_ID === 'YOUR_PIXEL_ID_HERE') return;
-
-  if (typeof window === 'undefined') return;
-
-  if (window._fbq) return;
-
-  const f: any = function () {
-    f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments);
-  };
-  window.fbq = f;
-  if (!window._fbq) window._fbq = f;
-  f.push = f;
-  f.loaded = true;
-  f.version = '2.0';
-  f.queue = [];
-
-  const t = document.createElement('script');
-  t.async = true;
-  t.src = 'https://connect.facebook.net/en_US/fbevents.js';
-  document.head.appendChild(t);
-
-  window.fbq('init', META_PIXEL_ID);
-  window.fbq('track', 'PageView');
-};
-
-export const trackPageView = (url?: string) => {
+export const trackPageView = () => {
   if (typeof window !== 'undefined' && window.fbq) {
     window.fbq('track', 'PageView');
   }
