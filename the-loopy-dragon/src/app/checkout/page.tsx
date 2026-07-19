@@ -8,6 +8,7 @@ import OrderSummary from "@/components/OrderSummary";
 import { SPECIAL_OFFER_PRODUCTS } from "@/utils/dragonOffers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { trackInitiateCheckout, trackPurchase } from "@/utils/metaPixel";
 
 interface CartItem {
   cartKey: string;
@@ -341,6 +342,8 @@ function CheckoutContent() {
       return;
     }
     if (!validate()) return;
+
+    trackInitiateCheckout(total, Object.values(cart).reduce((sum, qty) => sum + qty, 0));
 
     // For custom orders, skip the cart validation
     if (!customOrder) {
@@ -699,6 +702,11 @@ function CheckoutContent() {
           }
           
           if (allSuccess) {
+            const contentIds = Object.entries(cart).map(([cartKey]) => {
+              const productId = getProductIdFromCartKey(cartKey);
+              return String(productId);
+            });
+            trackPurchase(total, contentIds, contentIds.length);
             router.push(`/order-summary?order_id=${generatedOrderId}`);
           } else {
             console.error("Order partially failed. Supabase error:", supabaseErrorMsg);

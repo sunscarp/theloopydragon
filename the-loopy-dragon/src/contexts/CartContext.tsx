@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { getActiveDragonOffer, clearActiveDragonOffer, calculateDiscountAmount, SPECIAL_OFFER_PRODUCTS, type DragonOffer } from "@/utils/dragonOffers";
+import { trackAddToCart } from "@/utils/metaPixel";
 
 type Product = {
   id: number;
@@ -431,6 +432,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       product = products.find((p) => p.id === id);
       if (!product || (product.Quantity !== undefined && product.Quantity <= 0)) return;
     }
+    
+    // Track AddToCart event
+    trackAddToCart(
+      (product as any).Product || `Product ${id}`,
+      String(id),
+      (product as any).Price * quantity,
+      quantity
+    );
     
     // Generate cart key
     const cartKey = generateCartKey(id, addons);
