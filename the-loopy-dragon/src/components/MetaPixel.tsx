@@ -3,7 +3,9 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { trackPageView, META_PIXEL_ID } from "@/utils/metaPixel";
+import { trackPageView } from "@/utils/metaPixel";
+
+const META_PIXEL_ID = "1038274745238582";
 
 export default function MetaPixel() {
   const pathname = usePathname();
@@ -13,8 +15,6 @@ export default function MetaPixel() {
       trackPageView();
     }
   }, [pathname]);
-
-  if (!META_PIXEL_ID || META_PIXEL_ID === 'YOUR_PIXEL_ID_HERE') return null;
 
   return (
     <>
